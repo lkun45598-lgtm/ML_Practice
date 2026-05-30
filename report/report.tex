@@ -1,78 +1,202 @@
 % !TEX program = xelatex
-% 人工智能综合实训 II 实训报告 —— LaTeX 版本
-% 编译：xelatex report.tex （建议连续编译两次以生成目录）
+% 人工智能综合实训 II 实训报告 —— LaTeX 版本（毕业论文格式）
+% 编译：xelatex report.tex （连续编译两次以生成目录）
 \documentclass[12pt,a4paper,fontset=fandol]{ctexart}   % Fandol 为 TeX Live 自带中文字体，免依赖系统字体
-\usepackage[margin=2.5cm]{geometry}
+\usepackage[margin=2.6cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{caption}
+\usepackage{array}
 \usepackage{amsmath}
+\usepackage{enumitem}
 \usepackage{hyperref}
 \hypersetup{hidelinks}
 
 \captionsetup{font=small}
 \graphicspath{{../task1_ml_wine/outputs/}{../task2_alexnet_fmnist/outputs/}}
+\renewcommand{\arraystretch}{1.2}
+\setlength{\parindent}{2em}
 
-\title{\textbf{人工智能综合实训 II 实训报告}}
-\author{学号后三位\,姓名\quad（组员分工见附录）}
-\date{\today}
+% 章节标题风格
+\ctexset{
+  section/format = \Large\bfseries\centering,
+  subsection/format = \large\bfseries,
+  subsubsection/format = \normalsize\bfseries
+}
+
+\title{\textbf{\Huge 人工智能综合实训 II\\[6pt]\LARGE 实\,训\,报\,告}}
+\author{}
+\date{}
 
 \begin{document}
-\maketitle
 
-\begin{abstract}
-\noindent 本报告完成两个机器学习项目。项目一在 UCI 白葡萄酒质量数据集上构建多分类模型，
-对比支持向量机、决策树、随机森林与逻辑回归四种算法；项目二逐层手写实现经典卷积神经网络
-AlexNet，在 Fashion-MNIST 图像数据集上完成十分类任务。实验表明：项目一中随机森林表现最佳，
-测试集宏平均 F1 达 0.734；项目二手写 AlexNet 在测试集上达到 91.55\% 的准确率。
+% ===================== 封面 =====================
+\begin{titlepage}
+\centering
+\vspace*{2.5cm}
+{\Huge\bfseries 人工智能综合实训 II}\\[1.2cm]
+{\LARGE\bfseries 实\quad 训\quad 报\quad 告}\\[2.5cm]
+{\large
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{rl}
+\textbf{题\qquad 目：} & 机器学习与手写 AlexNet 图像分类 \\
+\textbf{学\qquad 院：} & \underline{\hspace{6cm}} \\
+\textbf{专\qquad 业：} & \underline{\hspace{6cm}} \\
+\textbf{小组成员：} & \underline{\hspace{6cm}} \\
+\textbf{指导教师：} & \underline{\hspace{6cm}} \\
+\end{tabular}}\\[2.5cm]
+{\large \today}
+\vfill
+\end{titlepage}
+
+% ===================== 摘要 =====================
+\begin{center}{\Large\bfseries 摘\quad 要}\end{center}
+\par 本实训围绕“机器学习全流程实践”展开，完成两个相互独立又层层递进的项目。
+\textbf{项目一}面向结构化数据，在 UCI 白葡萄酒质量数据集上构建多分类模型，系统对比了支持向量机、
+决策树、随机森林与逻辑回归四种算法，通过网格搜索与五折交叉验证进行调参，最终随机森林取得最佳性能，
+测试集准确率 73.5\%、宏平均 F1 为 0.734。\textbf{项目二}面向图像数据，按经典论文逐层手工实现卷积神经网络
+AlexNet（不调用任何预置模型），在 Fashion-MNIST 数据集上完成十分类任务，经 15 轮训练后测试集准确率达到
+91.55\%、宏平均 F1 为 0.915。两个项目完整覆盖了数据加载、可视化、预处理、模型建立、模型评估与结论分析的
+全流程，验证了集成学习在结构化数据上的优势以及深度卷积网络在图像识别上的有效性，并在此基础上提出了
+进一步的改进方向。
+
 \par\vspace{1ex}
-\noindent\textbf{关键词：}机器学习；支持向量机；随机森林；卷积神经网络；AlexNet
-\end{abstract}
+\noindent\textbf{关键词：}机器学习；支持向量机；随机森林；卷积神经网络；AlexNet；图像分类
 
+\newpage
 \tableofcontents
 \newpage
 
+% ===================== 第一章 =====================
 \section{引言}
-机器学习已广泛应用于工业质量评估、计算机视觉等领域。结构化数据的分类（如食品质量评级）
-通常采用传统机器学习算法，而图像识别则依赖深度卷积神经网络。2012 年 Krizhevsky 等人提出的
-AlexNet 首次在 ImageNet 大规模图像识别竞赛中以显著优势夺冠，确立了深度卷积网络在计算机视觉
-中的主导地位。本报告分别以这两类任务为载体，完整实践“加载$\rightarrow$查看$\rightarrow$预处理
-$\rightarrow$建模$\rightarrow$评估$\rightarrow$结论”的机器学习流程。
-\textit{（此处可进一步补充研究背景、应用现状与意义。）}
 
+\subsection{研究背景}
+机器学习是人工智能的核心分支，其目标是让计算机从数据中自动学习规律并对未知样本作出预测。
+依据数据形态的不同，机器学习方法大致可分为两类：面向结构化（表格）数据的传统机器学习算法，
+以及面向图像、语音等非结构化数据的深度学习方法。
+
+对于结构化数据的分类问题，支持向量机（SVM）、决策树以及以随机森林为代表的集成学习方法
+长期占据主流地位。它们具有训练高效、可解释性强的特点，在工业质量评估、金融风控、医疗诊断
+等领域应用广泛。其中集成学习通过组合多个弱学习器显著提升了模型的泛化能力，往往能取得最佳效果。
+
+对于图像识别问题，深度卷积神经网络（CNN）则带来了革命性的突破。2012 年，Krizhevsky 等人提出的
+AlexNet 在 ImageNet 大规模视觉识别挑战赛（ILSVRC）中以远超第二名的成绩夺冠，首次证明了深层卷积网络
+配合 ReLU 激活、Dropout 正则化和 GPU 加速训练的巨大威力，开启了深度学习在计算机视觉领域的黄金时代。
+AlexNet 由 5 个卷积层与 3 个全连接层构成，其设计思想至今仍是理解现代卷积网络的基础。
+
+\subsection{项目研究思路}
+本实训采用统一的机器学习方法论，对两个项目均遵循如下六个环节循序推进，如图~\ref{fig:pipeline} 的流程所示：
+
+\begin{enumerate}[label=（\arabic*）,leftmargin=3em]
+  \item \textbf{数据加载}：从公开数据源获取数据集，读入内存并核对规模与字段；
+  \item \textbf{数据查看}：通过描述性统计与可视化了解数据分布、相关性与潜在问题；
+  \item \textbf{数据预处理}：包括标签构造、特征标准化、数据集划分以及类别不平衡处理；
+  \item \textbf{模型建立}：选择合适的算法或网络结构，并通过调参确定最优配置；
+  \item \textbf{模型评估}：在独立测试集上用多种指标量化性能，并借助混淆矩阵等工具分析；
+  \item \textbf{结论分析}：归纳实验结果，对比模型优劣，提出改进方案。
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \framebox[0.92\textwidth]{\rule{0pt}{1.6cm}\;
+  数据加载 $\rightarrow$ 数据查看 $\rightarrow$ 数据预处理 $\rightarrow$ 模型建立 $\rightarrow$ 模型评估 $\rightarrow$ 结论分析\;}
+  \caption{机器学习项目统一研究流程}
+  \label{fig:pipeline}
+\end{figure}
+
+\subsection{小组成员分工}
+本项目由小组协作完成，成员分工如表~\ref{tab:team} 所示\footnote{请各组按实际情况填写学号、姓名与具体分工。}。
+
+\begin{table}[H]
+  \centering
+  \caption{小组成员分工表}
+  \label{tab:team}
+  \begin{tabular}{>{\centering\arraybackslash}m{2.5cm} >{\centering\arraybackslash}m{3cm} m{8cm}}
+    \toprule
+    学号（后三位） & 姓名 & 主要分工 \\
+    \midrule
+    \underline{\hspace{1.8cm}} & \underline{\hspace{2.2cm}} & 项目一数据预处理与机器学习建模、调参与评估 \\
+    \underline{\hspace{1.8cm}} & \underline{\hspace{2.2cm}} & 项目二 AlexNet 网络实现、模型训练与可视化评估 \\
+    \underline{\hspace{1.8cm}} & \underline{\hspace{2.2cm}} & 数据可视化、报告撰写、PPT 制作与汇报 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ===================== 第二章 =====================
 \section{项目一：红酒质量分类}
 
-\subsection{数据集与预处理}
-采用 UCI 白葡萄酒质量数据集，共 4898 个样本、11 个理化特征，原始质量评分为 0--10 的整数。
-为构建分类任务，将评分分箱为三类：评分 $\le 5$ 记为“差”、$=6$ 记为“中”、$\ge 7$ 记为“好”。
-数据经标准化处理（仅在训练集上拟合以避免数据泄漏），并按 8:2 分层划分训练集与测试集。
-针对类别不平衡，各模型统一采用类别加权（\texttt{class\_weight='balanced'}）。
-图~\ref{fig:eda_dist} 与图~\ref{fig:eda_corr} 给出质量分布与特征相关性分析。
+\subsection{数据集介绍与来源}
+本项目采用 \textbf{UCI 机器学习仓库}公开的葡萄酒质量数据集（Wine Quality Data Set），
+来源网址为 \url{https://archive.ics.uci.edu/dataset/186/wine+quality}。
+其中白葡萄酒子集共 \textbf{4898} 个样本，每个样本包含 \textbf{11} 个理化特征以及 1 个质量评分标签
+（0--10 的整数）。11 个特征分别为：固定酸度、挥发性酸度、柠檬酸、残糖、氯化物、游离二氧化硫、
+总二氧化硫、密度、pH 值、硫酸盐与酒精度。原始质量评分由品酒师给出，本质上反映了葡萄酒的综合品质。
+
+\subsection{数据加载与可视化分布}
+数据以分号分隔的 CSV 文件存储，使用 \texttt{pandas} 读入后核验为 $4898\times12$（11 特征 + 1 标签），
+无缺失值。为理解数据特性，绘制了质量评分的分布直方图（图~\ref{fig:wine_dist}）与特征相关性热力图
+（图~\ref{fig:wine_corr}）。
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.6\textwidth]{eda_quality_dist.png}
   \caption{葡萄酒质量评分分布}
-  \label{fig:eda_dist}
+  \label{fig:wine_dist}
 \end{figure}
+
+由分布图可见，质量评分集中于 5、6、7 三档，呈明显的中间多、两端少的不平衡特征。
+由相关性热力图可见，酒精度与质量评分呈较强正相关，密度与质量评分呈负相关，
+这与酿酒学常识一致，表明特征具备一定的判别能力。
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.78\textwidth]{eda_corr_heatmap.png}
+  \includegraphics[width=0.8\textwidth]{eda_corr_heatmap.png}
   \caption{特征相关性热力图}
-  \label{fig:eda_corr}
+  \label{fig:wine_corr}
 \end{figure}
 
-\subsection{模型与结果}
-对四种模型分别进行 5 折交叉验证网格搜索调参，并在测试集上评估。各模型的准确率、
-精确率、召回率与宏平均 F1 见表~\ref{tab:ml}。模型对比与随机森林特征重要性分别见
-图~\ref{fig:cmp} 与图~\ref{fig:imp}。
+\subsection{数据预处理}
+针对原始任务，进行如下预处理：
+\begin{enumerate}[label=（\arabic*）,leftmargin=3em]
+  \item \textbf{标签构造}：将 0--10 的质量评分分箱为三个类别——评分 $\le 5$ 记为“差”（类 0）、
+  $=6$ 记为“中”（类 1）、$\ge 7$ 记为“好”（类 2）。分箱后三类样本数分别为 1640、2198、1060，存在
+  类别不平衡。
+  \item \textbf{特征标准化}：使用 \texttt{StandardScaler} 对 11 个特征进行零均值、单位方差标准化，
+  且仅在训练集上拟合参数，再应用到测试集，以避免数据泄漏。
+  \item \textbf{数据集划分}：按 8:2 进行分层抽样划分，得到训练集 3918 个、测试集 980 个样本，
+  分层保证各类别比例一致。
+  \item \textbf{不平衡处理}：所有模型统一设置 \texttt{class\_weight='balanced'}，按类别频率反比加权，
+  缓解多数类主导问题。
+\end{enumerate}
+
+\subsection{模型建立}
+选取四种代表性算法并通过五折交叉验证 + 网格搜索（评分准则为宏平均 F1）确定最优超参数，
+结果见表~\ref{tab:wine_param}。
+
+\begin{table}[H]
+  \centering
+  \caption{四种模型的搜索空间与最优超参数}
+  \label{tab:wine_param}
+  \begin{tabular}{l l l}
+    \toprule
+    模型 & 主要搜索空间 & 最优超参数 \\
+    \midrule
+    SVM      & $C\in\{1,10\}$，$\gamma\in\{$scale$,0.1\}$，RBF 核 & $C=10,\ \gamma=0.1$ \\
+    决策树   & 最大深度 $\in\{$None$,10,20\}$，叶子最小样本 $\in\{1,5\}$ & 深度 None，叶子 1 \\
+    随机森林 & 树数 $\in\{200,400\}$，最大深度 $\in\{$None$,20\}$ & 树数 200，深度 20 \\
+    逻辑回归 & $C\in\{0.5,1,10\}$ & $C=0.5$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{模型评估}
+在独立测试集上对四个模型进行评估，整体指标对比见表~\ref{tab:wine_metric} 与图~\ref{fig:wine_cmp}。
 
 \begin{table}[H]
   \centering
   \caption{四种机器学习模型测试集性能对比}
-  \label{tab:ml}
+  \label{tab:wine_metric}
   \begin{tabular}{lcccc}
     \toprule
     模型 & 准确率 & 精确率 & 召回率 & 宏平均 F1 \\
@@ -87,84 +211,197 @@ $\rightarrow$建模$\rightarrow$评估$\rightarrow$结论”的机器学习流�
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.8\textwidth]{model_compare.png}
+  \includegraphics[width=0.78\textwidth]{model_compare.png}
   \caption{各模型测试集指标对比}
-  \label{fig:cmp}
+  \label{fig:wine_cmp}
+\end{figure}
+
+进一步给出最优模型——随机森林的各类别详细指标，见表~\ref{tab:wine_rf}。
+
+\begin{table}[H]
+  \centering
+  \caption{随机森林各类别精确率/召回率/F1}
+  \label{tab:wine_rf}
+  \begin{tabular}{lcccc}
+    \toprule
+    类别 & 精确率 & 召回率 & F1 & 样本数 \\
+    \midrule
+    差（$\le 5$） & 0.78 & 0.73 & 0.76 & 328 \\
+    中（$=6$）    & 0.69 & 0.77 & 0.73 & 440 \\
+    好（$\ge 7$） & 0.77 & 0.67 & 0.72 & 212 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+随机森林的混淆矩阵与特征重要性分别见图~\ref{fig:wine_rfcm} 与图~\ref{fig:wine_imp}。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.58\textwidth]{cm_随机森林.png}
+  \caption{随机森林混淆矩阵}
+  \label{fig:wine_rfcm}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.7\textwidth]{rf_feature_importance.png}
-  \caption{随机森林特征重要性}
-  \label{fig:imp}
+  \caption{随机森林特征重要性排序}
+  \label{fig:wine_imp}
 \end{figure}
 
-随机森林在所有指标上均显著优于其他模型，宏平均 F1 达 0.734；逻辑回归作为线性模型表现最差，
-说明该任务存在较强的非线性关系。特征重要性显示酒精度、密度等理化指标对质量判别贡献最大。
+\subsection{本章小结}
+实验表明，随机森林在所有指标上均显著领先，宏平均 F1 达 0.734，比次优的决策树高出约 9 个百分点；
+逻辑回归作为线性模型表现最差（F1 仅 0.520），说明该任务中特征与质量之间存在较强的非线性关系，
+集成学习能更好地拟合这种复杂边界。特征重要性显示酒精度、密度等理化指标对质量判别贡献最大。
 
+% ===================== 第三章 =====================
 \section{项目二：手写 AlexNet 图像分类}
 
-\subsection{网络结构}
-本项目不调用任何预置 AlexNet，而是使用基础算子逐层手工搭建。网络输入为 $1\times224\times224$
-的灰度图（Fashion-MNIST 经 Resize 至 224），结构如下：
+\subsection{数据集介绍与来源}
+本项目采用 \textbf{Fashion-MNIST} 数据集，由 Zalando 公司发布，来源网址为
+\url{https://www.kaggle.com/datasets/zalando-research/fashionmnist}（亦可经 \texttt{torchvision} 自动下载）。
+数据集共 \textbf{70000} 张 $28\times28$ 的灰度服饰图像，其中训练集 60000 张、测试集 10000 张，
+覆盖 10 个类别：T恤、裤子、套衫、连衣裙、外套、凉鞋、衬衫、运动鞋、包、短靴。
+相比手写数字 MNIST，Fashion-MNIST 类间相似度更高、识别难度更大，是评估图像分类模型的常用基准。
 
-\begin{itemize}
-  \item \textbf{特征提取（5 个卷积块）：}
-  Conv1($1\!\to\!96$, $11\times11$, 步长 4) + ReLU + LRN + 最大池化；
-  Conv2($96\!\to\!256$, $5\times5$) + ReLU + LRN + 最大池化；
-  Conv3($256\!\to\!384$, $3\times3$) + ReLU；
-  Conv4($384\!\to\!384$, $3\times3$) + ReLU；
-  Conv5($384\!\to\!256$, $3\times3$) + ReLU + 最大池化，输出 $256\times6\times6$。
-  \item \textbf{分类器（3 个全连接）：}
-  Dropout + 全连接($9216\!\to\!4096$) + ReLU；
-  Dropout + 全连接($4096\!\to\!4096$) + ReLU；
-  全连接($4096\!\to\!10$)。
-\end{itemize}
-模型参数量约 58.3M。
+\subsection{数据加载与可视化}
+通过 \texttt{torchvision.datasets.FashionMNIST} 自动下载并加载数据。由于 AlexNet 的标准输入为
+$224\times224$，在加载时将原始 $28\times28$ 图像放大（Resize）至 $224\times224$。部分测试样例及其
+预测结果见图~\ref{fig:fm_samples}（绿色标题为预测正确，红色为错误）。
 
-\subsection{训练与评估}
-采用交叉熵损失与带动量的随机梯度下降（SGD，动量 0.9，权重衰减 $5\times10^{-4}$），
-初始学习率 0.01，每 10 轮衰减为 1/10，共训练 15 轮，按验证集准确率保存最优模型。
-训练过程中验证集最高准确率为 0.9232。训练曲线见图~\ref{fig:curves}。
+\subsection{数据预处理}
+图像预处理流程包括：（1）\texttt{Resize(224)} 将图像缩放到 AlexNet 所需尺寸；
+（2）\texttt{ToTensor} 转为张量并归一化到 $[0,1]$；（3）\texttt{Normalize} 按 Fashion-MNIST 的
+单通道均值 0.2860、标准差 0.3530 进行标准化。此外，从 60000 张训练图中划出 10\% 作为验证集，
+用于训练过程中的模型选择，最终在 10000 张测试图上评估。
+
+\subsection{模型建立}
+按照经典 AlexNet 论文，使用 \texttt{nn.Conv2d}、\texttt{nn.Linear} 等基础算子\textbf{逐层手工搭建}网络，
+\textbf{不调用} \texttt{torchvision.models} 中的任何预置模型。网络输入为 $1\times224\times224$ 的灰度图，
+各层配置与输出尺寸见表~\ref{tab:alexnet}，总参数量约 58.3M。
+
+\begin{table}[H]
+  \centering
+  \caption{手写 AlexNet 网络结构}
+  \label{tab:alexnet}
+  \begin{tabular}{l l l}
+    \toprule
+    层 & 配置 & 输出尺寸 \\
+    \midrule
+    输入        & 灰度图像                                   & $1\times224\times224$ \\
+    Conv1       & $96$ 核，$11\times11$，步长 4，填充 2；ReLU+LRN & $96\times55\times55$ \\
+    MaxPool1    & $3\times3$，步长 2                          & $96\times27\times27$ \\
+    Conv2       & $256$ 核，$5\times5$，填充 2；ReLU+LRN      & $256\times27\times27$ \\
+    MaxPool2    & $3\times3$，步长 2                          & $256\times13\times13$ \\
+    Conv3       & $384$ 核，$3\times3$，填充 1；ReLU          & $384\times13\times13$ \\
+    Conv4       & $384$ 核，$3\times3$，填充 1；ReLU          & $384\times13\times13$ \\
+    Conv5       & $256$ 核，$3\times3$，填充 1；ReLU          & $256\times13\times13$ \\
+    MaxPool3    & $3\times3$，步长 2                          & $256\times6\times6$ \\
+    全连接 FC6  & Dropout(0.5) + Linear；ReLU                 & $4096$ \\
+    全连接 FC7  & Dropout(0.5) + Linear；ReLU                 & $4096$ \\
+    全连接 FC8  & Linear（输出层）                            & $10$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{训练配置}：损失函数为交叉熵；优化器为带动量的随机梯度下降（SGD，动量 0.9，
+权重衰减 $5\times10^{-4}$）；初始学习率 0.01，采用步长为 10、衰减系数 0.1 的学习率调度；
+批大小 128，共训练 15 轮，按验证集准确率保存最优模型。训练在单张 NVIDIA RTX 4090 上完成。
+
+\subsection{模型评估}
+训练与验证过程的损失、准确率曲线见图~\ref{fig:fm_curves}。验证集最高准确率为 0.9232，
+曲线平稳收敛，且在第 10 轮学习率衰减后性能进一步提升，未见明显过拟合。
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.95\textwidth]{curves.png}
-  \caption{训练/验证 损失与准确率曲线}
-  \label{fig:curves}
+  \caption{AlexNet 训练/验证 损失与准确率曲线}
+  \label{fig:fm_curves}
 \end{figure}
 
-在 10000 张测试图像上，模型最终准确率为 \textbf{91.55\%}，宏平均 F1 为 \textbf{0.915}。
-混淆矩阵与预测样例分别见图~\ref{fig:cm} 与图~\ref{fig:samples}。其中“衬衫”类与“T恤”“套衫”
-“外套”之间存在较多混淆，符合 Fashion-MNIST 上该类目视觉相似度高的普遍规律。
+在 10000 张测试图像上，模型最终准确率为 \textbf{91.55\%}，宏平均精确率、召回率、F1 均为 0.915。
+各类别详细指标见表~\ref{tab:fm_cls}，混淆矩阵见图~\ref{fig:fm_cm}。
+
+\begin{table}[H]
+  \centering
+  \caption{AlexNet 各类别测试指标}
+  \label{tab:fm_cls}
+  \begin{tabular}{lccc|lccc}
+    \toprule
+    类别 & 精确率 & 召回率 & F1 & 类别 & 精确率 & 召回率 & F1 \\
+    \midrule
+    T恤   & 0.87 & 0.85 & 0.86 & 凉鞋   & 0.98 & 0.98 & 0.98 \\
+    裤子  & 0.99 & 0.98 & 0.99 & 衬衫   & 0.76 & 0.74 & 0.75 \\
+    套衫  & 0.87 & 0.87 & 0.87 & 运动鞋 & 0.96 & 0.97 & 0.96 \\
+    连衣裙& 0.91 & 0.94 & 0.92 & 包     & 0.98 & 0.98 & 0.98 \\
+    外套  & 0.84 & 0.89 & 0.86 & 短靴   & 0.97 & 0.96 & 0.97 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\textwidth]{confusion_matrix.png}
+  \includegraphics[width=0.82\textwidth]{confusion_matrix.png}
   \caption{AlexNet 测试集混淆矩阵}
-  \label{fig:cm}
+  \label{fig:fm_cm}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{samples.png}
   \caption{测试集预测样例（绿色为正确，红色为错误）}
-  \label{fig:samples}
+  \label{fig:fm_samples}
 \end{figure}
 
-\section{结论}
-本报告完整实践了两类机器学习任务。项目一表明集成学习（随机森林）在结构化数据多分类上
-优于单一模型与线性模型；项目二验证了手写 AlexNet 在图像分类上的有效性，测试准确率达 91.55\%。
-后续可通过数据增强、批归一化、更深网络结构以及更充分的超参数搜索进一步提升性能。
+\subsection{本章小结}
+手写 AlexNet 在 Fashion-MNIST 上取得了 91.55\% 的测试准确率。从混淆矩阵与各类指标看，
+“裤子”“包”“凉鞋”等形态独特的类别识别率接近完美（F1 $\ge 0.98$），而“衬衫”类最易混淆
+（F1 仅 0.75），主要与“T恤”“套衫”“外套”相互误判——这些上装在低分辨率灰度图下视觉特征高度相似，
+符合 Fashion-MNIST 的公认难点。
 
+% ===================== 第四章 =====================
+\section{结论与实验总结}
+
+\subsection{结论}
+本实训完整实现了两类典型的机器学习任务并得出如下结论：
+\begin{enumerate}[label=（\arabic*）,leftmargin=3em]
+  \item 在结构化数据的红酒质量分类中，集成学习方法（随机森林）显著优于单一模型与线性模型，
+  宏平均 F1 达 0.734，是四种算法中的最佳选择；
+  \item 在图像分类任务中，逐层手写实现的 AlexNet 能够有效学习服饰图像特征，
+  测试准确率达 91.55\%，验证了深度卷积网络在视觉任务上的强大能力。
+\end{enumerate}
+
+\subsection{实验总结}
+通过本次实训，我们完整走通了“数据加载—查看—预处理—建模—评估—结论”的机器学习全流程，
+深入理解了：传统机器学习与深度学习在数据形态、建模思路上的差异；标准化、分层划分、类别加权等
+预处理手段对结果的影响；网格搜索与交叉验证在调参中的作用；以及卷积、池化、Dropout、LRN 等
+AlexNet 关键组件的原理与实现。在工程实践中，我们还解决了诸如绘图中文字体缺失数字字形、
+sklearn 新版本参数变更等实际问题，积累了宝贵经验。
+
+\subsection{改进方案}
+针对两个项目，后续可从以下方向进一步改进：
+\begin{itemize}[leftmargin=2.2em]
+  \item \textbf{项目一}：尝试 XGBoost、LightGBM 等更强的梯度提升模型；采用 SMOTE 等过采样方法
+  更充分地处理类别不平衡；引入特征工程（如交互项、分箱）与特征选择以提升判别力。
+  \item \textbf{项目二}：引入数据增强（随机裁剪、翻转）抑制过拟合；用批归一化（BatchNorm）替代
+  LRN 以加速收敛；适当增加训练轮数并使用余弦退火等更精细的学习率策略；亦可对比 VGG、ResNet 等
+  更先进的网络结构。
+  \item \textbf{通用}：建立更系统的实验管理与超参数搜索流程，对结果进行多次重复实验以评估稳定性。
+\end{itemize}
+
+% ===================== 参考文献 =====================
 \begin{thebibliography}{9}
 \bibitem{alexnet} Krizhevsky A, Sutskever I, Hinton G E.
 ImageNet Classification with Deep Convolutional Neural Networks.
-\textit{Advances in Neural Information Processing Systems (NeurIPS)}, 2012.
-\bibitem{wine} Cortez P, et al. Modeling wine preferences by data mining from
+\textit{Advances in Neural Information Processing Systems (NeurIPS)}, 2012: 1097--1105.
+\bibitem{wine} Cortez P, Cerdeira A, Almeida F, et al. Modeling wine preferences by data mining from
 physicochemical properties. \textit{Decision Support Systems}, 2009, 47(4): 547--553.
-\bibitem{sklearn} Pedregosa F, et al. Scikit-learn: Machine Learning in Python.
-\textit{JMLR}, 2011, 12: 2825--2830.
+\bibitem{fashion} Xiao H, Rasul K, Vollgraf R. Fashion-MNIST: a Novel Image Dataset for Benchmarking
+Machine Learning Algorithms. \textit{arXiv:1708.07747}, 2017.
+\bibitem{sklearn} Pedregosa F, Varoquaux G, Gramfort A, et al. Scikit-learn: Machine Learning in Python.
+\textit{Journal of Machine Learning Research}, 2011, 12: 2825--2830.
+\bibitem{pytorch} Paszke A, Gross S, Massa F, et al. PyTorch: An Imperative Style, High-Performance
+Deep Learning Library. \textit{NeurIPS}, 2019: 8024--8035.
 \end{thebibliography}
 
 \end{document}
