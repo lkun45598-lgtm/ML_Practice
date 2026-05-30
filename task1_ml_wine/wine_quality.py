@@ -71,7 +71,42 @@ def eda(df):
     print(f"[EDA] 图已保存到 {OUT_DIR}")
 
 
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+CLASS_NAMES = ["差(≤5)", "中(=6)", "好(≥7)"]
+
+
+def make_labels(df):
+    """将 0-10 的 quality 评分分箱为 3 类：≤5→0, =6→1, ≥7→2。"""
+    def to_cls(q):
+        if q <= 5:
+            return 0
+        elif q == 6:
+            return 1
+        return 2
+    y = df["quality"].apply(to_cls).to_numpy()
+    X = df.drop(columns=["quality"]).to_numpy()
+    print("[预处理] 三分类标签分布:", np.bincount(y))
+    return X, y
+
+
+def preprocess(X, y, test_size=0.2, seed=42):
+    """分层划分 + 标准化（仅在训练集 fit）。返回标准化后的数据与 scaler。"""
+    X_tr, X_te, y_tr, y_te = train_test_split(
+        X, y, test_size=test_size, stratify=y, random_state=seed)
+    scaler = StandardScaler().fit(X_tr)
+    X_tr = scaler.transform(X_tr)
+    X_te = scaler.transform(X_te)
+    print(f"[预处理] 训练集 {X_tr.shape}，测试集 {X_te.shape}")
+    return X_tr, X_te, y_tr, y_te, scaler
+
+
 if __name__ == "__main__":
     download_data()
     df = load_data()
     eda(df)
+    X, y = make_labels(df)
+    X_tr, X_te, y_tr, y_te, scaler = preprocess(X, y)
+    assert X_tr.shape[1] == 11 and len(set(y)) == 3
+    print("[自检] 预处理通过")
