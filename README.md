@@ -1,0 +1,90 @@
+# 人工智能综合实训 II
+
+华南农业大学《人工智能综合实训 II》课程项目。包含两个独立的机器学习项目，完整实践
+**加载 → 查看 → 预处理 → 建模 → 评估 → 结论** 的流程：
+
+| 任务 | 内容 | 数据集 | 最佳结果 |
+|------|------|--------|----------|
+| **任务①** | 传统机器学习多分类（SVM / 决策树 / 随机森林 / 逻辑回归） | UCI 白葡萄酒质量（4898×11，3 分类） | 随机森林 macro-F1 **0.734** |
+| **任务②** | **逐层手写** AlexNet 图像分类（不调用预置模型） | Fashion-MNIST（70000，10 分类） | 测试集准确率 **91.55%** |
+
+## 目录结构
+
+```
+ML_Practice/
+├── task1_ml_wine/              # 任务① 机器学习
+│   ├── wine_quality.py         # 完整管线：下载/EDA/预处理/四模型网格搜索/评估
+│   └── outputs/                # EDA图、混淆矩阵、模型对比、特征重要性、metrics.csv
+├── task2_alexnet_fmnist/       # 任务② 手写 AlexNet
+│   ├── alexnet.py              # 逐层手写的 AlexNet（nn.Module）
+│   ├── data.py                 # Fashion-MNIST 加载（Resize 224 + train/val/test）
+│   ├── train.py                # 训练 + 验证，保存最优 checkpoint
+│   ├── evaluate.py             # 测试集评估、混淆矩阵、训练曲线、预测样例
+│   └── outputs/                # 曲线图、混淆矩阵、样例图、history.json、test_metrics.json
+├── common/zh_font.py           # matplotlib 中文字体设置（含数字/字母回退）
+├── report/                     # 实训报告
+│   ├── 毕业论文_人工智能实训.docx  # Word 版（python-docx 生成）
+│   ├── generate_report.py      # Word 生成脚本
+│   ├── report.tex              # LaTeX 版（xelatex + ctex/fandol）
+│   └── report.pdf              # LaTeX 编译产物
+├── docs/superpowers/           # 设计文档与实施计划
+└── requirements.txt
+```
+
+> 数据集与训练得到的模型 checkpoint（`*.pt`）已通过 `.gitignore` 排除，不在仓库中。
+> 运行脚本时会自动重新下载数据并训练。
+
+## 环境
+
+- Python 3.12，建议用 conda 环境（开发环境为 `pytorch312`）
+- GPU：训练任务②使用 CUDA（开发环境为单卡 RTX 4090，约 10 分钟跑完 15 轮）
+
+```bash
+pip install -r requirements.txt
+# 关键依赖：torch、torchvision、scikit-learn、pandas、matplotlib、seaborn、python-docx
+```
+
+## 运行方式
+
+### 任务① 红酒质量分类
+```bash
+python task1_ml_wine/wine_quality.py
+```
+自动下载 UCI 数据集，完成 EDA、预处理（质量评分分箱为 差/中/好 三类）、
+对四个模型做 5 折交叉验证网格搜索，并在测试集评估，结果与图表输出到 `task1_ml_wine/outputs/`。
+
+### 任务② 手写 AlexNet
+```bash
+# 1) 模型自检（打印前向输出形状与参数量）
+python task2_alexnet_fmnist/alexnet.py
+
+# 2) 训练（首次运行自动下载 Fashion-MNIST）
+python task2_alexnet_fmnist/train.py --epochs 15 --batch-size 128 --lr 0.01
+#   冒烟测试：python task2_alexnet_fmnist/train.py --subset 256 --epochs 2
+
+# 3) 评估（加载最优 checkpoint，生成混淆矩阵/曲线/样例）
+python task2_alexnet_fmnist/evaluate.py
+```
+
+### 生成报告
+```bash
+python report/generate_report.py          # 生成 Word 文档
+cd report && xelatex report.tex && xelatex report.tex   # 编译 LaTeX → PDF
+```
+
+## 网络结构（手写 AlexNet）
+
+输入 `1×224×224`，约 58.3M 参数：
+
+- **特征提取（5 卷积块）**：Conv(1→96,11×11,s4)→ReLU→LRN→MaxPool；Conv(96→256,5×5)→ReLU→LRN→MaxPool；
+  Conv(256→384,3×3)→ReLU；Conv(384→384,3×3)→ReLU；Conv(384→256,3×3)→ReLU→MaxPool（输出 256×6×6）
+- **分类器（3 全连接）**：Dropout→Linear(9216→4096)→ReLU；Dropout→Linear(4096→4096)→ReLU；Linear(4096→10)
+
+> 按课程要求，AlexNet 使用 `nn.Conv2d` / `nn.Linear` 等基础算子**逐层手工组装**，
+> 不调用 `torchvision.models.alexnet` 或任何预置模型。
+
+## 说明
+
+- 所有脚本可独立运行，产物统一落到各自的 `outputs/` 目录。
+- 绘图中文显示：`common/zh_font.py` 优先选用同时含中文、数字与拉丁字母的字体
+  （如 AR PL SungtiL GB），避免数字被渲染成方块。
