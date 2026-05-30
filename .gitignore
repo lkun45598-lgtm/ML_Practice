@@ -1,0 +1,8 @@
+# data & heavy artifacts
+**/data/
+**/outputs/*.pt
+**/outputs/*.pth
+**/outputs/*.ckpt
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
