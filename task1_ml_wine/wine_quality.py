@@ -102,6 +102,47 @@ def preprocess(X, y, test_size=0.2, seed=42):
     return X_tr, X_te, y_tr, y_te, scaler
 
 
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+
+
+def build_models():
+    """返回 {模型名: (estimator, 参数网格)}，统一类别加权处理不平衡。"""
+    return {
+        "SVM": (
+            SVC(class_weight="balanced", probability=False),
+            {"C": [1, 10], "gamma": ["scale", 0.1], "kernel": ["rbf"]},
+        ),
+        "决策树": (
+            DecisionTreeClassifier(class_weight="balanced", random_state=42),
+            {"max_depth": [None, 10, 20], "min_samples_leaf": [1, 5]},
+        ),
+        "随机森林": (
+            RandomForestClassifier(class_weight="balanced", random_state=42, n_jobs=-1),
+            {"n_estimators": [200, 400], "max_depth": [None, 20]},
+        ),
+        "逻辑回归": (
+            LogisticRegression(class_weight="balanced", max_iter=2000),
+            {"C": [0.5, 1, 10]},
+        ),
+    }
+
+
+def train_models(X_tr, y_tr):
+    """对每个模型做 5 折网格搜索，返回 {名: 最优estimator}。"""
+    fitted = {}
+    for name, (est, grid) in build_models().items():
+        print(f"\n[训练] {name} 网格搜索中...")
+        gs = GridSearchCV(est, grid, cv=5, scoring="f1_macro", n_jobs=-1)
+        gs.fit(X_tr, y_tr)
+        print(f"[训练] {name} 最优参数: {gs.best_params_}  CV f1_macro={gs.best_score_:.4f}")
+        fitted[name] = gs.best_estimator_
+    return fitted
+
+
 if __name__ == "__main__":
     download_data()
     df = load_data()
@@ -110,3 +151,5 @@ if __name__ == "__main__":
     X_tr, X_te, y_tr, y_te, scaler = preprocess(X, y)
     assert X_tr.shape[1] == 11 and len(set(y)) == 3
     print("[自检] 预处理通过")
+    models = train_models(X_tr, y_tr)
+    print("[自检] 训练完成，模型数:", len(models))
