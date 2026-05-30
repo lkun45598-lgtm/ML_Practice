@@ -10,8 +10,42 @@ import csv
 import json
 from docx import Document
 from docx.shared import Pt, Inches
+from docx.oxml import parse_xml
 from docx.oxml.ns import qn
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+# ---------------------- OMML 公式构建（Word 公式编辑器格式） ----------------------
+_M = "http://schemas.openxmlformats.org/officeDocument/2006/math"
+
+
+def _esc(t):
+    return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def mr(t):
+    """公式中的普通文本片段。"""
+    return f'<m:r><m:t xml:space="preserve">{_esc(t)}</m:t></m:r>'
+
+
+def mfrac(num, den):
+    """分式。"""
+    return f"<m:f><m:num>{num}</m:num><m:den>{den}</m:den></m:f>"
+
+
+def msup(base, sup):
+    """上标。"""
+    return f"<m:sSup><m:e>{base}</m:e><m:sup>{sup}</m:sup></m:sSup>"
+
+
+def msub(base, sub):
+    """下标。"""
+    return f"<m:sSub><m:e>{base}</m:e><m:sub>{sub}</m:sub></m:sSub>"
+
+
+def msubsup(base, sub, sup):
+    """同时带上下标。"""
+    return (f"<m:sSubSup><m:e>{base}</m:e><m:sub>{sub}</m:sub>"
+            f"<m:sup>{sup}</m:sup></m:sSubSup>")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -42,10 +76,11 @@ def para(doc, text, indent=True, align=None):
     return p
 
 
-def formula(doc, text):
-    """以居中段落呈现文字公式。"""
-    p = doc.add_paragraph(text)
+def equation(doc, inner):
+    """以居中段落插入一个 OMML 公式（Word 公式编辑器格式）。"""
+    p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p._p.append(parse_xml(f'<m:oMath xmlns:m="{_M}">{inner}</m:oMath>'))
     return p
 
 
@@ -173,15 +208,20 @@ def chapter2(doc):
 
     doc.add_heading("2.2 传统机器学习算法", level=2)
     doc.add_heading("2.2.1 支持向量机（SVM）", level=3)
-    para(doc, "支持向量机的基本思想是在特征空间中寻找一个最大间隔超平面以分隔不同类别，其优化目标为在"
-              "约束 yᵢ(wᵀxᵢ+b)≥1−ξᵢ 下最小化 (1/2)‖w‖² + C·Σξᵢ，其中 C 为惩罚系数、ξᵢ 为松弛变量。"
-              "对于非线性可分问题，SVM 通过核函数将样本映射到高维空间，本实训采用径向基（RBF）核：")
-    formula(doc, "K(x, x′) = exp(−γ‖x − x′‖²)")
+    para(doc, "支持向量机的基本思想是在特征空间中寻找一个最大间隔超平面以分隔不同类别，在约束 "
+              "yᵢ(wᵀxᵢ+b) ≥ 1−ξᵢ 下，其优化目标为：")
+    equation(doc, mr("min  ") + mfrac(mr("1"), mr("2")) + msup(mr("‖w‖"), mr("2"))
+             + mr(" + C ") + mr("Σ") + msub(mr("ξ"), mr("i")))
+    para(doc, "其中 C 为惩罚系数、ξᵢ 为松弛变量。对于非线性可分问题，SVM 通过核函数将样本映射到高维"
+              "空间，本实训采用径向基（RBF）核：")
+    equation(doc, mr("K(x, x′) = exp(−γ") + msup(mr("‖x−x′‖"), mr("2")) + mr(")"))
 
     doc.add_heading("2.2.2 决策树", level=3)
     para(doc, "决策树通过递归地选择最优特征对样本空间进行划分，形成树状的判别结构。划分依据通常为基尼"
-              "不纯度 Gini(D) = 1 − Σ pₖ²，其中 pₖ 为类别 k 在节点中的占比。算法每次选择使子节点不纯度"
-              "下降最大的特征进行分裂，具有良好的可解释性，但单棵树容易过拟合。")
+              "不纯度：")
+    equation(doc, mr("Gini(D) = 1 − ") + mr("Σ") + msubsup(mr("p"), mr("k"), mr("2")))
+    para(doc, "其中 pₖ 为类别 k 在节点中的占比。算法每次选择使子节点不纯度下降最大的特征进行分裂，"
+              "具有良好的可解释性，但单棵树容易过拟合。")
 
     doc.add_heading("2.2.3 随机森林", level=3)
     para(doc, "随机森林是一种基于 Bagging 思想的集成学习方法，通过自助采样（Bootstrap）构建多棵决策树，"
@@ -189,32 +229,49 @@ def chapter2(doc):
               "模型方差，使其在保持高精度的同时具有较强的抗过拟合能力。")
 
     doc.add_heading("2.2.4 逻辑回归", level=3)
-    para(doc, "逻辑回归是一种线性分类模型，通过 Softmax（多分类）函数将线性输出映射为类别概率 "
-              "P(y=k|x) = exp(wₖᵀx) / Σⱼ exp(wⱼᵀx)，并以交叉熵为损失函数进行参数估计。其结构简单、"
-              "训练高效，常作为分类任务的基线模型。")
+    para(doc, "逻辑回归是一种线性分类模型，通过 Softmax（多分类）函数将线性输出映射为类别概率：")
+    equation(doc, mr("P(y=k|x) = ")
+             + mfrac(msup(mr("e"), msub(mr("w"), mr("k")) + mr("ᵀx")),
+                     mr("Σ") + msup(mr("e"), msub(mr("w"), mr("j")) + mr("ᵀx"))))
+    para(doc, "并以交叉熵为损失函数进行参数估计。其结构简单、训练高效，常作为分类任务的基线模型。")
 
     doc.add_heading("2.3 卷积神经网络与 AlexNet", level=2)
     para(doc, "卷积神经网络（CNN）是处理图像数据的主流深度模型，其核心组件包括：")
     for line in [
         "（1）卷积层：通过可学习的卷积核在图像上滑动提取局部特征，具有局部连接与权值共享的特点，"
-        "大幅减少参数量。给定输入尺寸 W、卷积核 K、步长 S、填充 P，输出尺寸为 O =⌊(W−K+2P)/S⌋+1。",
+        "大幅减少参数量。给定输入尺寸 W、卷积核 K、步长 S、填充 P，输出尺寸计算见下式。",
         "（2）激活函数 ReLU：f(x)=max(0,x)，引入非线性并缓解梯度消失，是 AlexNet 的关键创新之一。",
         "（3）池化层：通过最大池化等操作进行下采样，降低特征图尺寸、增强平移不变性。",
         "（4）局部响应归一化（LRN）：对相邻通道的响应进行归一化，增强模型的泛化能力。",
         "（5）Dropout：训练时以一定概率随机置零神经元输出，有效抑制过拟合。",
         "（6）全连接层：将提取到的高层特征映射到类别空间，输出分类结果。"]:
         para(doc, line, indent=False)
+    equation(doc, mr("O = ⌊") + mfrac(mr("W − K + 2P"), mr("S")) + mr("⌋ + 1"))
     para(doc, "AlexNet 由 5 个卷积层与 3 个全连接层堆叠而成，首次将 ReLU、Dropout、数据增强与 GPU 训练"
               "有机结合，是深度学习发展史上的里程碑。")
 
     doc.add_heading("2.4 模型评估指标", level=2)
     para(doc, "对于分类任务，依据混淆矩阵中的真正例 TP、假正例 FP、真负例 TN、假负例 FN，常用指标定义如下：")
-    formula(doc, "准确率 = (TP+TN)/(TP+TN+FP+FN)")
-    formula(doc, "精确率 = TP/(TP+FP)，  召回率 = TP/(TP+FN)")
-    formula(doc, "F1 = 2·精确率·召回率 / (精确率+召回率)")
+    equation(doc, mr("准确率 = ") + mfrac(mr("TP + TN"), mr("TP + TN + FP + FN")))
+    equation(doc, mr("精确率 = ") + mfrac(mr("TP"), mr("TP + FP"))
+             + mr("，  召回率 = ") + mfrac(mr("TP"), mr("TP + FN")))
+    equation(doc, mr("F1 = ") + mfrac(mr("2 × 精确率 × 召回率"), mr("精确率 + 召回率")))
     para(doc, "对于多分类问题，常计算各类别指标的算术平均，即宏平均（Macro-average），它对每个类别一视"
               "同仁，能更好地反映模型在不平衡数据上的综合表现。混淆矩阵则以矩阵形式展示各类别的预测分布，"
               "可直观分析模型的混淆情况。")
+
+    doc.add_heading("2.5 实验环境配置", level=2)
+    para(doc, "本实训的全部实验均在同一硬件与软件环境下完成，具体配置如表 2-1 所示。项目一的机器学习"
+              "模型基于 scikit-learn 实现，项目二的 AlexNet 基于 PyTorch 实现并使用 GPU 加速训练。")
+    add_table(doc, ["项目", "配置"],
+              [["操作系统", "Linux (Ubuntu)"],
+               ["编程语言", "Python 3.12"],
+               ["深度学习框架", "PyTorch 2.7.1（CUDA 11.8）+ torchvision 0.22.1"],
+               ["机器学习库", "scikit-learn 1.8.0"],
+               ["数据处理", "pandas 3.0.2、numpy 2.4.3"],
+               ["可视化", "matplotlib 3.10.8、seaborn"],
+               ["GPU", "NVIDIA GeForce RTX 4090（24GB）"]],
+              caption="表 2-1 实验环境配置")
     doc.add_page_break()
 
 
@@ -298,7 +355,15 @@ def chapter3(doc):
     add_image(doc, os.path.join(T1, "rf_feature_importance.png"), 4.5, "图 3-5 随机森林特征重要性排序")
     para(doc, "特征重要性结果显示酒精度、密度与挥发性酸度对质量判别贡献最大，与相关性分析的结论相互印证。")
 
-    doc.add_heading("3.6 本章小结", level=2)
+    doc.add_heading("3.6 误差分析", level=2)
+    para(doc, "进一步分析随机森林的混淆矩阵（图 3-4）可以发现，模型的误差呈现明显的“邻级混淆”特征："
+              "真实为“差”的 328 个样本中有 82 个被误判为“中”，真实为“好”的 212 个样本中有 68 个被误判"
+              "为“中”，而“差”与“好”两个相隔等级之间的相互误判极少（分别仅 5 例与 2 例）。其根源在于，"
+              "质量评分本质上是连续的有序变量，相邻等级（如 5 分与 6 分）的样本在理化特征上高度接近，"
+              "缺乏清晰的判别边界；而处于中间的“中”类样本数量最多、左右毗邻两端，自然成为误判的主要汇聚点。"
+              "这提示我们：若将该问题建模为有序回归或引入对邻级错误更敏感的代价矩阵，有望进一步降低此类误差。")
+
+    doc.add_heading("3.7 本章小结", level=2)
     para(doc, "实验表明，随机森林在所有指标上均显著领先，宏平均 F1 达 0.734，比次优的决策树高出约 9 个"
               "百分点；逻辑回归作为线性模型表现最差（F1 仅 0.520），说明该任务中特征与质量之间存在较强的"
               "非线性关系，而集成学习能更好地拟合复杂决策边界，并通过多树投票降低方差、提升鲁棒性。"
@@ -349,10 +414,12 @@ def chapter4(doc):
                ["FC7", "Dropout(0.5)+Linear；ReLU", "4096"],
                ["FC8", "Linear（输出层）", "10"]],
               caption="表 4-1 手写 AlexNet 网络结构")
-    para(doc, "训练配置：损失函数采用交叉熵 L=−Σ yᵢ·log(ŷᵢ)；优化器为带动量的随机梯度下降（SGD，动量0.9，"
-              "权重衰减5e-4），更新规则为 v←βv−η∇L、θ←θ+v，动量项有助于加速收敛并抑制震荡；初始学习率 0.01，"
-              "采用步长10、衰减系数0.1 的学习率调度（StepLR），即每 10 轮将学习率降为原来的1/10；批大小128，"
-              "共训练15轮，按验证集准确率保存最优模型。训练在单张 NVIDIA RTX 4090 GPU 上完成，约耗时十余分钟。")
+    para(doc, "训练配置：损失函数采用交叉熵，优化器为带动量的随机梯度下降（SGD，动量 0.9，权重衰减 5e-4）：")
+    equation(doc, mr("L = − Σ ") + msub(mr("y"), mr("i")) + mr(" log ") + msub(mr("ŷ"), mr("i"))
+             + mr("，  v ← βv − η∇L，  θ ← θ + v"))
+    para(doc, "其中动量项有助于加速收敛并抑制震荡。初始学习率 0.01，采用步长 10、衰减系数 0.1 的学习率"
+              "调度（StepLR），即每 10 轮将学习率降为原来的 1/10；批大小 128，共训练 15 轮，按验证集准确率"
+              "保存最优模型。训练在单张 NVIDIA RTX 4090 GPU 上完成，约耗时十余分钟。")
 
     doc.add_heading("4.5 模型评估", level=2)
     para(doc, "训练与验证过程的损失、准确率曲线见图 4-2。可见训练初期损失迅速下降、准确率快速提升，随后"
@@ -374,7 +441,16 @@ def chapter4(doc):
               caption="表 4-2 AlexNet 各类别测试指标")
     add_image(doc, os.path.join(T2, "confusion_matrix.png"), 5.0, "图 4-3 AlexNet 测试集混淆矩阵")
 
-    doc.add_heading("4.6 本章小结", level=2)
+    doc.add_heading("4.6 误差分析", level=2)
+    para(doc, "由混淆矩阵（图 4-3）可见，AlexNet 的误差高度集中于四类上装——T恤、套衫、外套、衬衫之间。"
+              "其中“衬衫”最难识别，其 1000 个测试样本中有 95 个被误判为 T恤、61 个误判为套衫、73 个误判为"
+              "外套；而“T恤”也有 109 个被误判为衬衫。与之形成鲜明对比的是，“裤子”“包”“凉鞋”“短靴”等"
+              "形态轮廓差异显著的类别几乎不与其他类别混淆，识别率接近完美。究其原因，这些上装在 28×28 的"
+              "低分辨率灰度图中，领口、袖型、版型等关键区分性细节被严重弱化，整体轮廓高度相似，是 "
+              "Fashion-MNIST 的固有难点；预测样例图（图 4-1）中的红色错误样本也大多集中于此类上装。由此可见，"
+              "进一步提升性能的关键在于增强模型对细粒度纹理的判别能力，例如引入数据增强、更深的网络或注意力机制。")
+
+    doc.add_heading("4.7 本章小结", level=2)
     para(doc, "手写 AlexNet 在 Fashion-MNIST 上取得了 91.55% 的测试准确率，验证了所实现网络的正确性与有效性。"
               "从混淆矩阵与各类指标看，“裤子”“包”“凉鞋”“短靴”等形态独特的类别识别率接近完美（F1≥0.97），"
               "而“衬衫”类最易混淆（F1 仅 0.75），主要与“T恤”“套衫”“外套”相互误判——这些上装在低分辨率"
