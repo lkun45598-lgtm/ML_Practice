@@ -1,0 +1,30 @@
+[训练] 设备=cuda epochs=15 subset=None
+[epoch  1] train loss=1.6039 acc=0.3851 | val loss=0.6523 acc=0.7512
+        ↳ 保存最优模型 (val_acc=0.7512)
+[epoch  2] train loss=0.5443 acc=0.7962 | val loss=0.4326 acc=0.8397
+        ↳ 保存最优模型 (val_acc=0.8397)
+[epoch  3] train loss=0.4129 acc=0.8466 | val loss=0.3684 acc=0.8648
+        ↳ 保存最优模型 (val_acc=0.8648)
+[epoch  4] train loss=0.3501 acc=0.8697 | val loss=0.3219 acc=0.8815
+        ↳ 保存最优模型 (val_acc=0.8815)
+[epoch  5] train loss=0.3179 acc=0.8806 | val loss=0.3134 acc=0.8835
+        ↳ 保存最优模型 (val_acc=0.8835)
+[epoch  6] train loss=0.2943 acc=0.8898 | val loss=0.2966 acc=0.8875
+        ↳ 保存最优模型 (val_acc=0.8875)
+[epoch  7] train loss=0.2740 acc=0.8972 | val loss=0.2687 acc=0.8980
+        ↳ 保存最优模型 (val_acc=0.8980)
+[epoch  8] train loss=0.2592 acc=0.9028 | val loss=0.2542 acc=0.9057
+        ↳ 保存最优模型 (val_acc=0.9057)
+[epoch  9] train loss=0.2452 acc=0.9085 | val loss=0.2482 acc=0.9045
+[epoch 10] train loss=0.2376 acc=0.9112 | val loss=0.2402 acc=0.9118
+        ↳ 保存最优模型 (val_acc=0.9118)
+[epoch 11] train loss=0.2015 acc=0.9249 | val loss=0.2169 acc=0.9195
+        ↳ 保存最优模型 (val_acc=0.9195)
+[epoch 12] train loss=0.1941 acc=0.9272 | val loss=0.2133 acc=0.9212
+        ↳ 保存最优模型 (val_acc=0.9212)
+[epoch 13] train loss=0.1908 acc=0.9283 | val loss=0.2145 acc=0.9212
+[epoch 14] train loss=0.1877 acc=0.9300 | val loss=0.2124 acc=0.9217
+        ↳ 保存最优模型 (val_acc=0.9217)
+[epoch 15] train loss=0.1860 acc=0.9307 | val loss=0.2105 acc=0.9232
+        ↳ 保存最优模型 (val_acc=0.9232)
+[训练] 完成，最优 val_acc=0.9232
