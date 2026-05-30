@@ -143,6 +143,55 @@ def train_models(X_tr, y_tr):
     return fitted
 
 
+from sklearn.metrics import (accuracy_score, precision_recall_fscore_support,
+                             confusion_matrix, classification_report)
+
+
+def evaluate_models(models, X_te, y_te):
+    """在测试集评估，画混淆矩阵与对比柱状图、特征重要性，返回指标表。"""
+    set_chinese_font()
+    rows = []
+    for name, model in models.items():
+        y_pred = model.predict(X_te)
+        acc = accuracy_score(y_te, y_pred)
+        p, r, f1, _ = precision_recall_fscore_support(
+            y_te, y_pred, average="macro", zero_division=0)
+        rows.append({"模型": name, "准确率": acc, "精确率": p, "召回率": r, "F1": f1})
+        print(f"\n===== {name} =====")
+        print(classification_report(y_te, y_pred, target_names=CLASS_NAMES, zero_division=0))
+        cm = confusion_matrix(y_te, y_pred)
+        plt.figure(figsize=(5, 4))
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                    xticklabels=CLASS_NAMES, yticklabels=CLASS_NAMES)
+        plt.title(f"{name} 混淆矩阵"); plt.xlabel("预测"); plt.ylabel("真实")
+        plt.tight_layout()
+        plt.savefig(os.path.join(OUT_DIR, f"cm_{name}.png"), dpi=150); plt.close()
+
+    metrics = pd.DataFrame(rows)
+    metrics.to_csv(os.path.join(OUT_DIR, "metrics.csv"), index=False, encoding="utf-8-sig")
+    print("\n[评估] 指标汇总:\n", metrics.to_string(index=False))
+
+    plt.figure(figsize=(8, 5))
+    m = metrics.set_index("模型")[["准确率", "精确率", "召回率", "F1"]]
+    m.plot(kind="bar", ax=plt.gca())
+    plt.title("各模型测试集指标对比"); plt.ylabel("分数"); plt.xticks(rotation=0)
+    plt.ylim(0, 1); plt.legend(loc="lower right"); plt.tight_layout()
+    plt.savefig(os.path.join(OUT_DIR, "model_compare.png"), dpi=150); plt.close()
+
+    if "随机森林" in models:
+        rf = models["随机森林"]
+        cols = pd.read_csv(CSV_PATH, sep=";").drop(columns=["quality"]).columns
+        imp = pd.Series(rf.feature_importances_, index=cols).sort_values()
+        plt.figure(figsize=(7, 5))
+        imp.plot(kind="barh", color="#55A868")
+        plt.title("随机森林特征重要性"); plt.tight_layout()
+        plt.savefig(os.path.join(OUT_DIR, "rf_feature_importance.png"), dpi=150); plt.close()
+
+    best = metrics.loc[metrics["F1"].idxmax(), "模型"]
+    print(f"\n[结论] 按 macro-F1，最优模型为: {best}")
+    return metrics
+
+
 if __name__ == "__main__":
     download_data()
     df = load_data()
@@ -153,3 +202,6 @@ if __name__ == "__main__":
     print("[自检] 预处理通过")
     models = train_models(X_tr, y_tr)
     print("[自检] 训练完成，模型数:", len(models))
+    metrics = evaluate_models(models, X_te, y_te)
+    assert os.path.exists(os.path.join(OUT_DIR, "metrics.csv"))
+    print("[完成] 任务① 全流程结束")
