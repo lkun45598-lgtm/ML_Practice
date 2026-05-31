@@ -1,0 +1,17 @@
+[alexnet_nolrn_focal] model=alexnet img=224 aug=False lrn=False seed=0 epochs=15 device=cuda
+[alexnet_nolrn_focal] epoch  1 train_acc=0.6118 val_acc=0.8093
+[alexnet_nolrn_focal] epoch  2 train_acc=0.8254 val_acc=0.8542
+[alexnet_nolrn_focal] epoch  3 train_acc=0.8587 val_acc=0.8660
+[alexnet_nolrn_focal] epoch  4 train_acc=0.8719 val_acc=0.8788
+[alexnet_nolrn_focal] epoch  5 train_acc=0.8836 val_acc=0.8898
+[alexnet_nolrn_focal] epoch  6 train_acc=0.8901 val_acc=0.8922
+[alexnet_nolrn_focal] epoch  7 train_acc=0.8966 val_acc=0.8968
+[alexnet_nolrn_focal] epoch  8 train_acc=0.9024 val_acc=0.9053
+[alexnet_nolrn_focal] epoch  9 train_acc=0.9058 val_acc=0.9043
+[alexnet_nolrn_focal] epoch 10 train_acc=0.9100 val_acc=0.9015
+[alexnet_nolrn_focal] epoch 11 train_acc=0.9220 val_acc=0.9140
+[alexnet_nolrn_focal] epoch 12 train_acc=0.9250 val_acc=0.9148
+[alexnet_nolrn_focal] epoch 13 train_acc=0.9259 val_acc=0.9147
+[alexnet_nolrn_focal] epoch 14 train_acc=0.9278 val_acc=0.9137
+[alexnet_nolrn_focal] epoch 15 train_acc=0.9275 val_acc=0.9138
+[alexnet_nolrn_focal] 完成 test_acc=0.9167 f1=0.9163 -> exp_alexnet_nolrn_focal.json

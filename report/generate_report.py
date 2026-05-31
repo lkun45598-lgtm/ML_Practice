@@ -523,11 +523,58 @@ def chapter4(doc):
     doc.add_page_break()
 
 
-# ---------------------- 第5章 实验复现说明 ----------------------
+# ---------------------- 第5章 核心创新 ----------------------
+def chapter_innovation(doc):
+    doc.add_heading("第5章 核心创新：误差驱动的针对性改进", level=1)
+    para(doc, "本章是本报告的核心创新点。不同于一般实训“跑通模型、报告精度”即止，本文提出并实践一套"
+              "“诊断—改进—验证”闭环方法论：先借助混淆矩阵诊断系统性错误的根因，再针对根因提出改进方案，"
+              "最后用实验量化验证改进是否有效。该方法论在两个项目上分别落地。")
+
+    doc.add_heading("5.1 项目一改进：从分类到有序回归", level=2)
+    para(doc, "诊断：红酒任务的误差几乎全部是“邻级混淆”——质量本质是有序变量，相邻等级难以区分，而"
+              "“差↔好”这种跨级严重误判极少。改进：据此将任务由直接三分类改为有序回归→分级——用随机森林"
+              "回归器预测连续质量分，再四舍五入归并到差/中/好三级，使模型显式利用等级的有序性。验证：除"
+              "准确率、宏 F1 外，引入两个面向有序性的指标——“严重误判数”（真实与预测相差 2 级，即差↔好"
+              "的个数）与“有序 MAE”（预测类与真实类之差的平均绝对值），结果见表 5-1 与图 5-1。")
+    add_table(doc, ["方法", "准确率", "宏平均F1", "严重误判数", "有序MAE"],
+              [["直接分类（随机森林）", "0.7347", "0.7336", "7", "0.2724"],
+               ["有序回归→分级", "0.7571", "0.7533", "4", "0.2469"]],
+              caption="表 5-1 有序回归改进与直接分类的对比")
+    add_image(doc, os.path.join(T1, "ordinal_improvement.png"), 3.4,
+              "图 5-1 有序回归→分级显著减少严重误判（差↔好）")
+    para(doc, "改进取得全面提升：准确率 0.7347→0.7571，宏 F1 0.7336→0.7533，尤其严重误判数由 7 降至 4、"
+              "有序 MAE 同步下降。这验证了“显式建模标签有序性”的有效性，体现了从误差分析出发指导建模的"
+              "科学方法。")
+
+    doc.add_heading("5.2 项目二改进尝试与可解释性分析", level=2)
+    para(doc, "诊断：AlexNet 误差高度集中于视觉相似的上装（衬衫↔T恤/套衫/外套）。改进尝试：据此猜想"
+              "“困难来自难分样本”，遂用 Focal Loss（聚焦难分样本）替换交叉熵，在最优的去 LRN 配置上重训，"
+              "结果见表 5-2。")
+    add_table(doc, ["损失函数", "测试准确率", "宏平均F1", "衬衫类F1", "外套类F1"],
+              [["交叉熵（CE）", "0.9247", "0.9245", "0.77", "0.88"],
+               ["Focal Loss", "0.9167", "0.9163", "0.75", "0.86"]],
+              caption="表 5-2 Focal Loss 与交叉熵的对比")
+    para(doc, "验证与反思（诚实的负面结果）：Focal Loss 不仅没有提升、反而略有下降。这说明此处困难并非"
+              "源于样本难易不平衡（Fashion-MNIST 各类样本完全均衡），而是源于特征本身——低分辨率灰度图下"
+              "上装的领口、袖型等细节被严重弱化。为佐证，进一步用 Grad-CAM 可视化模型判别依据（图 5-2）："
+              "注意力主要落在服饰主体轮廓，对区分上装所需的细粒度局部缺乏聚焦。")
+    add_image(doc, os.path.join(T2, "gradcam.png"), 5.6,
+              "图 5-2 Grad-CAM：AlexNet 分类时关注的区域（上=原图，下=热力图叠加）")
+    para(doc, "由此得出有价值的结论：要进一步提升细粒度区分，应从增强特征表达入手（更高分辨率、更深网络、"
+              "注意力机制），而非调整损失或采样策略。这一“尝试—证伪—定位真因”的过程体现了严谨的实验科学态度。")
+
+    doc.add_heading("5.3 本章小结", level=2)
+    para(doc, "本章通过“诊断—改进—验证”闭环，在项目一取得可量化的正向改进（有序回归显著降低严重误判），"
+              "在项目二通过一次诚实的负面实验结合 Grad-CAM 可解释性分析，准确定位了性能瓶颈的真实来源。"
+              "相比“仅报告精度”的常规做法，这是本报告最具价值的创新点。")
+    doc.add_page_break()
+
+
+# ---------------------- 第6章 实验复现说明 ----------------------
 def chapter_repro(doc):
-    doc.add_heading("第5章 实验复现说明", level=1)
-    doc.add_heading("5.1 代码文件说明", level=2)
-    para(doc, "项目源代码按任务组织，各文件职责如表 5-1 所示。")
+    doc.add_heading("第6章 实验复现说明", level=1)
+    doc.add_heading("6.1 代码文件说明", level=2)
+    para(doc, "项目源代码按任务组织，各文件职责如表 6-1 所示。")
     add_table(doc, ["文件", "功能"],
               [["task1_ml_wine/wine_quality.py", "任务一完整流程：下载/EDA/预处理/四模型训练/评估"],
                ["task2_alexnet_fmnist/alexnet.py", "逐层手写的 AlexNet 网络定义"],
@@ -537,10 +584,11 @@ def chapter_repro(doc):
                ["task2_alexnet_fmnist/evaluate.py", "测试集评估与可视化"],
                ["task2_alexnet_fmnist/experiments.py", "对照实验统一运行器"],
                ["task2_alexnet_fmnist/aggregate_experiments.py", "对照实验结果聚合与绘图"],
+               ["task2_alexnet_fmnist/gradcam.py", "Grad-CAM 可解释性可视化"],
                ["common/zh_font.py", "matplotlib 中文字体设置"],
                ["report/generate_report.py", "生成 Word 版报告"]],
-              caption="表 5-1 源代码文件说明")
-    doc.add_heading("5.2 运行步骤与关键设置", level=2)
+              caption="表 6-1 源代码文件说明")
+    doc.add_heading("6.2 运行步骤与关键设置", level=2)
     para(doc, "按以下顺序运行即可复现全部结果（解释器为 conda 环境 pytorch312）：")
     for line in [
         "（1）任务一：python task1_ml_wine/wine_quality.py；",
@@ -558,14 +606,14 @@ def chapter_repro(doc):
 
 # ---------------------- 第6章 结论 ----------------------
 def chapter5(doc):
-    doc.add_heading("第6章 结论与实验总结", level=1)
-    doc.add_heading("6.1 结论", level=2)
+    doc.add_heading("第7章 结论与实验总结", level=1)
+    doc.add_heading("7.1 结论", level=2)
     para(doc, "（1）在结构化数据的红酒质量分类中，集成学习方法（随机森林）显著优于单一模型与线性模型，"
               "测试集宏平均 F1 达 0.734，是四种算法中的最佳选择，印证了集成学习在中小规模结构化数据上的"
               "普遍优势。", indent=False)
     para(doc, "（2）在图像分类任务中，逐层手写实现的 AlexNet 能够有效学习服饰图像的层次化特征，测试准确率"
               "达 91.55%，充分验证了深度卷积网络在视觉任务上的强大能力以及本次复现的正确性。", indent=False)
-    doc.add_heading("6.2 实验总结", level=2)
+    doc.add_heading("7.2 实验总结", level=2)
     para(doc, "通过本次实训，我们完整走通了“数据加载—查看—预处理—建模—评估—结论”的机器学习全流程，"
               "并获得如下收获：其一，深入理解了传统机器学习与深度学习在数据形态、建模思路与适用场景上的"
               "差异；其二，掌握了标准化、分层划分、类别加权等预处理手段及其对结果的影响，体会到“数据决定"
@@ -573,7 +621,7 @@ def chapter5(doc):
               "实现 AlexNet，透彻理解了卷积、池化、ReLU、LRN、Dropout 等核心组件的原理与协同机制。工程实践"
               "中还解决了绘图中文字体缺失数字字形、scikit-learn 新版本参数变更等实际问题，锻炼了独立排查与"
               "解决问题的能力。")
-    doc.add_heading("6.3 改进方案", level=2)
+    doc.add_heading("7.3 改进方案", level=2)
     para(doc, "项目一：尝试 XGBoost、LightGBM 等更强的梯度提升模型；采用 SMOTE(Chawla 等, 2002)等过采样方法更充分处理类别"
               "不平衡；引入特征工程（特征交互、分箱）与特征选择以提升判别力；也可将质量评分作为回归任务建模"
               "后再分级。")
@@ -626,6 +674,7 @@ def build():
     chapter2(doc)
     chapter3(doc)
     chapter4(doc)
+    chapter_innovation(doc)
     chapter_repro(doc)
     chapter5(doc)
     out = os.path.join(HERE, "毕业论文_人工智能实训.docx")

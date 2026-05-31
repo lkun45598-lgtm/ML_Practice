@@ -1,0 +1,30 @@
+{
+  "tag": "alexnet_nolrn_focal",
+  "model": "alexnet",
+  "img_size": 224,
+  "augment": false,
+  "use_lrn": false,
+  "loss": "focal",
+  "seed": 0,
+  "epochs": 15,
+  "batch_size": 128,
+  "lr": 0.01,
+  "n_params_M": 58.299,
+  "best_val_acc": 0.9148,
+  "test_acc": 0.9167,
+  "test_precision": 0.9165,
+  "test_recall": 0.9167,
+  "test_f1": 0.9163,
+  "f1_per_class": [
+    0.8543,
+    0.989,
+    0.8708,
+    0.9277,
+    0.8637,
+    0.985,
+    0.7491,
+    0.9674,
+    0.9855,
+    0.9702
+  ]
+}

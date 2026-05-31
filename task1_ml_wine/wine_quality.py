@@ -92,14 +92,11 @@ def make_labels(df):
 
 
 def preprocess(X, y, test_size=0.2, seed=42):
-    """分层划分 + 标准化（仅在训练集 fit）。返回标准化后的数据与 scaler。"""
+    """分层划分（标准化放入建模 Pipeline 内逐折完成，避免交叉验证数据泄漏）。"""
     X_tr, X_te, y_tr, y_te = train_test_split(
         X, y, test_size=test_size, stratify=y, random_state=seed)
-    scaler = StandardScaler().fit(X_tr)
-    X_tr = scaler.transform(X_tr)
-    X_te = scaler.transform(X_te)
     print(f"[预处理] 训练集 {X_tr.shape}，测试集 {X_te.shape}")
-    return X_tr, X_te, y_tr, y_te, scaler
+    return X_tr, X_te, y_tr, y_te
 
 
 from sklearn.svm import SVC
@@ -107,38 +104,45 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
 
 
 def build_models():
-    """返回 {模型名: (estimator, 参数网格)}，统一类别加权处理不平衡。"""
+    """返回 {模型名: (estimator, 参数网格)}；参数键用 clf__ 前缀以配合 Pipeline。"""
     return {
         "SVM": (
             SVC(class_weight="balanced", probability=False),
-            {"C": [1, 10], "gamma": ["scale", 0.1], "kernel": ["rbf"]},
+            {"clf__C": [1, 10], "clf__gamma": ["scale", 0.1], "clf__kernel": ["rbf"]},
         ),
         "决策树": (
             DecisionTreeClassifier(class_weight="balanced", random_state=42),
-            {"max_depth": [None, 10, 20], "min_samples_leaf": [1, 5]},
+            {"clf__max_depth": [None, 10, 20], "clf__min_samples_leaf": [1, 5]},
         ),
         "随机森林": (
             RandomForestClassifier(class_weight="balanced", random_state=42, n_jobs=-1),
-            {"n_estimators": [200, 400], "max_depth": [None, 20]},
+            {"clf__n_estimators": [200, 400], "clf__max_depth": [None, 20]},
         ),
         "逻辑回归": (
             LogisticRegression(class_weight="balanced", max_iter=2000),
-            {"C": [0.5, 1, 10]},
+            {"clf__C": [0.5, 1, 10]},
         ),
     }
 
 
 def train_models(X_tr, y_tr):
-    """对每个模型做 5 折网格搜索，返回 {名: 最优estimator}。"""
+    """对每个模型做 5 折网格搜索，返回 {名: 最优Pipeline}。
+
+    标准化与分类器封装为 Pipeline，使 StandardScaler 在每个交叉验证折内独立 fit，
+    严格避免验证折信息泄漏到标准化参数中。
+    """
     fitted = {}
     for name, (est, grid) in build_models().items():
         print(f"\n[训练] {name} 网格搜索中...")
-        gs = GridSearchCV(est, grid, cv=5, scoring="f1_macro", n_jobs=-1)
+        pipe = Pipeline([("scaler", StandardScaler()), ("clf", est)])
+        gs = GridSearchCV(pipe, grid, cv=5, scoring="f1_macro", n_jobs=-1)
         gs.fit(X_tr, y_tr)
-        print(f"[训练] {name} 最优参数: {gs.best_params_}  CV f1_macro={gs.best_score_:.4f}")
+        best = {k.replace("clf__", ""): v for k, v in gs.best_params_.items()}
+        print(f"[训练] {name} 最优参数: {best}  CV f1_macro={gs.best_score_:.4f}")
         fitted[name] = gs.best_estimator_
     return fitted
 
@@ -179,7 +183,7 @@ def evaluate_models(models, X_te, y_te):
     plt.savefig(os.path.join(OUT_DIR, "model_compare.png"), dpi=150); plt.close()
 
     if "随机森林" in models:
-        rf = models["随机森林"]
+        rf = models["随机森林"].named_steps["clf"]  # 从 Pipeline 取出分类器
         cols = pd.read_csv(CSV_PATH, sep=";").drop(columns=["quality"]).columns
         imp = pd.Series(rf.feature_importances_, index=cols).sort_values()
         plt.figure(figsize=(7, 5))
@@ -192,16 +196,73 @@ def evaluate_models(models, X_te, y_te):
     return metrics
 
 
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import f1_score
+
+
+def _to_cls(q):
+    """质量评分→三类：≤5差(0)、=6中(1)、≥7好(2)。"""
+    return np.where(q <= 5, 0, np.where(q == 6, 1, 2))
+
+
+def ordinal_improvement(df, models, seed=42):
+    """核心创新点①：误差驱动改进——既然误差几乎全是“邻级混淆”，将质量视为有序变量，
+    用“回归→分级”替代直接分类，并用“严重误判数(差↔好,跨2级)”与“有序MAE”验证改进。"""
+    set_chinese_font()
+    X = df.drop(columns=["quality"]).to_numpy()
+    q = df["quality"].to_numpy()
+    Xtr, Xte, qtr, qte = train_test_split(
+        X, q, test_size=0.2, stratify=_to_cls(q), random_state=seed)
+    true_cls = _to_cls(qte)
+
+    # 方案A：直接分类（沿用已训练的最优随机森林）
+    pred_clf = models["随机森林"].predict(Xte)
+    # 方案B：有序回归→分级（回归预测连续质量分，四舍五入后再分箱）
+    reg = Pipeline([("scaler", StandardScaler()),
+                    ("reg", RandomForestRegressor(n_estimators=400, random_state=42, n_jobs=-1))])
+    reg.fit(Xtr, qtr)
+    pred_reg = _to_cls(np.rint(reg.predict(Xte)))
+
+    def stat(pred):
+        acc = (pred == true_cls).mean()
+        f1 = f1_score(true_cls, pred, average="macro")
+        severe = int(np.sum(np.abs(pred - true_cls) == 2))   # 差↔好 严重误判
+        mae = float(np.mean(np.abs(pred - true_cls)))         # 有序MAE
+        return acc, f1, severe, mae
+
+    rows = []
+    for name, pred in [("直接分类(随机森林)", pred_clf), ("有序回归→分级", pred_reg)]:
+        acc, f1, sev, mae = stat(pred)
+        rows.append({"方法": name, "准确率": round(acc, 4), "宏F1": round(f1, 4),
+                     "严重误判数": sev, "有序MAE": round(mae, 4)})
+        print(f"[创新①] {name}: acc={acc:.4f} F1={f1:.4f} 严重误判={sev} MAE={mae:.4f}")
+    pd.DataFrame(rows).to_csv(os.path.join(OUT_DIR, "ordinal_improvement.csv"),
+                              index=False, encoding="utf-8-sig")
+
+    # 对比柱状图（严重误判数）
+    plt.figure(figsize=(5, 4))
+    plt.bar([r["方法"] for r in rows], [r["严重误判数"] for r in rows],
+            color=["#4C72B0", "#55A868"])
+    for i, r in enumerate(rows):
+        plt.text(i, r["严重误判数"] + 0.1, str(r["严重误判数"]), ha="center")
+    plt.ylabel("严重误判数（差↔好，跨2级）")
+    plt.title("有序回归→分级 显著减少严重误判")
+    plt.tight_layout(); plt.savefig(os.path.join(OUT_DIR, "ordinal_improvement.png"), dpi=150)
+    plt.close()
+    return rows
+
+
 if __name__ == "__main__":
     download_data()
     df = load_data()
     eda(df)
     X, y = make_labels(df)
-    X_tr, X_te, y_tr, y_te, scaler = preprocess(X, y)
+    X_tr, X_te, y_tr, y_te = preprocess(X, y)
     assert X_tr.shape[1] == 11 and len(set(y)) == 3
     print("[自检] 预处理通过")
     models = train_models(X_tr, y_tr)
     print("[自检] 训练完成，模型数:", len(models))
     metrics = evaluate_models(models, X_te, y_te)
+    ordinal_improvement(df, models)            # 核心创新点①：误差驱动的有序改进
     assert os.path.exists(os.path.join(OUT_DIR, "metrics.csv"))
     print("[完成] 任务① 全流程结束")

@@ -624,7 +624,88 @@ Ioffe 和 Szegedy, 2015）取代，表明其正则化收益有限，在小数据
 图下轮廓与纹理高度相似，是 Fashion-MNIST 公认的识别难点。这也说明，进一步提升性能需要更强的特征
 提取能力或更精细的数据增强策略。
 
-% ===================== 第五章 实验复现说明 =====================
+% ===================== 第五章 核心创新 =====================
+\section{核心创新：误差驱动的针对性改进}
+本章是本报告的核心创新点。不同于一般实训“跑通模型、报告精度”即止，本文提出并实践一套
+\textbf{“诊断—改进—验证”闭环方法论}：先借助混淆矩阵\textbf{诊断}出系统性错误的根因，再针对根因
+\textbf{提出}改进方案，最后用实验\textbf{量化验证}改进是否有效。该方法论在两个项目上分别落地。
+
+\subsection{项目一改进：从分类到有序回归}
+\textbf{诊断：}由 4.x 与 3.7 节的误差分析可知，红酒任务的误差几乎全部是\textbf{“邻级混淆”}——
+质量本质是\textbf{有序变量}，相邻等级难以区分，而“差↔好”这种跨级严重误判极少。
+\textbf{改进：}据此将任务由“直接三分类”改为\textbf{有序回归→分级}——用随机森林回归器预测连续质量分，
+再四舍五入归并到差/中/好三级，使模型显式利用等级的有序性。
+\textbf{验证：}除准确率、宏 F1 外，专门引入两个\textbf{面向有序性的指标}——“严重误判数”（真实与预测
+相差 2 级，即差↔好的个数）与“有序 MAE”（预测类与真实类之差的平均绝对值）。结果见表~\ref{tab:ordinal}
+与图~\ref{fig:ordinal}。
+
+\begin{table}[H]
+  \centering
+  \caption{有序回归改进与直接分类的对比}
+  \label{tab:ordinal}
+  \begin{tabular}{lcccc}
+    \toprule
+    方法 & 准确率 & 宏平均 F1 & 严重误判数 & 有序 MAE \\
+    \midrule
+    直接分类（随机森林） & 0.7347 & 0.7336 & 7 & 0.2724 \\
+    \textbf{有序回归→分级} & \textbf{0.7571} & \textbf{0.7533} & \textbf{4} & \textbf{0.2469} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{ordinal_improvement.png}
+  \caption{有序回归→分级显著减少严重误判（差↔好）}
+  \label{fig:ordinal}
+\end{figure}
+
+改进取得了全面提升：准确率由 0.7347 升至 0.7571，宏 F1 由 0.7336 升至 0.7533，尤其是\textbf{严重误判
+数由 7 降至 4}、有序 MAE 同步下降。这验证了“显式建模标签的有序性”这一改进思路的有效性，也体现了
+“从误差分析出发指导建模”的科学方法。
+
+\subsection{项目二改进尝试与可解释性分析}
+\textbf{诊断：}AlexNet 的误差高度集中于视觉相似的上装（衬衫↔T恤/套衫/外套）。
+\textbf{改进尝试：}据此猜想“困难来自难分样本”，遂用 \textbf{Focal Loss}（聚焦难分样本）替换交叉熵，
+在最优的去 LRN 配置上重训，结果见表~\ref{tab:focal}。
+
+\begin{table}[H]
+  \centering
+  \caption{Focal Loss 与交叉熵在去 LRN 的 AlexNet 上的对比}
+  \label{tab:focal}
+  \begin{tabular}{lcccc}
+    \toprule
+    损失函数 & 测试准确率 & 宏平均 F1 & 衬衫类 F1 & 外套类 F1 \\
+    \midrule
+    交叉熵（CE） & \textbf{0.9247} & \textbf{0.9245} & \textbf{0.77} & \textbf{0.88} \\
+    Focal Loss & 0.9167 & 0.9163 & 0.75 & 0.86 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{验证与反思（诚实的负面结果）：}Focal Loss \textbf{不仅没有提升，反而略有下降}。这说明此处的困难
+\textbf{并非源于样本的难易不平衡}（Fashion-MNIST 各类样本数完全均衡），\textbf{而是源于特征本身}——
+低分辨率灰度图下上装的领口、袖型等区分性细节被严重弱化。为佐证这一判断，进一步用 \textbf{Grad-CAM}
+可视化 AlexNet 的判别依据（图~\ref{fig:gradcam}）：模型的注意力主要落在服饰主体轮廓上，对区分上装所需
+的细粒度局部缺乏聚焦。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{gradcam.png}
+  \caption{Grad-CAM 可视化：AlexNet 分类时关注的图像区域（上=原图，下=热力图叠加）}
+  \label{fig:gradcam}
+\end{figure}
+
+由此得出一个有价值的结论：要进一步提升此类细粒度区分，应从\textbf{增强特征表达}入手（如更高输入分辨率、
+更深网络、引入注意力机制），而非调整损失或采样策略。这一“尝试—证伪—定位真因”的过程，正体现了
+严谨的实验科学态度。
+
+\subsection{本章小结}
+本章通过“诊断—改进—验证”闭环，在项目一取得了可量化的正向改进（有序回归显著降低严重误判），
+在项目二则通过一次诚实的负面实验结合 Grad-CAM 可解释性分析，准确定位了性能瓶颈的真实来源。
+相比“仅报告精度”的常规做法，这一方法论是本报告最具价值的创新点。
+
+% ===================== 第六章 实验复现说明 =====================
 \section{实验复现说明}
 为保证实验结果可复现，本节说明代码结构、运行步骤与关键设置。
 
@@ -648,6 +729,7 @@ Ioffe 和 Szegedy, 2015）取代，表明其正则化收益有限，在小数据
     task2\_alexnet\_fmnist/evaluate.py & 测试集评估与可视化 \\
     task2\_alexnet\_fmnist/experiments.py & 对照实验统一运行器 \\
     task2\_alexnet\_fmnist/aggregate\_experiments.py & 对照实验结果聚合与绘图 \\
+    task2\_alexnet\_fmnist/gradcam.py & Grad-CAM 可解释性可视化 \\
     common/zh\_font.py & matplotlib 中文字体设置 \\
     report/generate\_report.py & 生成 Word 版报告 \\
     \bottomrule

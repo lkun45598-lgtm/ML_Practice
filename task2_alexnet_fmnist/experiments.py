@@ -44,6 +44,20 @@ def run_epoch(model, loader, criterion, optimizer, device, train):
     return loss_sum / total, correct / total
 
 
+class FocalLoss(nn.Module):
+    """Focal Loss：对难分样本加权，缓解“易分样本主导梯度”的问题。gamma 越大越聚焦难样本。"""
+
+    def __init__(self, gamma=2.0):
+        super().__init__()
+        self.gamma = gamma
+
+    def forward(self, logits, target):
+        import torch.nn.functional as F
+        ce = F.cross_entropy(logits, target, reduction="none")
+        pt = torch.exp(-ce)
+        return ((1 - pt) ** self.gamma * ce).mean()
+
+
 @torch.no_grad()
 def test_metrics(model, loader, device):
     from sklearn.metrics import accuracy_score, precision_recall_fscore_support
@@ -55,7 +69,9 @@ def test_metrics(model, loader, device):
     y = _t.cat(ys).numpy(); p = _t.cat(ps).numpy()
     acc = accuracy_score(y, p)
     pr, rc, f1, _ = precision_recall_fscore_support(y, p, average="macro", zero_division=0)
-    return float(acc), float(pr), float(rc), float(f1)
+    # 每类 F1（用于困难类对比）
+    _, _, f1_cls, _ = precision_recall_fscore_support(y, p, average=None, zero_division=0)
+    return float(acc), float(pr), float(rc), float(f1), [round(float(x), 4) for x in f1_cls]
 
 
 def build_model(name, use_lrn):
@@ -70,6 +86,7 @@ def main():
     ap.add_argument("--img-size", type=int, default=224)
     ap.add_argument("--augment", action="store_true")
     ap.add_argument("--no-lrn", action="store_true", help="AlexNet 去掉 LRN 的消融")
+    ap.add_argument("--loss", choices=["ce", "focal"], default="ce", help="损失函数")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--epochs", type=int, default=15)
     ap.add_argument("--batch-size", type=int, default=128)
@@ -91,7 +108,7 @@ def main():
 
     model = build_model(args.model, use_lrn).to(device)
     n_params = sum(p.numel() for p in model.parameters())
-    criterion = nn.CrossEntropyLoss()
+    criterion = FocalLoss(gamma=2.0) if args.loss == "focal" else nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
@@ -106,13 +123,13 @@ def main():
             best_state = copy.deepcopy(model.state_dict())
 
     model.load_state_dict(best_state)
-    acc, pr, rc, f1 = test_metrics(model, test_loader, device)
+    acc, pr, rc, f1, f1_cls = test_metrics(model, test_loader, device)
     result = {"tag": args.tag, "model": args.model, "img_size": args.img_size,
-              "augment": args.augment, "use_lrn": use_lrn, "seed": args.seed,
+              "augment": args.augment, "use_lrn": use_lrn, "loss": args.loss, "seed": args.seed,
               "epochs": args.epochs, "batch_size": args.batch_size, "lr": args.lr,
               "n_params_M": round(n_params / 1e6, 3), "best_val_acc": round(best_val, 4),
               "test_acc": round(acc, 4), "test_precision": round(pr, 4),
-              "test_recall": round(rc, 4), "test_f1": round(f1, 4)}
+              "test_recall": round(rc, 4), "test_f1": round(f1, 4), "f1_per_class": f1_cls}
     with open(os.path.join(OUT_DIR, f"exp_{args.tag}.json"), "w") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     print(f"[{args.tag}] 完成 test_acc={acc:.4f} f1={f1:.4f} -> exp_{args.tag}.json")
