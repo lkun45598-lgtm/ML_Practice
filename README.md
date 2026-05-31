@@ -66,11 +66,29 @@ python task2_alexnet_fmnist/train.py --epochs 15 --batch-size 128 --lr 0.01
 python task2_alexnet_fmnist/evaluate.py
 ```
 
+### 对照实验（SimpleCNN 基线 / LRN 消融 / 数据增强）
+```bash
+cd task2_alexnet_fmnist
+python experiments.py --model simplecnn --img-size 28 --seed 0 --epochs 10 --tag simplecnn_s0
+python experiments.py --model alexnet --no-lrn --seed 0 --epochs 15 --tag alexnet_nolrn
+python experiments.py --model alexnet --augment --seed 0 --epochs 15 --tag alexnet_aug
+python aggregate_experiments.py           # 汇总并绘制对比图
+```
+
 ### 生成报告
 ```bash
 python report/generate_report.py          # 生成 Word 文档
-cd report && xelatex report.tex && xelatex report.tex   # 编译 LaTeX → PDF
+cd report && python make_flowchart.py && xelatex report.tex && xelatex report.tex   # LaTeX → PDF
 ```
+
+## 提交说明（重要）
+按课程要求，最终在「教育在线」**以附件分别提交、不要打包成 zip**：
+1. PPT（汇报用）
+2. Word 文档（学校毕业论文格式）
+3. Python 源代码（各 `.py` 文件，作为附件）
+
+由学号最小者 **蔡铭飞（202434610301）** 负责提交；文件按「学号后3位姓名_…」命名，
+建议：`309雷正_301蔡铭飞_326冼嘉谦`。数据集与模型 checkpoint 不随仓库提交，运行脚本会自动下载/重新训练。
 
 ## 网络结构（手写 AlexNet）
 

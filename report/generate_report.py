@@ -124,15 +124,41 @@ def cover(doc):
     info = [("题　　目：", "机器学习与手写 AlexNet 图像分类"),
             ("学　　院：", "人工智能与低空技术学院"),
             ("专　　业：", "人工智能"),
-            ("小组成员：", "雷正　蔡铭飞　冼嘉谦"),
-            ("指导教师：", "赵静")]
+            ("小组成员：", "雷正、蔡铭飞、冼嘉谦"),
+            ("指导教师：", "赵静"),
+            ("提交日期：", "2026 年 6 月")]
     for k, v in info:
         p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         run = p.add_run(k + v); run.font.size = Pt(14)
-    for _ in range(4):
+    doc.add_page_break()
+
+
+def declaration(doc):
+    """原创性声明与使用授权声明页（按学校模板）。"""
+    h = doc.add_paragraph("华南农业大学本科毕业论文（设计）原创性声明")
+    h.alignment = WD_ALIGN_PARAGRAPH.CENTER; h.runs[0].font.bold = True; h.runs[0].font.size = Pt(14)
+    para(doc, "本人郑重声明：所呈交的毕业论文（设计），是本人在导师的指导下，独立进行研究工作所取得的"
+              "成果。除文中已经注明引用的内容外，本论文不包含任何其他个人或集体已经发表或撰写过的作品"
+              "成果。对本文的研究做出重要贡献的个人和集体，均已在文中以明确方式标明。本人完全意识到本"
+              "声明的法律结果由本人承担。")
+    for _ in range(2):
         doc.add_paragraph()
-    d = doc.add_paragraph("2026 年 5 月"); d.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    d.runs[0].font.size = Pt(14)
+    s = doc.add_paragraph("作者签名：＿＿＿＿＿＿　　日期：　　年　　月　　日")
+    s.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    for _ in range(2):
+        doc.add_paragraph()
+    h2 = doc.add_paragraph("华南农业大学本科毕业论文（设计）使用授权声明")
+    h2.alignment = WD_ALIGN_PARAGRAPH.CENTER; h2.runs[0].font.bold = True; h2.runs[0].font.size = Pt(14)
+    para(doc, "本人完全了解学校有关保留、使用毕业论文（设计）的规定，同意学校保留并向国家有关部门或机构"
+              "送交毕业论文（设计）的复印件和电子版，允许毕业论文（设计）被查阅和借阅。学校可以将本毕业"
+              "论文（设计）的全部或部分内容编入有关数据库进行检索，可以采用影印、缩印或扫描等复制手段保存"
+              "和汇编毕业论文（设计）。")
+    for _ in range(2):
+        doc.add_paragraph()
+    s2 = doc.add_paragraph("作者签名：＿＿＿＿＿　指导教师签名：＿＿＿＿＿")
+    s2.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    s3 = doc.add_paragraph("日期：　　年　　月　　日　　日期：　　年　　月　　日")
+    s3.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     doc.add_page_break()
 
 
@@ -168,13 +194,14 @@ def chapter1(doc):
               "红酒质量分级与服饰图像分类，通过完整的工程实践，加深对机器学习核心思想、典型算法与建模"
               "流程的理解，培养从数据到模型、再到结论的综合实践能力，具有重要的学习与应用价值。")
     doc.add_heading("1.2 国内外研究现状", level=2)
-    para(doc, "在传统机器学习方面，支持向量机由 Vapnik 等人于 20 世纪 90 年代提出，凭借坚实的统计学习"
-              "理论基础和优秀的小样本泛化能力，长期是分类任务的重要工具；以随机森林、梯度提升树（GBDT、"
-              "XGBoost、LightGBM）为代表的集成学习方法，通过组合多个弱学习器进一步提升了精度与鲁棒性，"
-              "至今仍是结构化数据竞赛中的主流方案。在深度学习方面，2012 年 Krizhevsky 等人提出的 AlexNet"
-              "在 ImageNet 竞赛中以显著优势夺冠，掀起了深度卷积网络的研究热潮；此后 VGG、GoogLeNet、"
-              "ResNet 等更深、更高效的网络结构相继涌现，不断刷新图像识别的精度上限。本实训以经典且最具"
-              "代表性的 AlexNet 为研究对象，逐层复现其结构，旨在透彻理解卷积神经网络的工作机制。")
+    para(doc, "在传统机器学习方面，支持向量机由 Cortes 和 Vapnik（1995）正式提出，凭借坚实的统计学习"
+              "理论基础和优秀的小样本泛化能力，长期是分类任务的重要工具；以随机森林（Breiman, 2001）、"
+              "梯度提升树（GBDT、XGBoost、LightGBM）为代表的集成学习方法，通过组合多个弱学习器进一步提升"
+              "了精度与鲁棒性，至今仍是结构化数据竞赛中的主流方案。在深度学习方面，Krizhevsky 等人（2012）"
+              "提出的 AlexNet 在 ImageNet 竞赛中以显著优势夺冠，掀起了深度卷积网络的研究热潮；此后 "
+              "VGG（Simonyan 和 Zisserman, 2015）、GoogLeNet、ResNet（He 等, 2016）等更深、更高效的网络结构"
+              "相继涌现，不断刷新图像识别的精度上限。本实训以经典且最具代表性的 AlexNet 为研究对象，逐层"
+              "复现其结构，旨在透彻理解卷积神经网络的工作机制。")
     doc.add_heading("1.3 项目研究思路", level=2)
     para(doc, "本实训采用统一的机器学习方法论，对两个项目均遵循以下六个环节循序推进，整体流程见图 1-1：")
     for line in [
@@ -204,7 +231,7 @@ def chapter2(doc):
               "映射 f: X→Y，使其对未知样本具有良好的预测能力。当标签 y 取离散值时即为分类问题。本实训"
               "两个项目均属于多分类问题：项目一为三分类（红酒质量等级），项目二为十分类（服饰类别）。"
               "模型学习的核心是最小化训练数据上的损失函数，同时通过正则化、交叉验证等手段控制模型复杂度"
-              "以提升泛化能力。")
+              "以提升泛化能力（周志华, 2016）。")
 
     doc.add_heading("2.2 传统机器学习算法", level=2)
     doc.add_heading("2.2.1 支持向量机（SVM）", level=3)
@@ -220,7 +247,7 @@ def chapter2(doc):
     para(doc, "决策树通过递归地选择最优特征对样本空间进行划分，形成树状的判别结构。划分依据通常为基尼"
               "不纯度：")
     equation(doc, mr("Gini(D) = 1 − ") + mr("Σ") + msubsup(mr("p"), mr("k"), mr("2")))
-    para(doc, "其中 pₖ 为类别 k 在节点中的占比。算法每次选择使子节点不纯度下降最大的特征进行分裂，"
+    para(doc, "其中 pₖ 为类别 k 在节点中的占比（周志华, 2016）。算法每次选择使子节点不纯度下降最大的特征进行分裂，"
               "具有良好的可解释性，但单棵树容易过拟合。")
 
     doc.add_heading("2.2.3 随机森林", level=3)
@@ -233,7 +260,7 @@ def chapter2(doc):
     equation(doc, mr("P(y=k|x) = ")
              + mfrac(msup(mr("e"), msub(mr("w"), mr("k")) + mr("ᵀx")),
                      mr("Σ") + msup(mr("e"), msub(mr("w"), mr("j")) + mr("ᵀx"))))
-    para(doc, "并以交叉熵为损失函数进行参数估计。其结构简单、训练高效，常作为分类任务的基线模型。")
+    para(doc, "并以交叉熵为损失函数进行参数估计（周志华, 2016）。其结构简单、训练高效，常作为分类任务的基线模型。")
 
     doc.add_heading("2.3 卷积神经网络与 AlexNet", level=2)
     para(doc, "卷积神经网络（CNN）是处理图像数据的主流深度模型，其核心组件包括：")
@@ -243,11 +270,11 @@ def chapter2(doc):
         "（2）激活函数 ReLU：f(x)=max(0,x)，引入非线性并缓解梯度消失，是 AlexNet 的关键创新之一。",
         "（3）池化层：通过最大池化等操作进行下采样，降低特征图尺寸、增强平移不变性。",
         "（4）局部响应归一化（LRN）：对相邻通道的响应进行归一化，增强模型的泛化能力。",
-        "（5）Dropout：训练时以一定概率随机置零神经元输出，有效抑制过拟合。",
+        "（5）Dropout：训练时以一定概率随机置零神经元输出，有效抑制过拟合（Srivastava 等, 2014）。",
         "（6）全连接层：将提取到的高层特征映射到类别空间，输出分类结果。"]:
         para(doc, line, indent=False)
     equation(doc, mr("O = ⌊") + mfrac(mr("W − K + 2P"), mr("S")) + mr("⌋ + 1"))
-    para(doc, "AlexNet 由 5 个卷积层与 3 个全连接层堆叠而成，首次将 ReLU、Dropout、数据增强与 GPU 训练"
+    para(doc, "AlexNet（Krizhevsky 等, 2012）由 5 个卷积层与 3 个全连接层堆叠而成，首次将 ReLU、Dropout、数据增强与 GPU 训练"
               "有机结合，是深度学习发展史上的里程碑。")
 
     doc.add_heading("2.4 模型评估指标", level=2)
@@ -257,7 +284,7 @@ def chapter2(doc):
              + mr("，  召回率 = ") + mfrac(mr("TP"), mr("TP + FN")))
     equation(doc, mr("F1 = ") + mfrac(mr("2 × 精确率 × 召回率"), mr("精确率 + 召回率")))
     para(doc, "对于多分类问题，常计算各类别指标的算术平均，即宏平均（Macro-average），它对每个类别一视"
-              "同仁，能更好地反映模型在不平衡数据上的综合表现。混淆矩阵则以矩阵形式展示各类别的预测分布，"
+              "同仁，能更好地反映模型在不平衡数据上的综合表现（周志华, 2016）。混淆矩阵则以矩阵形式展示各类别的预测分布，"
               "可直观分析模型的混淆情况。")
 
     doc.add_heading("2.5 实验环境配置", level=2)
@@ -280,7 +307,7 @@ def chapter3(doc):
     doc.add_heading("第3章 项目一：红酒质量分类", level=1)
 
     doc.add_heading("3.1 数据集介绍与来源", level=2)
-    para(doc, "本项目采用 UCI 机器学习仓库公开的葡萄酒质量数据集（Wine Quality Data Set），来源网址为 "
+    para(doc, "本项目采用 UCI 机器学习仓库公开的葡萄酒质量数据集（Wine Quality Data Set，Cortez 等, 2009），来源网址为 "
               "https://archive.ics.uci.edu/dataset/186/wine+quality 。其中白葡萄酒子集共 4898 个样本，"
               "每个样本包含 11 个理化特征以及 1 个质量评分标签（0–10 的整数，由品酒师综合评定）。"
               "各特征含义见表 3-1。")
@@ -314,21 +341,32 @@ def chapter3(doc):
         "（3）数据集划分：按 8:2 分层抽样划分，得训练集 3918 个、测试集 980 个样本，保证各类别比例一致。",
         "（4）不平衡处理：所有模型统一设置 class_weight='balanced'，按类别频率反比加权，使模型更关注少数类。"]:
         para(doc, line, indent=False)
+    para(doc, "关于标签分箱的依据，表 3-2 给出了原始质量评分的完整分布及三分类归并方案。")
+    add_table(doc, ["原始评分", "3", "4", "5", "6", "7", "8", "9", "合计"],
+              [["样本数", "20", "163", "1457", "2198", "880", "175", "5", "4898"],
+               ["归并类别", "差(≤5)：1640", "", "", "中：2198", "好(≥7)：1060", "", "", ""]],
+              caption="表 3-2 原始质量评分分布与三分类归并方案")
+    para(doc, "如表 3-2 所示，原始评分高度集中于 5、6、7 三档（合计占 92.6%），而 3、4、8、9 分的样本极少"
+              "（最少的 9 分仅 5 例）。若直接进行七分类，这些极少数类几乎无法被有效学习、评价也极不稳定；"
+              "若简化为二分类，又会丢失“中等品质”这一重要档次。因此，本文参照课程“3 分类”要求并结合数据"
+              "的实际分布，将评分按≤5/=6/≥7 归并为差/中/好三类——既保证每个类别都有足够样本（最少 1060 例），"
+              "又符合葡萄酒质量“低/中/高”分级的实际语义，是兼顾可学习性与业务含义的合理选择。")
 
     doc.add_heading("3.4 模型建立", level=2)
-    para(doc, "选取支持向量机、决策树、随机森林、逻辑回归四种代表性算法（原理见 2.2 节），通过五折交叉"
-              "验证结合网格搜索（评分准则为宏平均 F1）对关键超参数进行寻优。五折交叉验证将训练集均分为"
+    para(doc, "选取支持向量机、决策树、随机森林、逻辑回归四种代表性算法（原理见 2.2 节），借助 scikit-learn"
+              "（Pedregosa 等, 2011）提供的 GridSearchCV，通过五折交叉验证结合网格搜索（评分准则为宏平均 F1）"
+              "对关键超参数进行寻优。五折交叉验证将训练集均分为"
               "五份，轮流以四份训练、一份验证，取平均性能作为评分，从而更稳健地选择超参数。各模型搜索"
-              "空间与最优结果见表 3-2。")
+              "空间与最优结果见表 3-3。")
     add_table(doc, ["模型", "主要搜索空间", "最优超参数"],
               [["SVM", "C∈{1,10}, γ∈{scale,0.1}, RBF核", "C=10, γ=0.1"],
                ["决策树", "最大深度∈{None,10,20}, 叶子最小样本∈{1,5}", "深度None, 叶子1"],
                ["随机森林", "树数∈{200,400}, 最大深度∈{None,20}", "树数200, 深度20"],
                ["逻辑回归", "C∈{0.5,1,10}", "C=0.5"]],
-              caption="表 3-2 四种模型的搜索空间与最优超参数")
+              caption="表 3-3 四种模型的搜索空间与最优超参数")
 
     doc.add_heading("3.5 模型评估", level=2)
-    para(doc, "在独立测试集上对四个模型进行评估，整体指标对比见表 3-3 与图 3-3。")
+    para(doc, "在独立测试集上对四个模型进行评估，整体指标对比见表 3-4 与图 3-3。")
     rows = [["SVM", "0.617", "0.616", "0.660", "0.622"],
             ["决策树", "0.650", "0.647", "0.644", "0.645"],
             ["随机森林", "0.735", "0.748", "0.723", "0.734"],
@@ -339,15 +377,15 @@ def chapter3(doc):
             data = list(csv.reader(f))
         rows = [[r[0]] + [f"{float(x):.3f}" for x in r[1:]] for r in data[1:]]
     add_table(doc, ["模型", "准确率", "精确率", "召回率", "宏平均F1"], rows,
-              caption="表 3-3 四种机器学习模型测试集性能对比")
+              caption="表 3-4 四种机器学习模型测试集性能对比")
     add_image(doc, os.path.join(T1, "model_compare.png"), 5.0, "图 3-3 各模型测试集指标对比")
     para(doc, "由表 3-3 可见，随机森林在四项指标上全面领先，其次为决策树与 SVM，逻辑回归表现最差。"
-              "为进一步分析最优模型，给出随机森林各类别详细指标（表 3-4）及其混淆矩阵（图 3-4）。")
+              "为进一步分析最优模型，给出随机森林各类别详细指标（表 3-5）及其混淆矩阵（图 3-4）。")
     add_table(doc, ["类别", "精确率", "召回率", "F1", "样本数"],
               [["差(≤5)", "0.78", "0.73", "0.76", "328"],
                ["中(=6)", "0.69", "0.77", "0.73", "440"],
                ["好(≥7)", "0.77", "0.67", "0.72", "212"]],
-              caption="表 3-4 随机森林各类别指标")
+              caption="表 3-5 随机森林各类别指标")
     para(doc, "从各类别指标看，随机森林对“差”“好”两端类别精确率较高，而“中”类样本最多、与相邻等级"
               "边界模糊，召回率虽高但精确率相对偏低，这与质量评分本身的连续性、相邻等级难以截然区分的"
               "特点相符。")
@@ -376,7 +414,7 @@ def chapter4(doc):
     doc.add_heading("第4章 项目二：手写 AlexNet 图像分类", level=1)
 
     doc.add_heading("4.1 数据集介绍与来源", level=2)
-    para(doc, "本项目采用 Fashion-MNIST 数据集，由德国 Zalando 公司发布，来源网址为 "
+    para(doc, "本项目采用 Fashion-MNIST 数据集（Xiao 等, 2017），由德国 Zalando 公司发布，来源网址为 "
               "https://www.kaggle.com/datasets/zalando-research/fashionmnist （亦可经 torchvision 自动下载）。"
               "数据集共 70000 张 28×28 的灰度服饰图像，其中训练集 60000 张、测试集 10000 张，均匀覆盖 10 个"
               "类别：T恤、裤子、套衫、连衣裙、外套、凉鞋、衬衫、运动鞋、包、短靴。相比经典的手写数字 MNIST，"
@@ -441,7 +479,33 @@ def chapter4(doc):
               caption="表 4-2 AlexNet 各类别测试指标")
     add_image(doc, os.path.join(T2, "confusion_matrix.png"), 5.0, "图 4-3 AlexNet 测试集混淆矩阵")
 
-    doc.add_heading("4.6 误差分析", level=2)
+    doc.add_heading("4.6 模型对照实验", level=2)
+    para(doc, "为更客观地评估手写 AlexNet 的有效性、并探究其各设计组件的作用，本文在相同训练协议"
+              "（SGD、批大小 128、相同学习率调度、15 轮）下设计了一组对照实验，结果见表 4-3 与图 4-4。"
+              "其中 SimpleCNN 为仅含 3 个卷积块的轻量网络（约 0.39M 参数，直接在 28×28 原图上训练，重复 3 个"
+              "随机种子取均值±标准差）；AlexNet 则分别测试了基线（含 LRN）、去掉 LRN 的消融版本，以及加入"
+              "数据增强（随机水平翻转+小角度旋转）的版本。")
+    add_table(doc, ["模型 / 配置", "参数量", "测试准确率", "宏平均F1"],
+              [["SimpleCNN（轻量基线，3 种子）", "0.39M", "0.9181±0.0015", "0.9171±0.0014"],
+               ["AlexNet（基线：LRN，无增强）", "58.3M", "0.9183", "0.9179"],
+               ["AlexNet（消融：去掉 LRN）", "58.3M", "0.9247", "0.9245"],
+               ["AlexNet（+ 数据增强）", "58.3M", "0.9106", "0.9103"]],
+              caption="表 4-3 Fashion-MNIST 上的模型对照实验结果")
+    add_image(doc, os.path.join(T2, "exp_compare.png"), 5.0, "图 4-4 不同模型/配置的测试集准确率对比")
+    para(doc, "对照实验得到三点有价值的结论：", indent=False)
+    para(doc, "（1）模型容量应与数据复杂度相匹配。仅 0.39M 参数的 SimpleCNN 达到了 0.9181 的准确率，与 "
+              "58.3M 参数的 AlexNet（0.9183）几乎持平。这说明 Fashion-MNIST 本身信息量有限，AlexNet 巨大的"
+              "参数量在该任务上存在明显冗余；课程要求复现 AlexNet 具有教学价值，但从工程角度看，轻量网络"
+              "才是该数据集更高性价比的选择。", indent=False)
+    para(doc, "（2）LRN 并非必要，去掉反而更优。去掉 LRN 后 AlexNet 准确率由 0.9183 提升至 0.9247，与深度"
+              "学习的发展趋势一致——LRN 在后续的 VGG、ResNet 等网络中已被批归一化（BatchNorm，Ioffe 和 "
+              "Szegedy, 2015）取代，表明其正则化收益有限，在小数据上甚至可能干扰特征表达。", indent=False)
+    para(doc, "（3）简单数据增强在本设置下未带来增益。加入随机翻转与旋转后准确率反降至 0.9106。原因可能是："
+              "在仅 15 轮训练预算下，增强增加了优化难度而模型尚未充分收敛；且翻转/旋转会破坏某些类别（如鞋、"
+              "包）的固有方向性。这提示数据增强需与更长训练轮数、更有针对性的增强策略配合，不能盲目使用。",
+              indent=False)
+
+    doc.add_heading("4.7 误差分析", level=2)
     para(doc, "由混淆矩阵（图 4-3）可见，AlexNet 的误差高度集中于四类上装——T恤、套衫、外套、衬衫之间。"
               "其中“衬衫”最难识别，其 1000 个测试样本中有 95 个被误判为 T恤、61 个误判为套衫、73 个误判为"
               "外套；而“T恤”也有 109 个被误判为衬衫。与之形成鲜明对比的是，“裤子”“包”“凉鞋”“短靴”等"
@@ -450,7 +514,7 @@ def chapter4(doc):
               "Fashion-MNIST 的固有难点；预测样例图（图 4-1）中的红色错误样本也大多集中于此类上装。由此可见，"
               "进一步提升性能的关键在于增强模型对细粒度纹理的判别能力，例如引入数据增强、更深的网络或注意力机制。")
 
-    doc.add_heading("4.7 本章小结", level=2)
+    doc.add_heading("4.8 本章小结", level=2)
     para(doc, "手写 AlexNet 在 Fashion-MNIST 上取得了 91.55% 的测试准确率，验证了所实现网络的正确性与有效性。"
               "从混淆矩阵与各类指标看，“裤子”“包”“凉鞋”“短靴”等形态独特的类别识别率接近完美（F1≥0.97），"
               "而“衬衫”类最易混淆（F1 仅 0.75），主要与“T恤”“套衫”“外套”相互误判——这些上装在低分辨率"
@@ -458,16 +522,49 @@ def chapter4(doc):
     doc.add_page_break()
 
 
-# ---------------------- 第5章 结论 ----------------------
+# ---------------------- 第5章 实验复现说明 ----------------------
+def chapter_repro(doc):
+    doc.add_heading("第5章 实验复现说明", level=1)
+    doc.add_heading("5.1 代码文件说明", level=2)
+    para(doc, "项目源代码按任务组织，各文件职责如表 5-1 所示。")
+    add_table(doc, ["文件", "功能"],
+              [["task1_ml_wine/wine_quality.py", "任务一完整流程：下载/EDA/预处理/四模型训练/评估"],
+               ["task2_alexnet_fmnist/alexnet.py", "逐层手写的 AlexNet 网络定义"],
+               ["task2_alexnet_fmnist/simplecnn.py", "轻量基线网络 SimpleCNN"],
+               ["task2_alexnet_fmnist/data.py", "Fashion-MNIST 加载、变换与三划分"],
+               ["task2_alexnet_fmnist/train.py", "AlexNet 训练，保存最优 checkpoint"],
+               ["task2_alexnet_fmnist/evaluate.py", "测试集评估与可视化"],
+               ["task2_alexnet_fmnist/experiments.py", "对照实验统一运行器"],
+               ["task2_alexnet_fmnist/aggregate_experiments.py", "对照实验结果聚合与绘图"],
+               ["common/zh_font.py", "matplotlib 中文字体设置"],
+               ["report/generate_report.py", "生成 Word 版报告"]],
+              caption="表 5-1 源代码文件说明")
+    doc.add_heading("5.2 运行步骤与关键设置", level=2)
+    para(doc, "按以下顺序运行即可复现全部结果（解释器为 conda 环境 pytorch312）：")
+    for line in [
+        "（1）任务一：python task1_ml_wine/wine_quality.py；",
+        "（2）任务二训练：python task2_alexnet_fmnist/train.py --epochs 15 --batch-size 128 --lr 0.01；",
+        "（3）任务二评估：python task2_alexnet_fmnist/evaluate.py；",
+        "（4）对照实验：分别运行 experiments.py（不同 --model/--seed/--no-lrn/--augment 组合）后，"
+        "执行 python aggregate_experiments.py 汇总。"]:
+        para(doc, line, indent=False)
+    para(doc, "关键设置：随机种子固定（任务一 train_test_split 与各模型 random_state=42；任务二 PyTorch "
+              "种子 0~2）；任务一采用 80/20 分层划分与 5 折交叉验证；任务二使用 SGD（动量 0.9、权重衰减 "
+              "5e-4）、初始学习率 0.01、StepLR(步长 10、衰减 0.1)、批大小 128、训练 15 轮。软硬件环境见"
+              "表 2-1，全部图表与指标自动输出到各任务的 outputs/ 目录。")
+    doc.add_page_break()
+
+
+# ---------------------- 第6章 结论 ----------------------
 def chapter5(doc):
-    doc.add_heading("第5章 结论与实验总结", level=1)
-    doc.add_heading("5.1 结论", level=2)
+    doc.add_heading("第6章 结论与实验总结", level=1)
+    doc.add_heading("6.1 结论", level=2)
     para(doc, "（1）在结构化数据的红酒质量分类中，集成学习方法（随机森林）显著优于单一模型与线性模型，"
               "测试集宏平均 F1 达 0.734，是四种算法中的最佳选择，印证了集成学习在中小规模结构化数据上的"
               "普遍优势。", indent=False)
     para(doc, "（2）在图像分类任务中，逐层手写实现的 AlexNet 能够有效学习服饰图像的层次化特征，测试准确率"
               "达 91.55%，充分验证了深度卷积网络在视觉任务上的强大能力以及本次复现的正确性。", indent=False)
-    doc.add_heading("5.2 实验总结", level=2)
+    doc.add_heading("6.2 实验总结", level=2)
     para(doc, "通过本次实训，我们完整走通了“数据加载—查看—预处理—建模—评估—结论”的机器学习全流程，"
               "并获得如下收获：其一，深入理解了传统机器学习与深度学习在数据形态、建模思路与适用场景上的"
               "差异；其二，掌握了标准化、分层划分、类别加权等预处理手段及其对结果的影响，体会到“数据决定"
@@ -475,40 +572,60 @@ def chapter5(doc):
               "实现 AlexNet，透彻理解了卷积、池化、ReLU、LRN、Dropout 等核心组件的原理与协同机制。工程实践"
               "中还解决了绘图中文字体缺失数字字形、scikit-learn 新版本参数变更等实际问题，锻炼了独立排查与"
               "解决问题的能力。")
-    doc.add_heading("5.3 改进方案", level=2)
-    para(doc, "项目一：尝试 XGBoost、LightGBM 等更强的梯度提升模型；采用 SMOTE 等过采样方法更充分处理类别"
+    doc.add_heading("6.3 改进方案", level=2)
+    para(doc, "项目一：尝试 XGBoost、LightGBM 等更强的梯度提升模型；采用 SMOTE（Chawla 等, 2002）等过采样方法更充分处理类别"
               "不平衡；引入特征工程（特征交互、分箱）与特征选择以提升判别力；也可将质量评分作为回归任务建模"
               "后再分级。")
-    para(doc, "项目二：引入数据增强（随机裁剪、翻转、旋转）抑制过拟合并提升泛化；用批归一化（BatchNorm）"
-              "替代 LRN 加速收敛、稳定训练；适当增加训练轮数并采用余弦退火等更精细的学习率策略；亦可对比 "
-              "VGG、ResNet 等更先进结构，分析深度对精度的影响。")
+    para(doc, "项目二：引入数据增强（随机裁剪、翻转、旋转）抑制过拟合并提升泛化；用批归一化（BatchNorm，"
+              "Ioffe 和 Szegedy, 2015）替代 LRN 加速收敛、稳定训练；适当增加训练轮数并采用余弦退火等更精细的"
+              "学习率策略；亦可对比 VGG（Simonyan 和 Zisserman, 2015）、ResNet（He 等, 2016）等更先进结构，"
+              "分析深度对精度的影响。")
     para(doc, "通用：建立更系统的实验管理与超参数搜索流程，对关键结果进行多次重复实验以评估稳定性，"
               "并引入更全面的可视化与误差分析手段。")
     doc.add_heading("参考文献", level=1)
-    for ref in [
-        "[1] Krizhevsky A, Sutskever I, Hinton G E. ImageNet Classification with Deep Convolutional "
-        "Neural Networks. NeurIPS, 2012: 1097-1105.",
-        "[2] Cortez P, Cerdeira A, Almeida F, et al. Modeling wine preferences by data mining from "
-        "physicochemical properties. Decision Support Systems, 2009, 47(4): 547-553.",
-        "[3] Xiao H, Rasul K, Vollgraf R. Fashion-MNIST: a Novel Image Dataset for Benchmarking "
-        "Machine Learning Algorithms. arXiv:1708.07747, 2017.",
-        "[4] Breiman L. Random Forests. Machine Learning, 2001, 45(1): 5-32.",
-        "[5] Cortes C, Vapnik V. Support-Vector Networks. Machine Learning, 1995, 20(3): 273-297.",
-        "[6] Pedregosa F, et al. Scikit-learn: Machine Learning in Python. JMLR, 2011, 12: 2825-2830.",
-        "[7] Paszke A, et al. PyTorch: An Imperative Style, High-Performance Deep Learning Library. "
-        "NeurIPS, 2019: 8024-8035."]:
-        para(doc, ref, indent=False)
+    # 著者-出版年制：条目不加序号、悬挂缩进、先中文后西文，西文按姓氏字母排序
+    refs = [
+        "周志华. 机器学习[M]. 北京: 清华大学出版社, 2016: 23-200.",
+        "Breiman L. Random forests[J]. Machine Learning, 2001, 45(1): 5-32.",
+        "Chawla N V, Bowyer K W, Hall L O, et al. SMOTE: synthetic minority over-sampling technique[J]. "
+        "Journal of Artificial Intelligence Research, 2002, 16: 321-357.",
+        "Cortes C, Vapnik V. Support-vector networks[J]. Machine Learning, 1995, 20(3): 273-297.",
+        "Cortez P, Cerdeira A, Almeida F, et al. Modeling wine preferences by data mining from "
+        "physicochemical properties[J]. Decision Support Systems, 2009, 47(4): 547-553.",
+        "He K, Zhang X, Ren S, et al. Deep residual learning for image recognition[C]//IEEE Conference "
+        "on Computer Vision and Pattern Recognition. 2016: 770-778.",
+        "Ioffe S, Szegedy C. Batch normalization: accelerating deep network training by reducing "
+        "internal covariate shift[C]//International Conference on Machine Learning. 2015: 448-456.",
+        "Krizhevsky A, Sutskever I, Hinton G E. ImageNet classification with deep convolutional neural "
+        "networks[C]//Advances in Neural Information Processing Systems. 2012: 1097-1105.",
+        "Paszke A, Gross S, Massa F, et al. PyTorch: an imperative style, high-performance deep learning "
+        "library[C]//Advances in Neural Information Processing Systems. 2019: 8024-8035.",
+        "Pedregosa F, Varoquaux G, Gramfort A, et al. Scikit-learn: machine learning in Python[J]. "
+        "Journal of Machine Learning Research, 2011, 12: 2825-2830.",
+        "Simonyan K, Zisserman A. Very deep convolutional networks for large-scale image "
+        "recognition[C]//International Conference on Learning Representations. 2015.",
+        "Srivastava N, Hinton G, Krizhevsky A, et al. Dropout: a simple way to prevent neural networks "
+        "from overfitting[J]. Journal of Machine Learning Research, 2014, 15(1): 1929-1958.",
+        "Xiao H, Rasul K, Vollgraf R. Fashion-MNIST: a novel image dataset for benchmarking machine "
+        "learning algorithms[J]. arXiv preprint arXiv:1708.07747, 2017.",
+    ]
+    for ref in refs:
+        p = doc.add_paragraph(ref)
+        p.paragraph_format.left_indent = Pt(24)
+        p.paragraph_format.first_line_indent = Pt(-24)  # 悬挂缩进 2 字
 
 
 def build():
     doc = Document()
     set_base_style(doc)
     cover(doc)
+    declaration(doc)
     abstract(doc)
     chapter1(doc)
     chapter2(doc)
     chapter3(doc)
     chapter4(doc)
+    chapter_repro(doc)
     chapter5(doc)
     out = os.path.join(HERE, "毕业论文_人工智能实训.docx")
     doc.save(out)
