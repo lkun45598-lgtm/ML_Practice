@@ -64,6 +64,7 @@ def set_base_style(doc):
     rfonts.set(qn("w:eastAsia"), "SimSun")
     rfonts.set(qn("w:ascii"), "Times New Roman")
     rfonts.set(qn("w:hAnsi"), "Times New Roman")
+    style.paragraph_format.line_spacing = 1.5  # 全文 1.5 倍行距（学校规范）
 
 
 def para(doc, text, indent=True, align=None):
@@ -194,12 +195,12 @@ def chapter1(doc):
               "红酒质量分级与服饰图像分类，通过完整的工程实践，加深对机器学习核心思想、典型算法与建模"
               "流程的理解，培养从数据到模型、再到结论的综合实践能力，具有重要的学习与应用价值。")
     doc.add_heading("1.2 国内外研究现状", level=2)
-    para(doc, "在传统机器学习方面，支持向量机由 Cortes 和 Vapnik[1]正式提出，凭借坚实的统计学习"
-              "理论基础和优秀的小样本泛化能力，长期是分类任务的重要工具；以随机森林[2]、"
+    para(doc, "在传统机器学习方面，支持向量机由 Cortes 和 Vapnik (1995)正式提出，凭借坚实的统计学习"
+              "理论基础和优秀的小样本泛化能力，长期是分类任务的重要工具；以随机森林(Breiman, 2001)、"
               "梯度提升树（GBDT、XGBoost、LightGBM）为代表的集成学习方法，通过组合多个弱学习器进一步提升"
-              "了精度与鲁棒性，至今仍是结构化数据竞赛中的主流方案。在深度学习方面，Krizhevsky 等[3]"
+              "了精度与鲁棒性，至今仍是结构化数据竞赛中的主流方案。在深度学习方面，Krizhevsky 等 (2012)"
               "提出的 AlexNet 在 ImageNet 竞赛中以显著优势夺冠，掀起了深度卷积网络的研究热潮；此后 "
-              "VGG[4]、GoogLeNet、ResNet[5]等更深、更高效的网络结构"
+              "VGG(Simonyan 和 Zisserman, 2015)、GoogLeNet、ResNet(He 等, 2016)等更深、更高效的网络结构"
               "相继涌现，不断刷新图像识别的精度上限。本实训以经典且最具代表性的 AlexNet 为研究对象，逐层"
               "复现其结构，旨在透彻理解卷积神经网络的工作机制。")
     doc.add_heading("1.3 项目研究思路", level=2)
@@ -231,7 +232,7 @@ def chapter2(doc):
               "映射 f: X→Y，使其对未知样本具有良好的预测能力。当标签 y 取离散值时即为分类问题。本实训"
               "两个项目均属于多分类问题：项目一为三分类（红酒质量等级），项目二为十分类（服饰类别）。"
               "模型学习的核心是最小化训练数据上的损失函数，同时通过正则化、交叉验证等手段控制模型复杂度"
-              "以提升泛化能力[6]。")
+              "以提升泛化能力(周志华, 2016)。")
 
     doc.add_heading("2.2 传统机器学习算法", level=2)
     doc.add_heading("2.2.1 支持向量机（SVM）", level=3)
@@ -247,7 +248,7 @@ def chapter2(doc):
     para(doc, "决策树通过递归地选择最优特征对样本空间进行划分，形成树状的判别结构。划分依据通常为基尼"
               "不纯度：")
     equation(doc, mr("Gini(D) = 1 − ") + mr("Σ") + msubsup(mr("p"), mr("k"), mr("2")))
-    para(doc, "其中 pₖ 为类别 k 在节点中的占比[6]。算法每次选择使子节点不纯度下降最大的特征进行分裂，"
+    para(doc, "其中 pₖ 为类别 k 在节点中的占比(周志华, 2016)。算法每次选择使子节点不纯度下降最大的特征进行分裂，"
               "具有良好的可解释性，但单棵树容易过拟合。")
 
     doc.add_heading("2.2.3 随机森林", level=3)
@@ -260,7 +261,7 @@ def chapter2(doc):
     equation(doc, mr("P(y=k|x) = ")
              + mfrac(msup(mr("e"), msub(mr("w"), mr("k")) + mr("ᵀx")),
                      mr("Σ") + msup(mr("e"), msub(mr("w"), mr("j")) + mr("ᵀx"))))
-    para(doc, "并以交叉熵为损失函数进行参数估计[6]。其结构简单、训练高效，常作为分类任务的基线模型。")
+    para(doc, "并以交叉熵为损失函数进行参数估计(周志华, 2016)。其结构简单、训练高效，常作为分类任务的基线模型。")
 
     doc.add_heading("2.3 卷积神经网络与 AlexNet", level=2)
     para(doc, "卷积神经网络（CNN）是处理图像数据的主流深度模型，其核心组件包括：")
@@ -270,11 +271,11 @@ def chapter2(doc):
         "（2）激活函数 ReLU：f(x)=max(0,x)，引入非线性并缓解梯度消失，是 AlexNet 的关键创新之一。",
         "（3）池化层：通过最大池化等操作进行下采样，降低特征图尺寸、增强平移不变性。",
         "（4）局部响应归一化（LRN）：对相邻通道的响应进行归一化，增强模型的泛化能力。",
-        "（5）Dropout：训练时以一定概率随机置零神经元输出，有效抑制过拟合[7]。",
+        "（5）Dropout：训练时以一定概率随机置零神经元输出，有效抑制过拟合(Srivastava 等, 2014)。",
         "（6）全连接层：将提取到的高层特征映射到类别空间，输出分类结果。"]:
         para(doc, line, indent=False)
     equation(doc, mr("O = ⌊") + mfrac(mr("W − K + 2P"), mr("S")) + mr("⌋ + 1"))
-    para(doc, "AlexNet[3]由 5 个卷积层与 3 个全连接层堆叠而成，首次将 ReLU、Dropout、数据增强与 GPU 训练"
+    para(doc, "AlexNet(Krizhevsky 等, 2012)由 5 个卷积层与 3 个全连接层堆叠而成，首次将 ReLU、Dropout、数据增强与 GPU 训练"
               "有机结合，是深度学习发展史上的里程碑。")
 
     doc.add_heading("2.4 模型评估指标", level=2)
@@ -284,12 +285,12 @@ def chapter2(doc):
              + mr("，  召回率 = ") + mfrac(mr("TP"), mr("TP + FN")))
     equation(doc, mr("F1 = ") + mfrac(mr("2 × 精确率 × 召回率"), mr("精确率 + 召回率")))
     para(doc, "对于多分类问题，常计算各类别指标的算术平均，即宏平均（Macro-average），它对每个类别一视"
-              "同仁，能更好地反映模型在不平衡数据上的综合表现[6]。混淆矩阵则以矩阵形式展示各类别的预测分布，"
+              "同仁，能更好地反映模型在不平衡数据上的综合表现(周志华, 2016)。混淆矩阵则以矩阵形式展示各类别的预测分布，"
               "可直观分析模型的混淆情况。")
 
     doc.add_heading("2.5 实验环境配置", level=2)
     para(doc, "本实训的全部实验均在同一硬件与软件环境下完成，具体配置如表 2-1 所示。项目一的机器学习"
-              "模型基于 scikit-learn 实现[8]，项目二的 AlexNet 基于 PyTorch 实现[9]并使用 GPU 加速训练。")
+              "模型基于 scikit-learn 实现，项目二的 AlexNet 基于 PyTorch 实现并使用 GPU 加速训练。")
     add_table(doc, ["项目", "配置"],
               [["操作系统", "Linux (Ubuntu)"],
                ["编程语言", "Python 3.12"],
@@ -307,7 +308,7 @@ def chapter3(doc):
     doc.add_heading("第3章 项目一：红酒质量分类", level=1)
 
     doc.add_heading("3.1 数据集介绍与来源", level=2)
-    para(doc, "本项目采用 UCI 机器学习仓库公开的葡萄酒质量数据集（Wine Quality Data Set）[10]，来源网址为 "
+    para(doc, "本项目采用 UCI 机器学习仓库公开的葡萄酒质量数据集（Wine Quality Data Set）(Cortez 等, 2009)，来源网址为 "
               "https://archive.ics.uci.edu/dataset/186/wine+quality 。其中白葡萄酒子集共 4898 个样本，"
               "每个样本包含 11 个理化特征以及 1 个质量评分标签（0–10 的整数，由品酒师综合评定）。"
               "各特征含义见表 3-1。")
@@ -354,7 +355,7 @@ def chapter3(doc):
 
     doc.add_heading("3.4 模型建立", level=2)
     para(doc, "选取支持向量机、决策树、随机森林、逻辑回归四种代表性算法（原理见 2.2 节），借助 scikit-learn"
-              "[8]提供的 GridSearchCV，通过五折交叉验证结合网格搜索（评分准则为宏平均 F1）"
+              "(Pedregosa 等, 2011)提供的 GridSearchCV，通过五折交叉验证结合网格搜索（评分准则为宏平均 F1）"
               "对关键超参数进行寻优。五折交叉验证将训练集均分为"
               "五份，轮流以四份训练、一份验证，取平均性能作为评分，从而更稳健地选择超参数。各模型搜索"
               "空间与最优结果见表 3-3。")
@@ -414,7 +415,7 @@ def chapter4(doc):
     doc.add_heading("第4章 项目二：手写 AlexNet 图像分类", level=1)
 
     doc.add_heading("4.1 数据集介绍与来源", level=2)
-    para(doc, "本项目采用 Fashion-MNIST 数据集[11]，由德国 Zalando 公司发布，来源网址为 "
+    para(doc, "本项目采用 Fashion-MNIST 数据集(Xiao 等, 2017)，由德国 Zalando 公司发布，来源网址为 "
               "https://www.kaggle.com/datasets/zalando-research/fashionmnist （亦可经 torchvision 自动下载）。"
               "数据集共 70000 张 28×28 的灰度服饰图像，其中训练集 60000 张、测试集 10000 张，均匀覆盖 10 个"
               "类别：T恤、裤子、套衫、连衣裙、外套、凉鞋、衬衫、运动鞋、包、短靴。相比经典的手写数字 MNIST，"
@@ -573,46 +574,46 @@ def chapter5(doc):
               "中还解决了绘图中文字体缺失数字字形、scikit-learn 新版本参数变更等实际问题，锻炼了独立排查与"
               "解决问题的能力。")
     doc.add_heading("6.3 改进方案", level=2)
-    para(doc, "项目一：尝试 XGBoost、LightGBM 等更强的梯度提升模型；采用 SMOTE[13]等过采样方法更充分处理类别"
+    para(doc, "项目一：尝试 XGBoost、LightGBM 等更强的梯度提升模型；采用 SMOTE(Chawla 等, 2002)等过采样方法更充分处理类别"
               "不平衡；引入特征工程（特征交互、分箱）与特征选择以提升判别力；也可将质量评分作为回归任务建模"
               "后再分级。")
     para(doc, "项目二：引入数据增强（随机裁剪、翻转、旋转）抑制过拟合并提升泛化；用批归一化（BatchNorm，"
               "Ioffe 和 Szegedy, 2015）替代 LRN 加速收敛、稳定训练；适当增加训练轮数并采用余弦退火等更精细的"
-              "学习率策略；亦可对比 VGG[4]、ResNet[5]等更先进结构，"
+              "学习率策略；亦可对比 VGG(Simonyan 和 Zisserman, 2015)、ResNet(He 等, 2016)等更先进结构，"
               "分析深度对精度的影响。")
     para(doc, "通用：建立更系统的实验管理与超参数搜索流程，对关键结果进行多次重复实验以评估稳定性，"
               "并引入更全面的可视化与误差分析手段。")
     doc.add_heading("参考文献", level=1)
-    # 顺序编码制：按正文首次引用顺序编号、悬挂缩进
+    # 著者-出版年制：条目不加序号、悬挂缩进、先中文后西文，西文按姓氏字母排序
     refs = [
-        "[1] Cortes C, Vapnik V. Support-vector networks[J]. Machine Learning, 1995, 20(3): 273-297.",
-        "[2] Breiman L. Random forests[J]. Machine Learning, 2001, 45(1): 5-32.",
-        "[3] Krizhevsky A, Sutskever I, Hinton G E. ImageNet classification with deep convolutional "
-        "neural networks[C]//Advances in Neural Information Processing Systems. 2012: 1097-1105.",
-        "[4] Simonyan K, Zisserman A. Very deep convolutional networks for large-scale image "
-        "recognition[C]//International Conference on Learning Representations. 2015.",
-        "[5] He K, Zhang X, Ren S, et al. Deep residual learning for image recognition[C]//IEEE "
-        "Conference on Computer Vision and Pattern Recognition. 2016: 770-778.",
-        "[6] 周志华. 机器学习[M]. 北京: 清华大学出版社, 2016: 23-200.",
-        "[7] Srivastava N, Hinton G, Krizhevsky A, et al. Dropout: a simple way to prevent neural "
-        "networks from overfitting[J]. Journal of Machine Learning Research, 2014, 15(1): 1929-1958.",
-        "[8] Pedregosa F, Varoquaux G, Gramfort A, et al. Scikit-learn: machine learning in Python[J]. "
-        "Journal of Machine Learning Research, 2011, 12: 2825-2830.",
-        "[9] Paszke A, Gross S, Massa F, et al. PyTorch: an imperative style, high-performance deep "
-        "learning library[C]//Advances in Neural Information Processing Systems. 2019: 8024-8035.",
-        "[10] Cortez P, Cerdeira A, Almeida F, et al. Modeling wine preferences by data mining from "
+        "周志华. 机器学习[M]. 北京: 清华大学出版社, 2016: 23-200.",
+        "Breiman L. Random forests[J]. Machine Learning, 2001, 45(1): 5-32.",
+        "Chawla N V, Bowyer K W, Hall L O, et al. SMOTE: synthetic minority over-sampling technique[J]. "
+        "Journal of Artificial Intelligence Research, 2002, 16: 321-357.",
+        "Cortes C, Vapnik V. Support-vector networks[J]. Machine Learning, 1995, 20(3): 273-297.",
+        "Cortez P, Cerdeira A, Almeida F, et al. Modeling wine preferences by data mining from "
         "physicochemical properties[J]. Decision Support Systems, 2009, 47(4): 547-553.",
-        "[11] Xiao H, Rasul K, Vollgraf R. Fashion-MNIST: a novel image dataset for benchmarking "
-        "machine learning algorithms[J]. arXiv preprint arXiv:1708.07747, 2017.",
-        "[12] Ioffe S, Szegedy C. Batch normalization: accelerating deep network training by reducing "
+        "He K, Zhang X, Ren S, et al. Deep residual learning for image recognition[C]//IEEE Conference "
+        "on Computer Vision and Pattern Recognition. 2016: 770-778.",
+        "Ioffe S, Szegedy C. Batch normalization: accelerating deep network training by reducing "
         "internal covariate shift[C]//International Conference on Machine Learning. 2015: 448-456.",
-        "[13] Chawla N V, Bowyer K W, Hall L O, et al. SMOTE: synthetic minority over-sampling "
-        "technique[J]. Journal of Artificial Intelligence Research, 2002, 16: 321-357.",
+        "Krizhevsky A, Sutskever I, Hinton G E. ImageNet classification with deep convolutional neural "
+        "networks[C]//Advances in Neural Information Processing Systems. 2012: 1097-1105.",
+        "Paszke A, Gross S, Massa F, et al. PyTorch: an imperative style, high-performance deep learning "
+        "library[C]//Advances in Neural Information Processing Systems. 2019: 8024-8035.",
+        "Pedregosa F, Varoquaux G, Gramfort A, et al. Scikit-learn: machine learning in Python[J]. "
+        "Journal of Machine Learning Research, 2011, 12: 2825-2830.",
+        "Simonyan K, Zisserman A. Very deep convolutional networks for large-scale image "
+        "recognition[C]//International Conference on Learning Representations. 2015.",
+        "Srivastava N, Hinton G, Krizhevsky A, et al. Dropout: a simple way to prevent neural networks "
+        "from overfitting[J]. Journal of Machine Learning Research, 2014, 15(1): 1929-1958.",
+        "Xiao H, Rasul K, Vollgraf R. Fashion-MNIST: a novel image dataset for benchmarking machine "
+        "learning algorithms[J]. arXiv preprint arXiv:1708.07747, 2017.",
     ]
     for ref in refs:
         p = doc.add_paragraph(ref)
-        p.paragraph_format.left_indent = Pt(30)
-        p.paragraph_format.first_line_indent = Pt(-30)  # 悬挂缩进
+        p.paragraph_format.left_indent = Pt(24)
+        p.paragraph_format.first_line_indent = Pt(-24)  # 悬挂缩进 2 字
 
 
 def build():
