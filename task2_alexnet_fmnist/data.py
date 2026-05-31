@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Fashion-MNIST 数据加载：下载、变换(Resize224)、train/val/test 三划分。"""
+"""Fashion-MNIST 数据加载：下载、变换、train/val/test 三划分。
+
+支持可配置输入尺寸 img_size 与训练集数据增强 augment（验证/测试集始终不增强）。
+默认 img_size=224、augment=False，与基线 AlexNet 一致，保证向后兼容。
+"""
 import os
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -15,29 +19,41 @@ CLASS_NAMES = ["T恤", "裤子", "套衫", "连衣裙", "外套",
 _MEAN, _STD = (0.2860,), (0.3530,)
 
 
-def _transform():
-    return transforms.Compose([
-        transforms.Resize(224),
-        transforms.ToTensor(),
-        transforms.Normalize(_MEAN, _STD),
-    ])
+def _make_tf(img_size, augment):
+    """构造变换；augment=True 时加入随机水平翻转与小角度旋转（仅用于训练集）。"""
+    ops = []
+    if img_size != 28:
+        ops.append(transforms.Resize(img_size))
+    if augment:
+        ops += [transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(10)]
+    ops += [transforms.ToTensor(), transforms.Normalize(_MEAN, _STD)]
+    return transforms.Compose(ops)
 
 
-def get_loaders(batch_size=128, val_ratio=0.1, num_workers=4, subset=None, seed=42):
+def get_loaders(batch_size=128, val_ratio=0.1, num_workers=4, subset=None,
+                seed=42, img_size=224, augment=False):
     """返回 (train_loader, val_loader, test_loader)。
-    subset: 若给整数，仅取该数量训练样本用于冒烟测试。"""
-    tf = _transform()
-    full_train = datasets.FashionMNIST(DATA_DIR, train=True, download=True, transform=tf)
-    test_set = datasets.FashionMNIST(DATA_DIR, train=False, download=True, transform=tf)
 
-    if subset is not None:
-        full_train = torch.utils.data.Subset(full_train, range(subset))
-        test_set = torch.utils.data.Subset(test_set, range(min(subset, len(test_set))))
+    img_size: 输入边长（AlexNet 用 224，SimpleCNN 用 28）。
+    augment:  仅对训练集启用数据增强；验证集与测试集始终使用无增强变换。
+    subset:   若给整数，仅取该数量样本用于冒烟测试。
+    """
+    train_tf = _make_tf(img_size, augment)
+    eval_tf = _make_tf(img_size, False)
+    train_aug = datasets.FashionMNIST(DATA_DIR, train=True, download=True, transform=train_tf)
+    train_eval = datasets.FashionMNIST(DATA_DIR, train=True, download=True, transform=eval_tf)
+    test_set = datasets.FashionMNIST(DATA_DIR, train=False, download=True, transform=eval_tf)
 
-    n_val = int(len(full_train) * val_ratio)
-    n_train = len(full_train) - n_val
+    n_total = len(train_aug) if subset is None else min(subset, len(train_aug))
     g = torch.Generator().manual_seed(seed)
-    train_set, val_set = random_split(full_train, [n_train, n_val], generator=g)
+    perm = torch.randperm(n_total, generator=g).tolist()
+    n_val = int(n_total * val_ratio)
+    val_idx, train_idx = perm[:n_val], perm[n_val:]
+    train_set = Subset(train_aug, train_idx)     # 训练集（可增强）
+    val_set = Subset(train_eval, val_idx)        # 验证集（不增强）
+    if subset is not None:
+        test_set = Subset(test_set, range(min(subset, len(test_set))))
 
     mk = lambda ds, sh: DataLoader(ds, batch_size=batch_size, shuffle=sh,
                                    num_workers=num_workers, pin_memory=True)

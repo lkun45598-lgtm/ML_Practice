@@ -1,0 +1,38 @@
+[
+  {
+    "name": "SimpleCNN（轻量基线，3 种子）",
+    "params": 0.391,
+    "acc": 0.9181333333333334,
+    "acc_std": 0.001484362938547494,
+    "f1": 0.9171333333333335,
+    "f1_std": 0.0014189197769195307,
+    "note": "28×28 输入"
+  },
+  {
+    "name": "AlexNet（基线：LRN，无增强）",
+    "params": 58.299,
+    "acc": 0.9183,
+    "acc_std": null,
+    "f1": 0.9179,
+    "f1_std": null,
+    "note": "224×224 输入"
+  },
+  {
+    "name": "AlexNet（消融：去掉 LRN）",
+    "params": 58.299,
+    "acc": 0.9247,
+    "acc_std": null,
+    "f1": 0.9245,
+    "f1_std": null,
+    "note": "去 LRN"
+  },
+  {
+    "name": "AlexNet（+ 数据增强）",
+    "params": 58.299,
+    "acc": 0.9106,
+    "acc_std": null,
+    "f1": 0.9103,
+    "f1_std": null,
+    "note": "翻转+旋转"
+  }
+]

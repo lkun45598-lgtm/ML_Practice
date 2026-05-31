@@ -1,0 +1,17 @@
+{
+  "tag": "alexnet_nolrn",
+  "model": "alexnet",
+  "img_size": 224,
+  "augment": false,
+  "use_lrn": false,
+  "seed": 0,
+  "epochs": 15,
+  "batch_size": 128,
+  "lr": 0.01,
+  "n_params_M": 58.299,
+  "best_val_acc": 0.9232,
+  "test_acc": 0.9247,
+  "test_precision": 0.9245,
+  "test_recall": 0.9247,
+  "test_f1": 0.9245
+}

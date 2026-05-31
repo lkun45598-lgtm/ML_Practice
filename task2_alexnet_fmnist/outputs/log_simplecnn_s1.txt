@@ -1,0 +1,12 @@
+[simplecnn_s1] model=simplecnn img=28 aug=False lrn=True seed=1 epochs=10 device=cuda
+[simplecnn_s1] epoch  1 train_acc=0.8165 val_acc=0.8875
+[simplecnn_s1] epoch  2 train_acc=0.8854 val_acc=0.9048
+[simplecnn_s1] epoch  3 train_acc=0.9016 val_acc=0.9072
+[simplecnn_s1] epoch  4 train_acc=0.9132 val_acc=0.9100
+[simplecnn_s1] epoch  5 train_acc=0.9200 val_acc=0.9103
+[simplecnn_s1] epoch  6 train_acc=0.9272 val_acc=0.9115
+[simplecnn_s1] epoch  7 train_acc=0.9317 val_acc=0.9185
+[simplecnn_s1] epoch  8 train_acc=0.9366 val_acc=0.9182
+[simplecnn_s1] epoch  9 train_acc=0.9425 val_acc=0.9187
+[simplecnn_s1] epoch 10 train_acc=0.9452 val_acc=0.9248
+[simplecnn_s1] 完成 test_acc=0.9165 f1=0.9156 -> exp_simplecnn_s1.json

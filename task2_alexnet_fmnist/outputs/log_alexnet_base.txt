@@ -1,0 +1,17 @@
+[alexnet_base] model=alexnet img=224 aug=False lrn=True seed=0 epochs=15 device=cuda
+[alexnet_base] epoch  1 train_acc=0.4361 val_acc=0.7695
+[alexnet_base] epoch  2 train_acc=0.8032 val_acc=0.8412
+[alexnet_base] epoch  3 train_acc=0.8494 val_acc=0.8592
+[alexnet_base] epoch  4 train_acc=0.8703 val_acc=0.8828
+[alexnet_base] epoch  5 train_acc=0.8844 val_acc=0.8940
+[alexnet_base] epoch  6 train_acc=0.8935 val_acc=0.8870
+[alexnet_base] epoch  7 train_acc=0.9012 val_acc=0.8962
+[alexnet_base] epoch  8 train_acc=0.9064 val_acc=0.9047
+[alexnet_base] epoch  9 train_acc=0.9121 val_acc=0.9080
+[alexnet_base] epoch 10 train_acc=0.9155 val_acc=0.9110
+[alexnet_base] epoch 11 train_acc=0.9263 val_acc=0.9165
+[alexnet_base] epoch 12 train_acc=0.9292 val_acc=0.9177
+[alexnet_base] epoch 13 train_acc=0.9316 val_acc=0.9170
+[alexnet_base] epoch 14 train_acc=0.9337 val_acc=0.9160
+[alexnet_base] epoch 15 train_acc=0.9332 val_acc=0.9178
+[alexnet_base] 完成 test_acc=0.9183 f1=0.9179 -> exp_alexnet_base.json

@@ -1,0 +1,122 @@
+# -*- coding: utf-8 -*-
+"""对照实验统一运行器：训练一个模型变体并在测试集评估，结果写入独立 JSON。
+
+支持的变体：SimpleCNN 基线、AlexNet（基线/去LRN消融/数据增强）。
+每次运行写出 outputs/exp_<tag>.json，便于多 GPU 并行而不发生写冲突；
+聚合由 aggregate_experiments.py 完成。
+
+示例：
+  python experiments.py --model simplecnn --img-size 28 --seed 0 --epochs 10 --tag simplecnn_s0
+  python experiments.py --model alexnet --img-size 224 --no-lrn --seed 0 --epochs 15 --tag alexnet_nolrn
+  python experiments.py --model alexnet --img-size 224 --augment --seed 0 --epochs 15 --tag alexnet_aug
+"""
+import os
+import json
+import copy
+import argparse
+import torch
+import torch.nn as nn
+
+from data import get_loaders
+from alexnet import AlexNet
+from simplecnn import SimpleCNN
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+OUT_DIR = os.path.join(HERE, "outputs")
+os.makedirs(OUT_DIR, exist_ok=True)
+
+
+def run_epoch(model, loader, criterion, optimizer, device, train):
+    model.train(train)
+    total, correct, loss_sum = 0, 0, 0.0
+    torch.set_grad_enabled(train)
+    for xb, yb in loader:
+        xb, yb = xb.to(device), yb.to(device)
+        if train:
+            optimizer.zero_grad()
+        out = model(xb)
+        loss = criterion(out, yb)
+        if train:
+            loss.backward(); optimizer.step()
+        loss_sum += loss.item() * xb.size(0)
+        correct += (out.argmax(1) == yb).sum().item()
+        total += xb.size(0)
+    return loss_sum / total, correct / total
+
+
+@torch.no_grad()
+def test_metrics(model, loader, device):
+    from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+    model.eval()
+    ys, ps = [], []
+    for xb, yb in loader:
+        ps.append(model(xb.to(device)).argmax(1).cpu()); ys.append(yb)
+    import torch as _t
+    y = _t.cat(ys).numpy(); p = _t.cat(ps).numpy()
+    acc = accuracy_score(y, p)
+    pr, rc, f1, _ = precision_recall_fscore_support(y, p, average="macro", zero_division=0)
+    return float(acc), float(pr), float(rc), float(f1)
+
+
+def build_model(name, use_lrn):
+    if name == "simplecnn":
+        return SimpleCNN(num_classes=10, in_channels=1)
+    return AlexNet(num_classes=10, in_channels=1, use_lrn=use_lrn)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--model", choices=["simplecnn", "alexnet"], required=True)
+    ap.add_argument("--img-size", type=int, default=224)
+    ap.add_argument("--augment", action="store_true")
+    ap.add_argument("--no-lrn", action="store_true", help="AlexNet 去掉 LRN 的消融")
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--epochs", type=int, default=15)
+    ap.add_argument("--batch-size", type=int, default=128)
+    ap.add_argument("--lr", type=float, default=0.01)
+    ap.add_argument("--subset", type=int, default=None)
+    ap.add_argument("--tag", required=True)
+    ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    args = ap.parse_args()
+
+    torch.manual_seed(args.seed)
+    device = torch.device(args.device)
+    use_lrn = not args.no_lrn
+    print(f"[{args.tag}] model={args.model} img={args.img_size} aug={args.augment} "
+          f"lrn={use_lrn} seed={args.seed} epochs={args.epochs} device={device}")
+
+    train_loader, val_loader, test_loader = get_loaders(
+        batch_size=args.batch_size, subset=args.subset, seed=args.seed,
+        img_size=args.img_size, augment=args.augment)
+
+    model = build_model(args.model, use_lrn).to(device)
+    n_params = sum(p.numel() for p in model.parameters())
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+
+    best_val, best_state = 0.0, None
+    for ep in range(1, args.epochs + 1):
+        tr_loss, tr_acc = run_epoch(model, train_loader, criterion, optimizer, device, True)
+        va_loss, va_acc = run_epoch(model, val_loader, criterion, optimizer, device, False)
+        scheduler.step()
+        print(f"[{args.tag}] epoch {ep:2d} train_acc={tr_acc:.4f} val_acc={va_acc:.4f}")
+        if va_acc > best_val:
+            best_val = va_acc
+            best_state = copy.deepcopy(model.state_dict())
+
+    model.load_state_dict(best_state)
+    acc, pr, rc, f1 = test_metrics(model, test_loader, device)
+    result = {"tag": args.tag, "model": args.model, "img_size": args.img_size,
+              "augment": args.augment, "use_lrn": use_lrn, "seed": args.seed,
+              "epochs": args.epochs, "batch_size": args.batch_size, "lr": args.lr,
+              "n_params_M": round(n_params / 1e6, 3), "best_val_acc": round(best_val, 4),
+              "test_acc": round(acc, 4), "test_precision": round(pr, 4),
+              "test_recall": round(rc, 4), "test_f1": round(f1, 4)}
+    with open(os.path.join(OUT_DIR, f"exp_{args.tag}.json"), "w") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    print(f"[{args.tag}] 完成 test_acc={acc:.4f} f1={f1:.4f} -> exp_{args.tag}.json")
+
+
+if __name__ == "__main__":
+    main()

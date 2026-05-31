@@ -1,0 +1,17 @@
+{
+  "tag": "simplecnn_s1",
+  "model": "simplecnn",
+  "img_size": 28,
+  "augment": false,
+  "use_lrn": true,
+  "seed": 1,
+  "epochs": 10,
+  "batch_size": 128,
+  "lr": 0.01,
+  "n_params_M": 0.391,
+  "best_val_acc": 0.9248,
+  "test_acc": 0.9165,
+  "test_precision": 0.9168,
+  "test_recall": 0.9165,
+  "test_f1": 0.9156
+}

@@ -66,6 +66,9 @@ def plot_samples(imgs, meta):
 
 def main():
     set_chinese_font()
+    if not os.path.exists(CKPT):
+        raise FileNotFoundError(
+            f"未找到模型文件 {CKPT}，请先运行 `python train.py` 完成训练以生成 alexnet_best.pt。")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     plot_curves()
     y_true, y_pred, imgs, meta = evaluate(device)
