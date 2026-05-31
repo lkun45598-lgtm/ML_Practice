@@ -12,3 +12,9 @@ report/*.aux
 report/*.log
 report/*.toc
 report/*.out
+
+# local backups & course materials
+*.bak
+*.pptx
+附件3*/
+.planning/

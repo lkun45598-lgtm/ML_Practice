@@ -37,7 +37,8 @@ def plot_curves():
 def evaluate(device):
     """在测试集预测，返回 (y_true, y_pred, 部分图像)。"""
     _, _, test_loader = get_loaders(batch_size=256)
-    model = AlexNet(num_classes=10, in_channels=1).to(device)
+    # 主模型采用 BatchNorm（替代 LRN）+ 40 轮余弦退火 + 数据增强训练，详见正文第四章。
+    model = AlexNet(num_classes=10, in_channels=1, use_bn=True).to(device)
     model.load_state_dict(torch.load(CKPT, map_location=device))
     model.eval()
     ys, ps, sample_imgs, sample_meta = [], [], None, None

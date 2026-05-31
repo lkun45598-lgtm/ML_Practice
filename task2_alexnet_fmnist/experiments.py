@@ -94,6 +94,8 @@ def main():
     ap.add_argument("--batch-size", type=int, default=128)
     ap.add_argument("--lr", type=float, default=0.01)
     ap.add_argument("--subset", type=int, default=None)
+    ap.add_argument("--save-ckpt", default=None, help="若给定路径，则保存最优权重(.pt)")
+    ap.add_argument("--save-history", default=None, help="若给定路径，则保存逐轮训练曲线(.json)")
     ap.add_argument("--tag", required=True)
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
@@ -118,16 +120,26 @@ def main():
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
     best_val, best_state = 0.0, None
+    history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
     for ep in range(1, args.epochs + 1):
         tr_loss, tr_acc = run_epoch(model, train_loader, criterion, optimizer, device, True)
         va_loss, va_acc = run_epoch(model, val_loader, criterion, optimizer, device, False)
         scheduler.step()
+        history["train_loss"].append(tr_loss); history["val_loss"].append(va_loss)
+        history["train_acc"].append(tr_acc); history["val_acc"].append(va_acc)
         print(f"[{args.tag}] epoch {ep:2d} train_acc={tr_acc:.4f} val_acc={va_acc:.4f}")
         if va_acc > best_val:
             best_val = va_acc
             best_state = copy.deepcopy(model.state_dict())
 
     model.load_state_dict(best_state)
+    if args.save_ckpt:
+        torch.save(best_state, args.save_ckpt)
+        print(f"[{args.tag}] 最优权重已保存 -> {args.save_ckpt}")
+    if args.save_history:
+        with open(args.save_history, "w") as f:
+            json.dump(history, f)
+        print(f"[{args.tag}] 训练曲线已保存 -> {args.save_history}")
     acc, pr, rc, f1, f1_cls = test_metrics(model, test_loader, device)
     result = {"tag": args.tag, "model": args.model, "img_size": args.img_size,
               "augment": args.augment, "use_lrn": use_lrn, "use_bn": args.bn,
