@@ -74,10 +74,10 @@ def test_metrics(model, loader, device):
     return float(acc), float(pr), float(rc), float(f1), [round(float(x), 4) for x in f1_cls]
 
 
-def build_model(name, use_lrn):
+def build_model(name, use_lrn, use_bn=False):
     if name == "simplecnn":
         return SimpleCNN(num_classes=10, in_channels=1)
-    return AlexNet(num_classes=10, in_channels=1, use_lrn=use_lrn)
+    return AlexNet(num_classes=10, in_channels=1, use_lrn=use_lrn, use_bn=use_bn)
 
 
 def main():
@@ -86,6 +86,8 @@ def main():
     ap.add_argument("--img-size", type=int, default=224)
     ap.add_argument("--augment", action="store_true")
     ap.add_argument("--no-lrn", action="store_true", help="AlexNet 去掉 LRN 的消融")
+    ap.add_argument("--bn", action="store_true", help="AlexNet 用 BatchNorm 替代 LRN")
+    ap.add_argument("--cosine", action="store_true", help="使用余弦退火学习率(适合更长训练)")
     ap.add_argument("--loss", choices=["ce", "focal"], default="ce", help="损失函数")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--epochs", type=int, default=15)
@@ -106,11 +108,14 @@ def main():
         batch_size=args.batch_size, subset=args.subset, seed=args.seed,
         img_size=args.img_size, augment=args.augment)
 
-    model = build_model(args.model, use_lrn).to(device)
+    model = build_model(args.model, use_lrn, use_bn=args.bn).to(device)
     n_params = sum(p.numel() for p in model.parameters())
     criterion = FocalLoss(gamma=2.0) if args.loss == "focal" else nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    if args.cosine:
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+    else:
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
     best_val, best_state = 0.0, None
     for ep in range(1, args.epochs + 1):
@@ -125,7 +130,8 @@ def main():
     model.load_state_dict(best_state)
     acc, pr, rc, f1, f1_cls = test_metrics(model, test_loader, device)
     result = {"tag": args.tag, "model": args.model, "img_size": args.img_size,
-              "augment": args.augment, "use_lrn": use_lrn, "loss": args.loss, "seed": args.seed,
+              "augment": args.augment, "use_lrn": use_lrn, "use_bn": args.bn,
+              "cosine": args.cosine, "loss": args.loss, "seed": args.seed,
               "epochs": args.epochs, "batch_size": args.batch_size, "lr": args.lr,
               "n_params_M": round(n_params / 1e6, 3), "best_val_acc": round(best_val, 4),
               "test_acc": round(acc, 4), "test_precision": round(pr, 4),

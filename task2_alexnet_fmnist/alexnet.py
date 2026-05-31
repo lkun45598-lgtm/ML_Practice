@@ -11,32 +11,28 @@ class AlexNet(nn.Module):
     输出: (N, num_classes)
     """
 
-    def __init__(self, num_classes=10, in_channels=1, use_lrn=True):
+    def __init__(self, num_classes=10, in_channels=1, use_lrn=True, use_bn=False):
         super().__init__()
-        # ---- 特征提取：5 个卷积块 ----
+
+        def block(cin, cout, k, s=1, p=0, pool=False, lrn=False):
+            """卷积块：Conv(+BN)+ReLU(+LRN)(+MaxPool)。use_bn=True 时以 BatchNorm 取代 LRN。"""
+            ls = [nn.Conv2d(cin, cout, kernel_size=k, stride=s, padding=p)]
+            if use_bn:
+                ls.append(nn.BatchNorm2d(cout))
+            ls.append(nn.ReLU(inplace=True))
+            if lrn and use_lrn and not use_bn:
+                ls.append(nn.LocalResponseNorm(size=5, alpha=1e-4, beta=0.75, k=2))
+            if pool:
+                ls.append(nn.MaxPool2d(kernel_size=3, stride=2))
+            return ls
+
+        # ---- 特征提取：5 个卷积块（输出尺寸不受 BN 影响）----
         layers = []
-        # Conv1: 1->96, 11x11, stride4, pad2 -> 96x55x55
-        layers += [nn.Conv2d(in_channels, 96, kernel_size=11, stride=4, padding=2),
-                   nn.ReLU(inplace=True)]
-        if use_lrn:
-            layers += [nn.LocalResponseNorm(size=5, alpha=1e-4, beta=0.75, k=2)]
-        layers += [nn.MaxPool2d(kernel_size=3, stride=2)]            # -> 96x27x27
-        # Conv2: 96->256, 5x5, pad2 -> 256x27x27
-        layers += [nn.Conv2d(96, 256, kernel_size=5, padding=2),
-                   nn.ReLU(inplace=True)]
-        if use_lrn:
-            layers += [nn.LocalResponseNorm(size=5, alpha=1e-4, beta=0.75, k=2)]
-        layers += [nn.MaxPool2d(kernel_size=3, stride=2)]            # -> 256x13x13
-        # Conv3: 256->384, 3x3, pad1
-        layers += [nn.Conv2d(256, 384, kernel_size=3, padding=1),
-                   nn.ReLU(inplace=True)]
-        # Conv4: 384->384, 3x3, pad1
-        layers += [nn.Conv2d(384, 384, kernel_size=3, padding=1),
-                   nn.ReLU(inplace=True)]
-        # Conv5: 384->256, 3x3, pad1 -> pool -> 256x6x6
-        layers += [nn.Conv2d(384, 256, kernel_size=3, padding=1),
-                   nn.ReLU(inplace=True),
-                   nn.MaxPool2d(kernel_size=3, stride=2)]            # -> 256x6x6
+        layers += block(in_channels, 96, 11, s=4, p=2, pool=True, lrn=True)  # -> 96x27x27
+        layers += block(96, 256, 5, p=2, pool=True, lrn=True)                # -> 256x13x13
+        layers += block(256, 384, 3, p=1)                                    # -> 384x13x13
+        layers += block(384, 384, 3, p=1)                                    # -> 384x13x13
+        layers += block(384, 256, 3, p=1, pool=True)                         # -> 256x6x6
         self.features = nn.Sequential(*layers)
 
         # ---- 分类器：3 个全连接 ----

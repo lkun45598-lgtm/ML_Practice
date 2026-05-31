@@ -1,0 +1,32 @@
+{
+  "tag": "alexnet_long_bn",
+  "model": "alexnet",
+  "img_size": 224,
+  "augment": false,
+  "use_lrn": true,
+  "use_bn": true,
+  "cosine": true,
+  "loss": "ce",
+  "seed": 0,
+  "epochs": 40,
+  "batch_size": 128,
+  "lr": 0.01,
+  "n_params_M": 58.302,
+  "best_val_acc": 0.9447,
+  "test_acc": 0.9432,
+  "test_precision": 0.9428,
+  "test_recall": 0.9432,
+  "test_f1": 0.9429,
+  "f1_per_class": [
+    0.8984,
+    0.993,
+    0.9133,
+    0.9472,
+    0.9184,
+    0.991,
+    0.8262,
+    0.9766,
+    0.9885,
+    0.9764
+  ]
+}
