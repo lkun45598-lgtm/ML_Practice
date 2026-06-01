@@ -146,8 +146,8 @@ ResNet(He 等, 2016)等更深、更高效的网络结构相继涌现，不断刷
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.8\textwidth]{flowchart.png}
-  \caption{机器学习项目统一研究流程}
+  \includegraphics[width=0.95\textwidth]{fig_roadmap.png}
+  \caption{本组两个子项目的总体技术路线}
   \label{fig:pipeline}
 \end{figure}
 
@@ -357,6 +357,17 @@ F1=\frac{2\cdot\text{精确率}\cdot\text{召回率}}{\text{精确率}+\text{召
 （最少 1060 例），又符合葡萄酒质量“低/中/高”分级的实际语义，是兼顾可学习性与业务含义的合理选择。
 
 \subsection{模型建立}
+项目一的完整建模流程如图~\ref{fig:ml_pipeline} 所示：经数据集导入、探索性数据分析、任务定义与
+分层划分后，以 \texttt{Pipeline} 将标准化与分类器封装为一体，再通过 \texttt{GridSearchCV} 完成
+交叉验证调参，最终对四种模型做统一评估。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_ml_pipeline.png}
+  \caption{项目一传统机器学习建模流程}
+  \label{fig:ml_pipeline}
+\end{figure}
+
 选取支持向量机、决策树、随机森林、逻辑回归四种代表性算法（原理见 2.2 节），借助 scikit-learn
 (Pedregosa 等, 2011)提供的 \texttt{GridSearchCV}，通过五折交叉验证结合网格搜索（评分准则为宏平均
 F1）对关键超参数进行寻优，各模型的搜索空间与最优结果见
@@ -400,8 +411,8 @@ F1）对关键超参数进行寻优，各模型的搜索空间与最优结果见
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.76\textwidth]{model_compare.png}
-  \caption{各模型测试集指标对比}
+  \includegraphics[width=0.85\textwidth]{fig_ml_compare.png}
+  \caption{四种传统机器学习模型测试集 Accuracy 与 Macro-F1 对比}
   \label{fig:wine_cmp}
 \end{figure}
 
@@ -489,7 +500,15 @@ F1）对关键超参数进行寻优，各模型的搜索空间与最优结果见
 见表~\ref{tab:alexnet}，总参数量约 58.3M。其中卷积层负责逐级提取由边缘、纹理到语义部件的层次化
 特征，池化层逐步降低空间分辨率，全连接层完成最终的类别判别。每个卷积层后均接入\textbf{批归一化
 （BatchNorm）}以稳定各层输入分布、加速收敛；原始 AlexNet 使用的局部响应归一化（LRN）则作为对照
-在第~\ref{sec:ablation} 节单独消融。
+在第~\ref{sec:ablation} 节单独消融。网络整体结构与各层张量尺寸的演变如图~\ref{fig:alexnet_arch}
+所示，可与表~\ref{tab:alexnet} 的逐层参数相互对照。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{fig_alexnet_arch.png}
+  \caption{手写 AlexNet 网络结构示意}
+  \label{fig:alexnet_arch}
+\end{figure}
 
 \begin{table}[H]
   \centering
@@ -522,6 +541,18 @@ $\theta\leftarrow\theta+v$，动量项有助于加速收敛并抑制震荡；初
 共训练 \textbf{40 轮}，并对训练集施加\textbf{数据增强}（随机水平翻转 + 小角度旋转）以提升泛化能力，
 按验证集准确率保存最优模型。训练在单张 NVIDIA RTX 4090 GPU 上完成，约耗时半小时。这些设置并非
 随意选定，而是由第~\ref{sec:ablation} 节的组件对照实验逐一验证后确定（详见第五章的贡献消融分析）。
+
+项目二从数据准备到最终评估的完整流程如图~\ref{fig:train_pipeline} 所示，分为数据准备、模型训练、
+模型选择与最终评估可视化四个阶段：数据准备完成训练/验证/测试划分、Resize 与标准化；模型训练以
+手写 AlexNet 配合交叉熵损失、SGD-动量优化器与学习率调度推进；模型选择按验证集准确率保存最优权重；
+最终评估在测试集上计算 Accuracy 与 Macro-F1，并辅以混淆矩阵与 Grad-CAM 可视化。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_train_pipeline.png}
+  \caption{项目二 AlexNet 训练与评估流程}
+  \label{fig:train_pipeline}
+\end{figure}
 
 \subsection{模型评估}
 训练与验证过程的损失、准确率曲线见图~\ref{fig:fm_curves}。可见训练初期损失迅速下降、准确率快速
@@ -701,7 +732,7 @@ Ioffe 和 Szegedy, 2015）取代，表明其正则化收益有限，在小数据
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.72\textwidth]{improve_compare.png}
+  \includegraphics[width=0.85\textwidth]{fig_contrib.png}
   \caption{组件消融：充分训练、BatchNorm、数据增强对测试准确率的逐项贡献}
   \label{fig:improve}
 \end{figure}
