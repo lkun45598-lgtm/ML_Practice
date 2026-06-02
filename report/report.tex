@@ -416,6 +416,32 @@ F1）对关键超参数进行寻优，各模型的搜索空间与最优结果见
   \label{fig:wine_cmp}
 \end{figure}
 
+考虑到本任务\textbf{标签有序且类别不平衡}，仅凭准确率与宏 F1 难以全面刻画模型质量，因此进一步报告
+五项进阶指标（表~\ref{tab:wine_extra}）：\textbf{平衡准确率}（各类召回率的均值，抗类别不平衡）、
+\textbf{二次加权 Kappa（QWK）}（对“跨级”错误施以二次方惩罚的有序一致性指标）、\textbf{Cohen's Kappa}
+（排除随机猜测后的一致性）、\textbf{Matthews 相关系数（MCC）}（不平衡场景下稳健的综合相关度）与
+\textbf{宏平均 ROC-AUC}（一对其余 OvR，衡量概率排序质量）。
+
+\begin{table}[H]
+  \centering
+  \caption{四种模型的进阶评估指标（测试集）}
+  \label{tab:wine_extra}
+  \begin{tabular}{lccccc}
+    \toprule
+    模型 & 平衡准确率 & 二次加权 Kappa & Cohen's Kappa & MCC & 宏 ROC-AUC \\
+    \midrule
+    SVM        & 0.660 & 0.626 & 0.428 & 0.439 & 0.819 \\
+    决策树     & 0.644 & 0.566 & 0.451 & 0.452 & 0.729 \\
+    \textbf{随机森林} & \textbf{0.724} & \textbf{0.720} & \textbf{0.579} & \textbf{0.581} & \textbf{0.899} \\
+    逻辑回归   & 0.567 & 0.491 & 0.296 & 0.311 & 0.740 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+在全部五项进阶指标上随机森林\textbf{依然稳居第一}（尤以 QWK 0.720、宏 ROC-AUC 0.899 明显领先），
+说明其优势是跨“一致性—概率排序—抗不平衡”多维度的全面领先，而非某一指标的偶然；逻辑回归各项垫底，
+与其线性假设难以拟合理化指标到质量之间的非线性关系相符。
+
 由表~\ref{tab:wine_metric} 可见，随机森林在四项指标上全面领先，其次为决策树与 SVM，逻辑回归
 表现最差。为进一步分析最优模型，给出随机森林各类别的详细指标（表~\ref{tab:wine_rf}）及其混淆矩阵
 （图~\ref{fig:wine_rfcm}）。
@@ -568,7 +594,9 @@ $\theta\leftarrow\theta+v$，动量项有助于加速收敛并抑制震荡；初
 \end{figure}
 
 在 10000 张测试图像上，模型最终准确率为 \textbf{94.38\%}，宏平均精确率、召回率、F1 分别为
-0.9437、0.9438、0.9437。各类别详细指标见表~\ref{tab:fm_cls}，整体混淆情况见图~\ref{fig:fm_cm}。
+0.9437、0.9438、0.9437。除硬分类指标外，模型的\textbf{宏平均 ROC-AUC 高达 0.9972}，\textbf{Cohen's
+Kappa 与 MCC 均为 0.938}，表明其在概率排序质量与“排除随机猜测”的一致性上同样表现优异（10 类近乎
+均衡，故各项与准确率高度吻合）。各类别详细指标见表~\ref{tab:fm_cls}，整体混淆情况见图~\ref{fig:fm_cm}。
 
 \begin{table}[H]
   \centering
@@ -608,7 +636,7 @@ $\theta\leftarrow\theta+v$，动量项有助于加速收敛并抑制震荡；初
 15 轮仅是\textbf{对照用的短预算}，并非主模型的训练设置（主模型为 40 轮）。结果如表~\ref{tab:exp}
 与图~\ref{fig:exp} 所示。其中 SimpleCNN 为仅含 3 个卷积块的轻量网络（约 0.39M 参数，直接在
 $28\times28$ 原图上训练，重复 3 个随机种子取均值$\pm$标准差）；AlexNet 则分别测试了含 LRN 的版本、
-去掉 LRN 的版本，以及在该短预算下加入数据增强的版本。
+去掉 LRN 的版本，以及在该短预算下分别加入数据增强、标签平滑的版本。
 
 \begin{table}[H]
   \centering
@@ -622,6 +650,7 @@ $28\times28$ 原图上训练，重复 3 个随机种子取均值$\pm$标准差�
     AlexNet（基线：LRN，无增强）   & 58.3M & 0.9183 & 0.9179 \\
     \textbf{AlexNet（消融：去掉 LRN）} & 58.3M & \textbf{0.9247} & \textbf{0.9245} \\
     AlexNet（+ 数据增强）          & 58.3M & 0.9106 & 0.9103 \\
+    AlexNet（去 LRN + 标签平滑 $\epsilon=0.1$） & 58.3M & 0.9226 & 0.9224 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -650,6 +679,53 @@ Ioffe 和 Szegedy, 2015）取代，表明其正则化收益有限，在小数据
 交互正是本文据以确定主模型配置（BN + 数据增强 + 40 轮）的依据，也说明对照实验的价值在于厘清各组件
 的\textbf{适用条件}，而非简单地给出“某组件好/坏”的结论。
 
+（4）\textbf{标签平滑在短预算下未见增益}。在去 LRN 配置上加入标签平滑（$\epsilon=0.1$）后准确率为
+0.9226，较未加时的 0.9247 反而略降约 0.2 个百分点。这与数据增强的情形一致——标签平滑本质上也是一种
+正则化，在 15 轮的欠拟合区间内会拖慢收敛；它再次印证“正则化类组件的收益与训练是否充分强相关”，
+也说明\textbf{并非任何常见 trick 都能无条件带来提升}，这与下一章否证 Focal Loss 的结论一脉相承。
+
+\subsection{训练效率与计算复杂度}\label{sec:efficiency}
+除分类性能外，本节从\textbf{计算开销}的角度审视所实现的网络，并报告若干工程优化的实测效果。
+
+\textbf{（1）计算复杂度对照。}\ 表~\ref{tab:complexity} 对比了主模型 AlexNet（输入 $224\times224$）
+与轻量 SimpleCNN（输入 $28\times28$）的\textbf{参数量、单图浮点运算量（FLOPs）与推理延迟}。AlexNet 的
+参数量约为 SimpleCNN 的 \textbf{149 倍}、FLOPs 约 \textbf{135 倍}、CPU 单图推理延迟约 \textbf{10 倍}，
+而二者在 Fashion-MNIST 上的准确率却相近（第~\ref{sec:ablation} 节）。这从算力角度坐实了前文判断：
+\textbf{AlexNet 在该任务上存在显著的容量与计算冗余}，将 $28\times28$ 强行上采样到 $224\times224$ 又进一步
+放大了卷积层的无效计算；若以部署为目标，轻量网络是性价比更高的选择。
+
+\begin{table}[H]
+  \centering
+  \caption{AlexNet 与 SimpleCNN 的计算复杂度对照（batch=1，RTX 4090）}
+  \label{tab:complexity}
+  \begin{tabular}{lccccc}
+    \toprule
+    模型（输入） & 参数量 & FLOPs & GPU 延迟 & CPU 延迟 & 测试准确率$^\dagger$ \\
+    \midrule
+    AlexNet（$224^2$）  & 58.30\,M & 1063.5\,M & 0.77\,ms & 15.44\,ms & $\approx$0.918 \\
+    SimpleCNN（$28^2$） & 0.39\,M & 7.9\,M & 0.45\,ms & 1.50\,ms & $\approx$0.918 \\
+    \midrule
+    倍数（AlexNet / SimpleCNN） & $\times$149 & $\times$135 & $\times$1.7 & $\times$10.3 & --- \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent {\small $\dagger$：此处为\textbf{15 轮短预算}下两网络的对照精度（约 0.918，见表~\ref{tab:exp}）；
+AlexNet 主模型经 40 轮充分训练后可达 94.38\%。FLOPs 由 \texttt{thop} 统计单张前向的乘加次数。}
+
+\textbf{（2）混合精度（AMP）与 cuDNN 自动调优。}\ 引入 \texttt{torch.cuda.amp} 自动混合精度（前向与反向
+以半精度为主、关键处保留单精度，并用 \texttt{GradScaler} 防止梯度下溢），配合 \texttt{cudnn.benchmark}
+在固定输入尺寸下自动挑选最快卷积算法后，主配置下\textbf{每轮训练时间由约 12.2\,s 降至约 10.1\,s（提速
+约 1.2 倍、节省约 17\%）}，而测试准确率基本不变——半精度未带来可见精度损失。在更深的网络或更大批量下，
+该加速收益通常会更显著。
+
+\textbf{（3）早停（Early Stopping）。}\ 进一步引入基于验证集准确率的早停（耐心 $\text{patience}=5$）：当
+验证准确率连续 5 轮不再提升即终止训练。在主配置下，模型于\textbf{第 26 轮达到验证最优，第 31 轮触发
+早停}，相比固定 40 轮\textbf{节省约 22\% 的训练轮数}，对应测试准确率 93.61\%。可见早停以约 0.8 个百分点
+的精度为代价换取了可观的算力节省——这一差距源于余弦退火在最后若干轮（学习率趋近 0）仍能“精修”出
+少量提升。因此本文的\textbf{主模型仍采用完整 40 轮}以追求峰值精度（94.38\%），而早停可作为\textbf{算力
+受限场景下的高性价比选项}；二者的取舍取决于对“精度—算力”的偏好。
+
 \subsection{误差分析}
 由混淆矩阵（图~\ref{fig:fm_cm}）可见，AlexNet 的误差高度集中于四类\textbf{上装}——T恤、套衫、外套、
 衬衫之间。其中“衬衫”最难识别，其 1000 个测试样本中虽有 819 个被正确识别，仍有 72 个被误判为 T恤、
@@ -659,12 +735,63 @@ Ioffe 和 Szegedy, 2015）取代，表明其正则化收益有限，在小数据
 预测样例图（图~\ref{fig:fm_samples}）中的红色错误样本也大多集中于此类上装。由此可见，进一步提升性能的
 关键在于增强模型对细粒度纹理的判别能力，例如引入数据增强、更深的网络或注意力机制。
 
+\subsection{架构对照拓展：训练技巧的尽头与更优架构}\label{sec:arch}
+在完成课程规定的\textbf{手写 AlexNet}主体任务后，我们进一步追问：94.38\% 是否已是该任务的上限？
+为此先\textbf{穷尽训练侧的手段}——在主模型基础上叠加 MixUp、随机擦除、标签平滑并延长至 80 轮，测试
+准确率为 94.45\%；再施以测试时增强（TTA，水平翻转平均）与\textbf{三模型集成}，准确率最高也仅达
+\textbf{94.55\%}（相对主模型 $+0.17$ 个百分点）。各类正交训练技巧的\textbf{边际收益已基本耗尽}，这强烈
+提示：瓶颈或许\textbf{不在训练，而在架构本身}。
+
+事实上，AlexNet 是为 $224\times224$ 的自然图像设计的：本任务须将 $28\times28$ 灰度图\textbf{上采样 8 倍}
+（并不增加任何信息）、其 $11\times11$ 大卷积核与占据绝大部分参数的 $4096$ 维全连接层，对这一简单小图任务
+而言都\textbf{冗余}（详见第~\ref{sec:efficiency} 节）。为验证这一判断，我们\textbf{同样逐层手写}了一个
+小型残差网络（ResNet）作为对照：采用 $3\times3$ 小卷积核、\textbf{残差连接}缓解深层退化、\textbf{全局平均
+池化}替代巨大全连接层，并\textbf{直接在原生 $28\times28$ 上训练}（不做上采样），其余训练协议与 AlexNet
+主模型一致。
+
+\begin{table}[H]
+  \centering
+  \caption{手写 AlexNet 与手写小型 ResNet 的架构对照（Fashion-MNIST 测试集）}
+  \label{tab:arch}
+  \begin{tabular}{lcc}
+    \toprule
+    指标 & 手写 AlexNet（主模型） & 手写小型 ResNet（对照） \\
+    \midrule
+    输入分辨率 & $224\times224$（上采样 8 倍） & $28\times28$（原生） \\
+    参数量 & 58.30M & \textbf{2.78M}（约 1/21） \\
+    FLOPs（单图） & 1063.5M & \textbf{323.3M}（约 1/3.3） \\
+    测试准确率 & 94.38\% & \textbf{94.92\%} \\
+    验证最高准确率 & 94.57\% & \textbf{95.15\%} \\
+    宏平均 F1 & 0.9437 & \textbf{0.949} \\
+    Cohen's Kappa / MCC & 0.938 & \textbf{0.944} \\
+    “衬衫”类 F1（最难类） & 0.83 & \textbf{0.846} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{arch_compare.png}
+  \caption{架构对照：小型 ResNet 以约 1/21 的参数量反超 AlexNet}
+  \label{fig:arch}
+\end{figure}
+
+结果如表~\ref{tab:arch} 与图~\ref{fig:arch} 所示：小型 ResNet 在\textbf{每一项指标上均超过 AlexNet}
+（测试准确率 94.38\%$\to$94.92\%，测试误差相对降低约 10\%；连最难的“衬衫”类 F1 也由 0.83 升至 0.846），
+而其参数量仅为 AlexNet 的\textbf{约 1/21}、计算量约 1/3.3。这一对照\textbf{实证了前文判断}：限制性能的
+主要因素\textbf{是架构而非训练技巧或数据集天花板}——残差连接、全局平均池化与原生分辨率输入，使一个
+小得多的网络反而又快又准。需要强调的是，本拓展\textbf{并非以 ResNet 取代 AlexNet}：手写 AlexNet 仍是本
+项目的规定主体与分析对象，此处的对照旨在\textbf{从架构层面理解 AlexNet 的局限}，体现“知其然亦知其所以然”
+的探究态度。
+
 \subsection{本章小结}
 手写 AlexNet 经 BatchNorm + 余弦退火 + 数据增强充分训练后，在 Fashion-MNIST 上取得了 \textbf{94.38\%}
 的测试准确率，验证了所实现网络的正确性与有效性。从混淆矩阵与各类指标看，“裤子”“包”“凉鞋”“短靴”
 等形态独特的类别识别率接近完美（F1 $\ge 0.97$），而“衬衫”类仍是最易混淆者（F1 约 0.83），主要与
 “T恤”“套衫”“外套”相互误判——这些上装在低分辨率灰度图下轮廓与纹理高度相似，是 Fashion-MNIST
-公认的识别难点。各设计组件对该结果的具体贡献，将在第五章通过消融实验进一步定量剖析。
+公认的识别难点。各设计组件对该结果的具体贡献，将在第五章通过消融实验进一步定量剖析。此外，第~\ref{sec:arch}
+节的架构对照表明，在穷尽训练技巧（准确率最高 94.55\%）之后，改用手写小型 ResNet 即以约 1/21 的参数反超至
+94.92\%，揭示出限制 AlexNet 的根本在于其面向大图设计的架构与本任务的不匹配。
 
 % ===================== 第五章 核心创新 =====================
 \section{核心创新：误差驱动的针对性改进}
@@ -685,12 +812,12 @@ Ioffe 和 Szegedy, 2015）取代，表明其正则化收益有限，在小数据
   \centering
   \caption{有序回归改进与直接分类的对比}
   \label{tab:ordinal}
-  \begin{tabular}{lcccc}
+  \begin{tabular}{lccccc}
     \toprule
-    方法 & 准确率 & 宏平均 F1 & 严重误判数 & 有序 MAE \\
+    方法 & 准确率 & 宏平均 F1 & 二次加权 Kappa & 严重误判数 & 有序 MAE \\
     \midrule
-    直接分类（随机森林） & 0.7347 & 0.7336 & 7 & 0.2724 \\
-    \textbf{有序回归→分级} & \textbf{0.7571} & \textbf{0.7533} & \textbf{4} & \textbf{0.2469} \\
+    直接分类（随机森林） & 0.7347 & 0.7336 & 0.7200 & 7 & 0.2724 \\
+    \textbf{有序回归→分级} & \textbf{0.7571} & \textbf{0.7533} & \textbf{0.7411} & \textbf{4} & \textbf{0.2469} \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -702,8 +829,9 @@ Ioffe 和 Szegedy, 2015）取代，表明其正则化收益有限，在小数据
   \label{fig:ordinal}
 \end{figure}
 
-改进取得了全面提升：准确率由 0.7347 升至 0.7571，宏 F1 由 0.7336 升至 0.7533，尤其是\textbf{严重误判
-数由 7 降至 4}、有序 MAE 同步下降。这验证了“显式建模标签的有序性”这一改进思路的有效性，也体现了
+改进取得了全面提升：准确率由 0.7347 升至 0.7571，宏 F1 由 0.7336 升至 0.7533，\textbf{二次加权 Kappa
+由 0.7200 升至 0.7411}，尤其是\textbf{严重误判数由 7 降至 4}、有序 MAE 同步下降——QWK 的提升尤其说明
+改进恰好作用在“跨级错误”这一最该惩罚的维度上。这验证了“显式建模标签的有序性”这一改进思路的有效性，也体现了
 “从误差分析出发指导建模”的科学方法。
 
 \subsection{项目二的组件贡献消融：拆解 94.38\% 的来源}\label{sec:contrib}

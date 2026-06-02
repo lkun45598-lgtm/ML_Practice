@@ -111,7 +111,7 @@ def build_models():
     """返回 {模型名: (estimator, 参数网格)}；参数键用 clf__ 前缀以配合 Pipeline。"""
     return {
         "SVM": (
-            SVC(class_weight="balanced", probability=False),
+            SVC(class_weight="balanced", probability=True, random_state=42),
             {"clf__C": [1, 10], "clf__gamma": ["scale", 0.1], "clf__kernel": ["rbf"]},
         ),
         "决策树": (
@@ -148,20 +148,36 @@ def train_models(X_tr, y_tr):
 
 
 from sklearn.metrics import (accuracy_score, precision_recall_fscore_support,
-                             confusion_matrix, classification_report)
+                             confusion_matrix, classification_report,
+                             balanced_accuracy_score, cohen_kappa_score,
+                             matthews_corrcoef, roc_auc_score)
 
 
 def evaluate_models(models, X_te, y_te):
     """在测试集评估，画混淆矩阵与对比柱状图、特征重要性，返回指标表。"""
     set_chinese_font()
-    rows = []
+    rows, rows_extra = [], []
     for name, model in models.items():
         y_pred = model.predict(X_te)
         acc = accuracy_score(y_te, y_pred)
         p, r, f1, _ = precision_recall_fscore_support(
             y_te, y_pred, average="macro", zero_division=0)
         rows.append({"模型": name, "准确率": acc, "精确率": p, "召回率": r, "F1": f1})
+        # 进阶指标：面向“有序+不平衡”的更稳健评估
+        bacc = balanced_accuracy_score(y_te, y_pred)              # 平衡准确率（抗类别不平衡）
+        qwk = cohen_kappa_score(y_te, y_pred, weights="quadratic")  # 二次加权Kappa（有序专用，跨级重罚）
+        kappa = cohen_kappa_score(y_te, y_pred)                   # Cohen's Kappa（排除碰运气的一致性）
+        mcc = matthews_corrcoef(y_te, y_pred)                     # Matthews 相关系数（不平衡稳健）
+        try:
+            proba = model.predict_proba(X_te)
+            auc = roc_auc_score(y_te, proba, multi_class="ovr", average="macro")  # 宏平均ROC-AUC(OvR)
+        except Exception:
+            auc = float("nan")
+        rows_extra.append({"模型": name, "平衡准确率": bacc, "二次加权Kappa": qwk,
+                           "CohenKappa": kappa, "MCC": mcc, "宏ROC_AUC": auc})
         print(f"\n===== {name} =====")
+        print(f"  平衡准确率={bacc:.4f} 二次加权Kappa={qwk:.4f} CohenKappa={kappa:.4f} "
+              f"MCC={mcc:.4f} 宏ROC-AUC={auc:.4f}")
         print(classification_report(y_te, y_pred, target_names=CLASS_NAMES, zero_division=0))
         cm = confusion_matrix(y_te, y_pred)
         plt.figure(figsize=(5, 4))
@@ -173,7 +189,10 @@ def evaluate_models(models, X_te, y_te):
 
     metrics = pd.DataFrame(rows)
     metrics.to_csv(os.path.join(OUT_DIR, "metrics.csv"), index=False, encoding="utf-8-sig")
-    print("\n[评估] 指标汇总:\n", metrics.to_string(index=False))
+    extra = pd.DataFrame(rows_extra)
+    extra.to_csv(os.path.join(OUT_DIR, "metrics_extra.csv"), index=False, encoding="utf-8-sig")
+    print("\n[评估] 基础指标汇总:\n", metrics.to_string(index=False))
+    print("\n[评估] 进阶指标汇总:\n", extra.to_string(index=False))
 
     plt.figure(figsize=(8, 5))
     m = metrics.set_index("模型")[["准确率", "精确率", "召回率", "F1"]]
@@ -226,16 +245,17 @@ def ordinal_improvement(df, models, seed=42):
     def stat(pred):
         acc = (pred == true_cls).mean()
         f1 = f1_score(true_cls, pred, average="macro")
+        qwk = cohen_kappa_score(true_cls, pred, weights="quadratic")  # 有序专用一致性
         severe = int(np.sum(np.abs(pred - true_cls) == 2))   # 差↔好 严重误判
         mae = float(np.mean(np.abs(pred - true_cls)))         # 有序MAE
-        return acc, f1, severe, mae
+        return acc, f1, qwk, severe, mae
 
     rows = []
     for name, pred in [("直接分类(随机森林)", pred_clf), ("有序回归→分级", pred_reg)]:
-        acc, f1, sev, mae = stat(pred)
+        acc, f1, qwk, sev, mae = stat(pred)
         rows.append({"方法": name, "准确率": round(acc, 4), "宏F1": round(f1, 4),
-                     "严重误判数": sev, "有序MAE": round(mae, 4)})
-        print(f"[创新①] {name}: acc={acc:.4f} F1={f1:.4f} 严重误判={sev} MAE={mae:.4f}")
+                     "二次加权Kappa": round(qwk, 4), "严重误判数": sev, "有序MAE": round(mae, 4)})
+        print(f"[创新①] {name}: acc={acc:.4f} F1={f1:.4f} QWK={qwk:.4f} 严重误判={sev} MAE={mae:.4f}")
     pd.DataFrame(rows).to_csv(os.path.join(OUT_DIR, "ordinal_improvement.csv"),
                               index=False, encoding="utf-8-sig")
 

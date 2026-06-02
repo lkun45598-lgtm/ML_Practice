@@ -8,7 +8,8 @@ import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import (accuracy_score, precision_recall_fscore_support,
-                             confusion_matrix, classification_report)
+                             confusion_matrix, classification_report,
+                             cohen_kappa_score, matthews_corrcoef, roc_auc_score)
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.zh_font import set_chinese_font
@@ -41,15 +42,17 @@ def evaluate(device):
     model = AlexNet(num_classes=10, in_channels=1, use_bn=True).to(device)
     model.load_state_dict(torch.load(CKPT, map_location=device))
     model.eval()
-    ys, ps, sample_imgs, sample_meta = [], [], None, None
+    ys, ps, probs, sample_imgs, sample_meta = [], [], [], None, None
     for xb, yb in test_loader:
         out = model(xb.to(device))
+        prob = out.softmax(1).cpu()          # 各类后验概率，用于 ROC-AUC
         pred = out.argmax(1).cpu()
         if sample_imgs is None:
             sample_imgs = xb[:12].cpu()
             sample_meta = (yb[:12].tolist(), pred[:12].tolist())
-        ys.append(yb); ps.append(pred)
-    return torch.cat(ys).numpy(), torch.cat(ps).numpy(), sample_imgs, sample_meta
+        ys.append(yb); ps.append(pred); probs.append(prob)
+    return (torch.cat(ys).numpy(), torch.cat(ps).numpy(),
+            torch.cat(probs).numpy(), sample_imgs, sample_meta)
 
 
 def plot_samples(imgs, meta):
@@ -72,10 +75,14 @@ def main():
             f"未找到模型文件 {CKPT}，请先运行 `python train.py` 完成训练以生成 alexnet_best.pt。")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     plot_curves()
-    y_true, y_pred, imgs, meta = evaluate(device)
+    y_true, y_pred, y_prob, imgs, meta = evaluate(device)
     acc = accuracy_score(y_true, y_pred)
     p, r, f1, _ = precision_recall_fscore_support(y_true, y_pred, average="macro")
+    kappa = cohen_kappa_score(y_true, y_pred)                          # 一致性（排除碰运气）
+    mcc = matthews_corrcoef(y_true, y_pred)                            # Matthews 相关系数
+    auc = roc_auc_score(y_true, y_prob, multi_class="ovr", average="macro")  # 宏平均ROC-AUC(OvR)
     print(f"[评估] 测试集 acc={acc:.4f} 精确率={p:.4f} 召回率={r:.4f} F1={f1:.4f}")
+    print(f"[评估] 宏ROC-AUC={auc:.4f} CohenKappa={kappa:.4f} MCC={mcc:.4f}")
     print(classification_report(y_true, y_pred, target_names=CLASS_NAMES))
 
     cm = confusion_matrix(y_true, y_pred)
@@ -88,7 +95,8 @@ def main():
 
     plot_samples(imgs, meta)
     with open(os.path.join(OUT_DIR, "test_metrics.json"), "w") as f:
-        json.dump({"acc": acc, "precision": p, "recall": r, "f1": f1}, f)
+        json.dump({"acc": acc, "precision": p, "recall": r, "f1": f1,
+                   "roc_auc": float(auc), "kappa": float(kappa), "mcc": float(mcc)}, f)
     print(f"[评估] 图与指标已保存到 {OUT_DIR}")
 
 

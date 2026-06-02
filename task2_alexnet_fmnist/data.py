@@ -19,27 +19,31 @@ CLASS_NAMES = ["T恤", "裤子", "套衫", "连衣裙", "外套",
 _MEAN, _STD = (0.2860,), (0.3530,)
 
 
-def _make_tf(img_size, augment):
-    """构造变换；augment=True 时加入随机水平翻转与小角度旋转（仅用于训练集）。"""
+def _make_tf(img_size, augment, strong=False):
+    """构造变换；augment=True 加随机翻转+小角度旋转；strong=True 再加平移与随机擦除（仅训练集）。"""
     ops = []
     if img_size != 28:
         ops.append(transforms.Resize(img_size))
     if augment:
         ops += [transforms.RandomHorizontalFlip(),
                 transforms.RandomRotation(10)]
+        if strong:
+            ops.append(transforms.RandomAffine(0, translate=(0.1, 0.1)))
     ops += [transforms.ToTensor(), transforms.Normalize(_MEAN, _STD)]
+    if augment and strong:
+        ops.append(transforms.RandomErasing(p=0.25))   # 随机擦除：遮挡正则，强迫关注全局形态
     return transforms.Compose(ops)
 
 
 def get_loaders(batch_size=128, val_ratio=0.1, num_workers=4, subset=None,
-                seed=42, img_size=224, augment=False):
+                seed=42, img_size=224, augment=False, strong_aug=False):
     """返回 (train_loader, val_loader, test_loader)。
 
     img_size: 输入边长（AlexNet 用 224，SimpleCNN 用 28）。
     augment:  仅对训练集启用数据增强；验证集与测试集始终使用无增强变换。
     subset:   若给整数，仅取该数量样本用于冒烟测试。
     """
-    train_tf = _make_tf(img_size, augment)
+    train_tf = _make_tf(img_size, augment, strong=strong_aug)
     eval_tf = _make_tf(img_size, False)
     train_aug = datasets.FashionMNIST(DATA_DIR, train=True, download=True, transform=train_tf)
     train_eval = datasets.FashionMNIST(DATA_DIR, train=True, download=True, transform=eval_tf)

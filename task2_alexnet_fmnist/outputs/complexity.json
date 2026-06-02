@@ -1,0 +1,20 @@
+{
+  "AlexNet@224": {
+    "params_M": 58.302,
+    "flops_M": 1063.5,
+    "latency_gpu_ms": 0.765,
+    "latency_cpu_ms": 15.437
+  },
+  "SimpleCNN@28": {
+    "params_M": 0.391,
+    "flops_M": 7.9,
+    "latency_gpu_ms": 0.452,
+    "latency_cpu_ms": 1.496
+  },
+  "device": "cuda",
+  "ratio": {
+    "params": 149.1,
+    "flops": 134.6,
+    "latency_cpu": 10.3
+  }
+}
