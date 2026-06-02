@@ -225,7 +225,7 @@ def _to_cls(q):
 
 
 def ordinal_improvement(df, models, seed=42):
-    """核心创新点①：误差驱动改进——既然误差几乎全是“邻级混淆”，将质量视为有序变量，
+    """误差分析补充实验：既然误差主要集中在相邻等级，将质量视为有序变量，
     用“回归→分级”替代直接分类，并用“严重误判数(差↔好,跨2级)”与“有序MAE”验证改进。"""
     set_chinese_font()
     X = df.drop(columns=["quality"]).to_numpy()
@@ -255,7 +255,7 @@ def ordinal_improvement(df, models, seed=42):
         acc, f1, qwk, sev, mae = stat(pred)
         rows.append({"方法": name, "准确率": round(acc, 4), "宏F1": round(f1, 4),
                      "二次加权Kappa": round(qwk, 4), "严重误判数": sev, "有序MAE": round(mae, 4)})
-        print(f"[创新①] {name}: acc={acc:.4f} F1={f1:.4f} QWK={qwk:.4f} 严重误判={sev} MAE={mae:.4f}")
+        print(f"[有序对照] {name}: acc={acc:.4f} F1={f1:.4f} QWK={qwk:.4f} 严重误判={sev} MAE={mae:.4f}")
     pd.DataFrame(rows).to_csv(os.path.join(OUT_DIR, "ordinal_improvement.csv"),
                               index=False, encoding="utf-8-sig")
 
@@ -266,7 +266,7 @@ def ordinal_improvement(df, models, seed=42):
     for i, r in enumerate(rows):
         plt.text(i, r["严重误判数"] + 0.1, str(r["严重误判数"]), ha="center")
     plt.ylabel("严重误判数（差↔好，跨2级）")
-    plt.title("有序回归→分级 显著减少严重误判")
+    plt.title("有序回归→分级减少严重误判")
     plt.tight_layout(); plt.savefig(os.path.join(OUT_DIR, "ordinal_improvement.png"), dpi=150)
     plt.close()
     return rows
@@ -283,6 +283,6 @@ if __name__ == "__main__":
     models = train_models(X_tr, y_tr)
     print("[自检] 训练完成，模型数:", len(models))
     metrics = evaluate_models(models, X_te, y_te)
-    ordinal_improvement(df, models)            # 核心创新点①：误差驱动的有序改进
+    ordinal_improvement(df, models)            # 误差驱动的有序建模对照
     assert os.path.exists(os.path.join(OUT_DIR, "metrics.csv"))
     print("[完成] 任务① 全流程结束")

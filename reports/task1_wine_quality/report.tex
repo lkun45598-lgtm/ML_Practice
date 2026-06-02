@@ -1,0 +1,594 @@
+% !TEX program = xelatex
+% 任务一独立论文：白葡萄酒质量分类
+\documentclass[12pt,a4paper,fontset=fandol]{ctexart}
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{hyperref}
+\hypersetup{hidelinks}
+
+\captionsetup{font=small, labelsep=quad}
+\graphicspath{{./}{../../report/}{../../task1_ml_wine/outputs/}}
+\renewcommand{\arraystretch}{1.3}
+\setlength{\parindent}{2em}
+\setlength{\emergencystretch}{3em}
+\numberwithin{figure}{section}
+\numberwithin{table}{section}
+\numberwithin{equation}{section}
+\onehalfspacing
+\pagestyle{plain}
+
+\ctexset{
+  section/format = \zihao{4}\heiti\raggedright,
+  section/beforeskip = {1ex plus 0.2ex},
+  section/afterskip = {0.8ex plus 0.2ex},
+  subsection/format = \zihao{-4}\heiti\raggedright,
+  subsubsection/format = \zihao{-4}\kaishu\raggedright
+}
+
+\begin{document}
+
+% ===================== 封面 =====================
+\begin{titlepage}
+\centering
+\vspace*{1.5cm}
+{\Large 本科毕业论文（设计）}\\[1.5cm]
+{\Huge\bfseries 人工智能综合实训 II}\\[0.6cm]
+{\LARGE\bfseries 任务一实训论文}\\[1.5cm]
+{\Large\bfseries 基于传统机器学习的白葡萄酒质量分类研究}\\[2cm]
+{\large
+\renewcommand{\arraystretch}{1.7}
+\begin{tabular}{rl}
+\textbf{学\qquad 院：} & 人工智能与低空技术学院 \\
+\textbf{专\qquad 业：} & 人工智能 \\
+\textbf{小组成员：} & 雷正（202434610309）、蔡铭飞（202434610301）、 \\
+                    & 冼嘉谦（202434610326） \\
+\textbf{指导教师：} & 赵静 \\
+\textbf{提交日期：} & 2026 年 6 月 \\
+\end{tabular}}
+\vfill
+\end{titlepage}
+
+% ===================== 原创性声明 =====================
+\thispagestyle{empty}
+\begin{center}{\large\bfseries 华南农业大学本科毕业论文（设计）原创性声明}\end{center}
+\vspace{0.5em}
+\par 本人郑重声明：所呈交的毕业论文（设计），是本人在导师的指导下，独立进行研究工作所取得的成果。
+除文中已经注明引用的内容外，本论文不包含任何其他个人或集体已经发表或撰写过的作品成果。对本文的研究
+做出重要贡献的个人和集体，均已在文中以明确方式标明。本人完全意识到本声明的法律结果由本人承担。
+\vspace{1.2cm}
+\par\hfill 作者签名：\rule{3cm}{0.4pt}\qquad 日期：\quad\ 年\ \quad 月\ \quad 日\hspace{1cm}
+\vspace{2cm}
+
+\begin{center}{\large\bfseries 华南农业大学本科毕业论文（设计）使用授权声明}\end{center}
+\vspace{0.5em}
+\par 本人完全了解学校有关保留、使用毕业论文（设计）的规定，同意学校保留并向国家有关部门或机构送交
+毕业论文（设计）的复印件和电子版，允许毕业论文（设计）被查阅和借阅。学校可以将本毕业论文（设计）的
+全部或部分内容编入有关数据库进行检索，可以采用影印、缩印或扫描等复制手段保存和汇编毕业论文（设计）。
+\vspace{1.2cm}
+\par\hfill 作者签名：\rule{3cm}{0.4pt}\qquad 指导教师签名：\rule{3cm}{0.4pt}\hspace{1cm}
+\par\hfill 日期：\quad\ 年\ \quad 月\ \quad 日\qquad\quad 日期：\quad\ 年\ \quad 月\ \quad 日\hspace{1cm}
+\newpage
+
+% ===================== 摘要 =====================
+\begin{center}{\Large\bfseries 摘\quad 要}\end{center}
+\par 葡萄酒质量预测是结构化数据分类中的典型问题。本文以 UCI Wine Quality 数据集中的白葡萄酒子集为
+研究对象，将原始质量评分归并为“差”“中”“好”三类，围绕数据加载、探索性分析、预处理、模型构建、
+模型评估和结果分析完成完整机器学习流程。实验选取支持向量机、决策树、随机森林和逻辑回归四种代表性
+分类算法，并采用标准化流水线、五折交叉验证和网格搜索进行超参数选择。
+
+\par 实验结果表明，随机森林在测试集上取得较优表现，准确率为 73.47\%，宏平均 F1 为 0.7336；在平衡
+准确率、二次加权 Kappa、MCC 和宏平均 ROC-AUC 等进阶指标上也表现较好。进一步的混淆矩阵分析显示，
+模型误差主要集中于相邻质量等级之间，严重跨级误判较少。基于这一特点，本文补充采用“回归预测质量分
+再分级”的有序建模方式进行对照，结果显示宏平均 F1 由 0.7336 提升至 0.7533，严重跨级误判数由 7 降至
+4。整体来看，集成学习方法适合该类中小规模结构化数据分类任务，而显式关注标签顺序有助于改进质量
+等级预测的误差结构。
+
+\par\vspace{1ex}
+\noindent\textbf{关键词：}机器学习；白葡萄酒质量；支持向量机；随机森林；有序建模；多分类
+
+\newpage
+\begin{center}{\Large\bfseries Abstract}\end{center}
+\par Wine quality prediction is a representative structured-data classification problem. This paper studies the
+white wine subset of the UCI Wine Quality dataset. The original quality scores are merged into three classes:
+low, medium and high. A complete machine learning workflow is implemented, including data loading, exploratory
+analysis, preprocessing, model construction, model evaluation and result analysis. Four representative classifiers,
+including support vector machine, decision tree, random forest and logistic regression, are compared using a
+standardized pipeline, five-fold cross validation and grid search.
+
+\par The experimental results show that random forest achieves relatively better performance on the test set, with
+an accuracy of 73.47\% and a macro-F1 score of 0.7336. It also performs well on balanced accuracy, quadratic
+weighted Kappa, MCC and macro ROC-AUC. Further analysis of the confusion matrix indicates that most errors occur
+between adjacent quality levels, while severe cross-level errors are rare. Based on this observation, a
+regression-then-discretization strategy is evaluated as an additional ordinal modeling comparison. The macro-F1
+score increases from 0.7336 to 0.7533, and the number of severe cross-level errors decreases from 7 to 4. Overall,
+ensemble learning is suitable for this medium-sized structured-data classification task, and explicitly considering
+the order of labels helps improve the error structure of wine quality prediction.
+
+\par\vspace{1ex}
+\noindent\textbf{Keywords:} machine learning; white wine quality; support vector machine; random forest; ordinal modeling; multi-class classification
+
+\newpage
+\tableofcontents
+\newpage
+
+% ===================== 第一章 引言 =====================
+\section{引言}
+
+\subsection{研究背景与意义}
+结构化数据分类是机器学习应用中最常见的任务之一，广泛存在于食品质量评价、金融风险判断、医学辅助诊断
+和业务决策等场景。与图像、文本等非结构化数据不同，结构化数据通常由仪器测量、业务记录或人工标注得到，
+具有特征含义明确、维度相对有限、样本规模中等、噪声来源可解释等特点。对于这类数据，深度学习并不总是
+最优或最经济的选择，支持向量机、决策树、随机森林、逻辑回归等传统机器学习方法仍然具有训练成本低、调试
+方便、结果较易解释等优势。
+
+葡萄酒质量评价兼具实际应用价值和方法研究价值。在真实生产场景中，葡萄酒质量通常受到酸度、糖分、硫化物、
+密度、酒精度等多种理化因素影响，最终评分又带有一定主观性。若能够基于理化指标建立稳定的质量分级模型，
+可以辅助质量控制、产品筛选和生产工艺分析。Cortez 等(2009)整理的 Wine Quality 数据集将理化检测指标与
+质量评分对应起来，为研究化学属性与感官质量之间的统计关系提供了公开基准。
+
+该任务的难点在于，葡萄酒质量评分并不是完全离散、边界清晰的类别标签。一方面，数据集中样本主要集中在
+中间分值，极高和极低评分样本较少，类别分布不均衡会影响模型训练和评价；另一方面，质量评分具有天然顺序，
+相邻等级之间的误判和跨等级误判在实际含义上并不相同。若只采用总体准确率评价模型，容易忽略少数类别表现
+和误差等级距离。因此，本研究不仅比较多种传统分类模型的性能，还进一步引入宏平均 F1、二次加权 Kappa、
+有序 MAE 和严重跨级误判数等指标，从误差结构角度讨论质量分级模型的适用性。
+
+从实训和研究方法角度看，白葡萄酒质量分类任务能够覆盖结构化数据建模的完整流程，包括数据读取与查看、
+探索性分析、标签构造、标准化、交叉验证、模型选择、测试集评价和结果解释。通过该任务，可以较系统地理解
+传统机器学习在中小规模结构化数据上的建模思路，并分析不同模型在可解释性、泛化能力和错误类型上的差异。
+
+\subsection{国内外研究现状}
+围绕结构化分类任务，国内外研究已经形成了较成熟的方法体系。周志华(2016)从监督学习、模型选择和泛化能力
+等角度系统总结了传统机器学习方法，为结构化数据分类提供了基础理论框架。逻辑回归作为广义线性模型的代表，
+具有参数含义清晰、训练效率高等特点，常用于建立可解释的分类基线。支持向量机由 Cortes 和 Vapnik(1995)
+提出，通过最大间隔原则提高分类器泛化能力，并可借助核函数刻画非线性边界，在中小规模数据集上具有较强
+竞争力。
+
+树模型及其集成方法是结构化数据建模中的重要方向。单棵决策树能够形成较直观的特征划分规则，但对训练样本
+扰动较敏感，容易产生较高方差。Breiman(2001)提出随机森林，通过 Bootstrap 采样、随机特征选择和多树投票
+降低方差，在表格数据任务中具有较好的稳定性。此后，梯度提升树进一步通过逐步拟合残差提升预测能力，
+XGBoost 和 LightGBM 等方法在工程效率和预测性能方面得到广泛应用。由于本文重点在于比较典型传统分类器并
+完成完整建模流程，实验主体选择了逻辑回归、支持向量机、决策树和随机森林，其中随机森林兼具非线性表达和
+一定可解释性，适合与葡萄酒理化指标任务相结合。
+
+葡萄酒质量预测方面，Cortez 等(2009)以红葡萄酒和白葡萄酒理化检测数据为基础，研究了数据挖掘方法对感官
+偏好建模的可行性。该数据集被广泛用于分类、回归、特征重要性分析和模型比较。已有研究通常关注理化指标与
+质量评分之间的统计关联，其中酒精度、挥发性酸度、密度等变量常被认为与质量判断关系较密切。由于原始质量
+分值集中在少数等级，直接进行多分值分类容易受到少数类样本不足影响，因此不少实验会将原始评分合并为二类
+或三类，以获得更稳定的训练和评价结果。
+
+类别不平衡和有序标签是该任务中需要重点处理的两个问题。He 和 Garcia(2009)指出，不平衡学习中总体准确率
+可能掩盖少数类别识别效果，因此需要结合平衡准确率、F1、MCC 等指标进行评价。另一方面，McCullagh(1980)
+提出的有序回归思想强调类别之间存在顺序关系时，模型和评价指标应区分不同等级距离的误差。葡萄酒质量评分
+从低到高具有明确次序，将其完全视为无序类别会弱化相邻误判与严重跨级误判之间的差异。因此，本文在常规
+三分类实验之外补充有序回归分级对照，并引入二次加权 Kappa 和严重误判数，以更贴合质量分级任务的实际语义。
+
+\subsection{研究内容与分工}
+本文围绕白葡萄酒质量三分类任务开展实验研究，主要工作包括：数据集加载与查看、质量评分三分类标签构造、
+特征标准化与分层划分、四种传统机器学习模型训练、测试集指标评价、混淆矩阵与特征重要性分析，以及基于
+误差结构的有序建模补充实验。小组成员分工如表~\ref{tab:team} 所示。
+
+\begin{table}[H]
+  \centering
+  \caption{小组成员分工表}
+  \label{tab:team}
+  \begin{tabular}{>{\centering\arraybackslash}m{3cm} >{\centering\arraybackslash}m{2cm} m{8cm}}
+    \toprule
+    学号 & 姓名 & 主要分工 \\
+    \midrule
+    202434610309 & 雷正 & 数据预处理、传统机器学习建模、调参与评估 \\
+    202434610301 & 蔡铭飞 & 结果复核、代码整理与实验复现支持 \\
+    202434610326 & 冼嘉谦 & 数据可视化、论文整理、PPT 制作与汇报 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ===================== 第二章 理论基础与实验设计 =====================
+\section{理论基础与实验设计}
+
+\subsection{监督学习与多分类问题}
+监督学习是在带标签训练集上学习从输入空间到输出空间的映射：
+\begin{equation}
+D=\{(\mathbf{x}_i,y_i)\}_{i=1}^{N},\qquad f:\mathcal{X}\rightarrow\mathcal{Y}.
+\end{equation}
+当标签取离散值时，该任务为分类问题。本文将白葡萄酒质量评分转化为三分类标签，即低质量、中等质量和高
+质量。模型学习的目标是在训练数据上最小化损失函数，并在独立测试集上取得良好的泛化性能。
+
+从经验风险最小化角度看，分类模型通常通过训练样本上的平均损失近似总体风险：
+\begin{equation}
+\hat{f}=\arg\min_{f\in\mathcal{F}}\frac{1}{N}\sum_{i=1}^{N}L\bigl(f(\mathbf{x}_i),y_i\bigr)+\lambda\Omega(f),
+\end{equation}
+其中 $L(\cdot)$ 表示分类损失，$\Omega(f)$ 表示模型复杂度约束，$\lambda$ 用于平衡拟合能力与泛化能力。
+白葡萄酒质量分级的特殊性在于，标签虽然被处理为三类，但类别之间仍具有低、中、高的自然顺序。因而，
+模型评价不能只关注预测是否完全相同，还应关注错误发生在相邻等级还是跨越两个等级。
+
+此外，原始评分分布集中在中间等级，极端等级样本较少。如果只使用总体准确率，模型可能偏向多数类别而忽视
+两端类别的识别效果。本文将宏平均 F1 作为模型选择的主要目标，是因为该指标先分别计算每个类别的 F1，
+再对类别取平均，能够减弱类别样本数差异对评价结果的影响。测试阶段进一步报告平衡准确率、MCC 和
+二次加权 Kappa，也是为了从不同角度刻画模型在不平衡、有序多分类任务中的表现。
+
+\subsection{标准化、交叉验证与模型选择}
+白葡萄酒数据集中各理化指标量纲不同，例如残糖、二氧化硫、密度和酒精度的数值范围差异较大。对于 SVM 和
+逻辑回归等依赖距离或线性权重优化的模型，如果不进行标准化，尺度较大的特征会在优化过程中占据更高权重，
+从而影响模型参数估计。本文采用 \texttt{StandardScaler} 对特征进行零均值、单位方差变换：
+\begin{equation}
+x'=\frac{x-\mu}{\sigma}.
+\end{equation}
+
+为避免数据泄漏，标准化步骤被封装在 scikit-learn 的 \texttt{Pipeline} 中，并与分类器一同参与交叉验证。
+也就是说，每一折验证时，标准化参数只由该折训练部分估计，验证部分不参与均值和方差计算。超参数选择采用
+五折交叉验证和网格搜索，优化目标设为宏平均 F1。最终模型只在训练集上完成选择和拟合，测试集仅用于最后
+一次独立评价，以保证结果分析具有较清晰的验证边界。
+
+\subsection{模型方法}
+本文选取四种典型分类算法进行比较：
+\begin{itemize}[leftmargin=2.2em]
+  \item \textbf{支持向量机（SVM）}：通过最大化分类间隔提高泛化能力，本文采用 RBF 核函数处理非线性关系。
+  \item \textbf{决策树}：通过特征划分形成树状分类规则，具有较好的可解释性。
+  \item \textbf{随机森林}：通过组合多棵决策树降低方差，在结构化数据任务中表现稳定。
+  \item \textbf{逻辑回归}：作为线性分类基线，用于检验理化指标与质量等级之间是否存在较强非线性关系。
+\end{itemize}
+
+支持向量机的基本思想是在特征空间中寻找间隔最大的分类超平面。对于线性不可分数据，核函数可以在不显式构造
+高维特征的情况下度量样本相似度。本文使用的 RBF 核具有较强的非线性表达能力，适合处理理化指标与质量等级
+之间可能存在的非线性边界，但其性能对 $C$ 和 $\gamma$ 等超参数较敏感。
+
+决策树通过递归划分特征空间建立分类规则。该方法可解释性较强，能够直观显示某些理化指标在不同阈值下对类别
+划分的作用，但单棵树容易受到训练样本扰动影响，深度过大时也容易过拟合。随机森林在决策树基础上引入
+Bootstrap 采样和随机特征子集，多棵树的投票结果能够降低单棵树的方差，因此在中小规模表格数据上通常具有
+更稳定的泛化表现。逻辑回归则以线性决策边界作为基线模型，其结果可以帮助判断该任务是否主要依赖简单线性
+关系；若逻辑回归表现明显偏低，通常意味着需要非线性模型捕捉更复杂的特征组合。
+
+\subsection{评价指标}
+为全面评价模型表现，本文采用准确率、宏平均精确率、宏平均召回率和宏平均 F1 作为基础指标。考虑到类别
+分布不均衡和质量等级具有顺序关系，进一步引入平衡准确率、二次加权 Kappa、Cohen's Kappa、MCC 和宏平均
+ROC-AUC 等进阶指标。其中，二次加权 Kappa 对跨级误判惩罚更高，适合分析有序标签场景。
+
+准确率表示所有样本中预测正确的比例，适合反映总体分类水平。对类别 $c$ 而言，精确率、召回率和 F1 可写为：
+\begin{equation}
+P_c=\frac{TP_c}{TP_c+FP_c},\qquad
+R_c=\frac{TP_c}{TP_c+FN_c},\qquad
+F1_c=\frac{2P_cR_c}{P_c+R_c}.
+\end{equation}
+宏平均指标对各类别结果直接取平均，使少数类别也能在总体评价中占有相同权重。平衡准确率本质上是各类别召回率
+的平均值，能够观察模型是否只偏向样本数较多的类别。MCC 综合考虑混淆矩阵中的四类统计量，在类别不均衡场景下
+比单纯准确率更稳定。Cohen's Kappa 衡量预测结果与真实标签的一致性，并扣除随机一致的影响；二次加权 Kappa
+进一步按照类别距离设置惩罚权重，因此更适合低、中、高这类有序标签。宏平均 ROC-AUC 则从阈值变化角度评价
+模型的类别区分能力，可作为概率输出质量的补充参考。
+
+% ===================== 第三章 数据集与预处理 =====================
+\section{数据集与预处理}
+
+\subsection{数据集来源}
+本文采用 UCI 机器学习仓库公开的 \href{https://archive.ics.uci.edu/dataset/186/wine+quality}{Wine Quality Data Set}
+中的白葡萄酒子集。该子集共 4898 个样本，每个样本包含 11 个理化指标和一个质量评分标签。主要特征包括
+固定酸度、挥发性酸度、柠檬酸、残糖、氯化物、游离二氧化硫、总二氧化硫、密度、pH 值、硫酸盐和酒精度。
+这些变量均来自理化检测结果，具有明确的物理或化学含义。与人工主观评分相比，理化指标更容易通过仪器稳定
+测量，因此适合作为质量分级模型的输入特征。需要注意的是，理化指标能够反映葡萄酒质量的部分侧面，但并不能
+完全替代真实品鉴过程中的香气、口感和风格偏好。因此，本文的建模目标更准确地说是基于可观测理化指标对质量
+等级进行统计预测，而不是给出完整的感官评价结论。
+
+\subsection{数据查看}
+实验首先对数据进行描述性统计、缺失值检查和质量评分分布分析。结果显示，数据集中无缺失值，原始质量
+评分主要集中在 5、6、7 三档，极高或极低评分样本较少。图~\ref{fig:quality-dist} 给出了质量评分分布，
+图~\ref{fig:corr} 给出了特征相关性热力图。
+
+质量评分分布说明，该数据集存在明显的中间等级集中现象。如果直接预测原始整数评分，部分少数分值的训练样本
+不足，容易导致模型对极端评分学习不充分。相关性热力图显示，部分特征之间存在较强相关关系，例如密度与残糖、
+酒精度等变量之间具有一定关联。这一现象提示模型需要处理特征间的联合影响，单一变量很难完全解释质量等级。
+因此，本文在建模时同时保留全部 11 个理化指标，并通过不同模型比较其非线性组合能力。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.58\textwidth]{eda_quality_dist.png}
+  \caption{白葡萄酒质量评分分布}
+  \label{fig:quality-dist}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{eda_corr_heatmap.png}
+  \caption{理化指标相关性热力图}
+  \label{fig:corr}
+\end{figure}
+
+\subsection{标签构造与数据划分}
+原始质量评分为 0--10 的整数，但实际样本集中主要分布在 5、6、7 分附近。若直接进行多类别分类，少数评分
+类别样本过少，模型训练和评价均不稳定。因此，本文结合数据分布与质量分级语义，将评分归并为三类：
+\begin{equation}
+y=
+\begin{cases}
+0,&q\le 5,\\
+1,&q=6,\\
+2,&q\ge 7.
+\end{cases}
+\end{equation}
+其中 0、1、2 分别对应“差”“中”“好”。数据集按 80/20 进行分层划分，保证训练集和测试集中的类别比例基本一致。
+标准化操作封装在 scikit-learn 的 \texttt{Pipeline} 中，使 \texttt{StandardScaler} 只在每个训练折内拟合，
+避免交叉验证中的数据泄漏。
+
+上述分级方式兼顾了类别可学习性和任务解释性。将 $q\le5$ 归为较低质量，可以覆盖低于主流评分的样本；将
+$q=6$ 单独作为中等质量，是因为该分值在数据集中占比较高且处于质量判断的中心区域；将 $q\ge7$ 归为较高质量，
+则对应整体表现更好的样本。三分类标签虽然降低了原始评分的细粒度，但能够减少少数类别过稀带来的评估波动，
+也更符合实际质量筛选中“较差、一般、较好”的分级需求。分层划分保证测试集中仍保留三类样本的近似比例，
+使混淆矩阵和宏平均指标具有可比较性。
+
+% ===================== 第四章 模型建立与实验结果 =====================
+\section{模型建立与实验结果}
+
+\subsection{训练设置}
+四种模型均采用五折交叉验证和网格搜索进行超参数选择，优化目标为宏平均 F1。各模型搜索空间如表~\ref{tab:grid}
+所示。
+
+参数网格的设置遵循“覆盖主要复杂度变化、避免过大搜索成本”的原则。SVM 重点搜索惩罚系数 $C$ 和 RBF 核参数
+$\gamma$，前者控制间隔约束与训练误差之间的权衡，后者影响样本相似度的局部性。决策树和随机森林主要搜索树深度、
+叶子节点样本数和树数量，以控制过拟合与集成稳定性。逻辑回归搜索正则化强度，用于确定线性基线在不同约束下的
+最佳表现。由于本文比较的重点是模型类型和误差结构，而非极限刷分，参数范围保持相对克制，以便结果分析更加清晰。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_ml_pipeline.png}
+  \caption{任务一传统机器学习建模流程}
+  \label{fig:ml-pipeline}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \caption{模型超参数搜索空间与最优结果}
+  \label{tab:grid}
+  \begin{tabular}{lll}
+    \toprule
+    模型 & 搜索空间 & 最优参数 \\
+    \midrule
+    SVM & $C\in\{1,10\}$，$\gamma\in\{\mathrm{scale},0.1\}$ & $C=10$，$\gamma=0.1$ \\
+    决策树 & 最大深度 $\in\{\mathrm{None},10,20\}$，叶子样本 $\in\{1,5\}$ & 深度 None，叶子样本 1 \\
+    随机森林 & 树数 $\in\{200,400\}$，最大深度 $\in\{\mathrm{None},20\}$ & 树数 200，深度 20 \\
+    逻辑回归 & $C\in\{0.5,1,10\}$ & $C=0.5$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{基础指标结果}
+四种模型在测试集上的基础指标如表~\ref{tab:metric} 所示。随机森林在准确率、精确率、召回率和宏平均 F1 上
+均取得较好结果，说明集成学习能够较好拟合理化指标与质量等级之间的非线性关系。
+
+\begin{table}[H]
+  \centering
+  \caption{四种模型的基础评估指标（测试集）}
+  \label{tab:metric}
+  \begin{tabular}{lcccc}
+    \toprule
+    模型 & 准确率 & 精确率 & 召回率 & 宏平均 F1 \\
+    \midrule
+    SVM & 0.617 & 0.616 & 0.660 & 0.622 \\
+    决策树 & 0.650 & 0.647 & 0.644 & 0.645 \\
+    \textbf{随机森林} & \textbf{0.735} & \textbf{0.748} & \textbf{0.723} & \textbf{0.734} \\
+    逻辑回归 & 0.522 & 0.524 & 0.567 & 0.520 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.78\textwidth]{model_compare.png}
+  \caption{四种模型测试集指标对比}
+  \label{fig:model-compare}
+\end{figure}
+
+从模型对比看，逻辑回归的准确率和宏平均 F1 均最低，说明理化指标与三类质量标签之间并非简单线性可分。SVM
+借助 RBF 核能够表达非线性边界，但在本实验中整体性能仍低于树模型，可能与质量等级边界模糊、特征间存在复杂
+交互以及类别分布不均衡有关。单棵决策树相比逻辑回归和 SVM 有一定提升，但其划分规则受局部样本影响较大，
+泛化稳定性有限。随机森林通过多棵树集成缓解了单树方差问题，在四项基础指标上均取得最高值，说明其更适合
+处理该数据集中理化指标之间的非线性组合关系。
+
+同时，随机森林准确率为 0.7347，宏平均 F1 为 0.7336，两者较为接近，说明模型并非仅依赖某个多数类别获得
+较高准确率，而是在三个类别上保持了相对均衡的识别能力。不过，该结果也表明任务本身仍有明显难度：质量评分
+受到感官主观性和潜在未观测因素影响，仅依赖 11 个理化指标难以完全区分所有边界样本。因此，后续分析需要结合
+混淆矩阵和有序误差，而不能只依据总体准确率判断模型表现。
+
+\subsection{进阶指标结果}
+表~\ref{tab:extra} 给出了进阶评估指标。随机森林在平衡准确率、二次加权 Kappa、MCC 和宏平均 ROC-AUC 等指标上
+也取得最高结果，说明其优势不仅体现在总体准确率上，也体现在有序一致性和不平衡鲁棒性等方面。
+
+\begin{table}[H]
+  \centering
+  \caption{四种模型的进阶评估指标（测试集）}
+  \label{tab:extra}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lccccc}
+    \toprule
+    模型 & 平衡准确率 & 二次加权 Kappa & Cohen's Kappa & MCC & 宏 ROC-AUC \\
+    \midrule
+    SVM & 0.660 & 0.626 & 0.428 & 0.439 & 0.819 \\
+    决策树 & 0.644 & 0.566 & 0.451 & 0.452 & 0.729 \\
+    \textbf{随机森林} & \textbf{0.723} & \textbf{0.720} & \textbf{0.579} & \textbf{0.581} & \textbf{0.899} \\
+    逻辑回归 & 0.567 & 0.491 & 0.296 & 0.311 & 0.740 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+平衡准确率结果进一步说明，随机森林对不同类别的召回能力较为均衡。二次加权 Kappa 达到 0.720，表示预测结果
+与真实等级之间具有较好的一致性，并且严重跨级误判相对较少。MCC 为 0.581，说明模型预测与真实标签之间存在
+较稳定的相关关系，但仍未达到完全可靠的程度。宏平均 ROC-AUC 为 0.899，说明随机森林输出的类别概率具有较好
+排序能力，即使某些样本最终类别判断错误，模型仍能在概率层面对类别进行相对有效的区分。相比之下，决策树的
+ROC-AUC 仅为 0.729，提示单树概率估计和边界稳定性均较弱。
+
+\subsection{随机森林模型分析}
+随机森林各类别指标如表~\ref{tab:rf-class} 所示。模型对“差”和“好”两端类别的精确率较高，而“中”类样本
+与相邻等级边界较模糊，分类难度相对更高。
+
+\begin{table}[H]
+  \centering
+  \caption{随机森林各类别精确率、召回率和 F1}
+  \label{tab:rf-class}
+  \begin{tabular}{lcccc}
+    \toprule
+    类别 & 精确率 & 召回率 & F1 & 样本数 \\
+    \midrule
+    差（$\le 5$） & 0.78 & 0.73 & 0.76 & 328 \\
+    中（$=6$） & 0.69 & 0.77 & 0.73 & 440 \\
+    好（$\ge 7$） & 0.77 & 0.67 & 0.72 & 212 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.55\textwidth]{cm_随机森林.png}
+  \caption{随机森林混淆矩阵}
+  \label{fig:rf-cm}
+\end{figure}
+
+随机森林的特征重要性如图~\ref{fig:rf-imp} 所示。酒精度、密度和挥发性酸度对质量等级判别贡献较大，这与
+相关性分析结果基本一致。
+
+从各类别指标看，“差”类 F1 为 0.76，“中”类 F1 为 0.73，“好”类 F1 为 0.72，三类之间差距不大，但召回率
+分布存在差异。中等质量样本召回率较高，说明模型较容易将边界不明确的样本归入中间等级；较高质量样本召回率
+相对偏低，说明部分高质量样本会被预测为中等质量。这种现象与数据分布和评分语义一致：中间等级样本数量更多，
+且很多理化指标处于连续变化状态，导致“中”和“好”之间不存在清晰的硬边界。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{rf_feature_importance.png}
+  \caption{随机森林特征重要性排序}
+  \label{fig:rf-imp}
+\end{figure}
+
+特征重要性排序可作为模型解释的参考，但不应被理解为严格因果关系。酒精度较高的重要性说明其在树模型划分中
+经常提供有效信息；密度与残糖、酒精度等变量存在关联，因此在区分不同质量等级时也可能发挥作用；挥发性酸度
+通常与不良风味相关，其重要性较高也符合葡萄酒质量判断的常识。由于随机森林重要性会受到特征相关性的影响，
+当多个变量携带相近信息时，重要性可能在相关特征之间分散。因此，本文将其作为解释模型判别依据的辅助结果，
+而不是对理化机制作绝对判断。
+
+% ===================== 第五章 误差分析与补充实验 =====================
+\section{误差分析与补充实验}
+
+\subsection{邻级混淆现象}
+进一步分析随机森林混淆矩阵可以发现，模型错误主要集中于“差”和“中”、“中”和“好”之间，而“差”和“好”
+之间的严重跨级误判较少。这说明质量等级边界具有模糊性，模型较难区分相邻等级，但整体上能够保持较好的
+有序一致性。
+
+这种邻级混淆具有明确的任务含义。对于葡萄酒质量评分而言，从 5 分到 6 分、从 6 分到 7 分的差异往往对应
+若干理化指标和感官因素的综合变化，边界样本在特征空间中可能相互重叠。相较之下，将低质量样本误判为高质量
+或将高质量样本误判为低质量，会带来更大的业务风险。随机森林严重跨级误判较少，说明模型虽然无法完全解决
+相邻等级边界问题，但在质量等级的整体排序方向上具有一定稳定性。也正因为如此，单纯三分类准确率不足以完整
+描述模型价值，有必要引入有序评价指标和补充实验。
+
+\subsection{有序回归分级对照}
+由于葡萄酒质量评分具有天然顺序，本文补充采用“回归预测连续质量分，再按阈值分级”的方式进行对照。评价
+指标除准确率和宏平均 F1 外，还引入严重误判数和有序 MAE。结果如表~\ref{tab:ordinal} 和图~\ref{fig:ordinal}
+所示。
+
+\begin{table}[H]
+  \centering
+  \caption{直接分类与有序回归分级的对比}
+  \label{tab:ordinal}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lccccc}
+    \toprule
+    方法 & 准确率 & 宏平均 F1 & 二次加权 Kappa & 严重误判数 & 有序 MAE \\
+    \midrule
+    直接分类（随机森林） & 0.7347 & 0.7336 & 0.7200 & 7 & 0.2724 \\
+    \textbf{有序回归→分级} & \textbf{0.7571} & \textbf{0.7533} & \textbf{0.7411} & \textbf{4} & \textbf{0.2469} \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.52\textwidth]{ordinal_improvement.png}
+  \caption{有序回归分级减少严重误判}
+  \label{fig:ordinal}
+\end{figure}
+
+结果显示，有序回归分级在多项指标上取得提升，尤其是严重跨级误判数由 7 降至 4。这说明在质量等级具有
+自然顺序的场景中，将标签有序性纳入建模和评价过程具有实际意义。
+
+有序回归分级的改进并不意味着常规分类方法失效，而是说明该任务中“类别距离”包含了有用信息。直接分类把
+“差、中、好”视为三个相互独立的标签，模型优化时不会显式区分相邻误判和跨级误判；回归再分级则先预测连续
+质量分，再根据阈值映射到等级，因此天然保留了评分从低到高的顺序结构。其准确率由 0.7347 提升至 0.7571，
+宏平均 F1 由 0.7336 提升至 0.7533，有序 MAE 也有所下降，说明该策略对边界样本具有一定缓和作用。
+不过，该对照仍属于较基础的有序建模尝试，结论应限定在当前数据划分和模型配置下。若要进一步确认稳定性，
+还需要多随机种子重复实验，并比较专门的有序分类模型。
+
+% ===================== 第六章 实验复现说明 =====================
+\section{实验复现说明}
+
+\subsection{代码结构}
+任务一源代码和主要输出文件如表~\ref{tab:code} 所示。
+\begin{table}[H]
+  \centering
+  \caption{任务一源代码与输出文件说明}
+  \label{tab:code}
+  \begin{tabular}{ll}
+    \toprule
+    文件 & 功能 \\
+    \midrule
+    wine\_quality.py & 数据下载、EDA、预处理、四模型训练与评估 \\
+    metrics.csv & 四种模型基础评估指标 \\
+    metrics\_extra.csv & 平衡准确率、Kappa、MCC、ROC-AUC 等进阶指标 \\
+    ordinal\_improvement.csv & 有序回归分级对照结果 \\
+    model\_compare.png & 模型指标对比图 \\
+    cm\_随机森林.png & 随机森林混淆矩阵 \\
+    rf\_feature\_importance.png & 随机森林特征重要性图 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{运行步骤}
+在项目根目录下执行以下命令即可复现实验结果：
+\begin{quote}
+{\small\ttfamily python task1\_ml\_wine/wine\_quality.py}
+\end{quote}
+脚本会自动下载数据集，完成探索性分析、标签构造、模型训练、网格搜索、测试集评估和图表输出，结果保存至
+\texttt{task1\_ml\_wine/outputs/}。
+
+% ===================== 第七章 结论与展望 =====================
+\section{结论与展望}
+
+\subsection{结论}
+本文围绕白葡萄酒质量三分类任务完成了传统机器学习建模与误差分析。实验表明，随机森林在四种模型中表现
+较优，测试集准确率为 0.7347，宏平均 F1 为 0.7336。结合进阶指标和混淆矩阵可知，随机森林不仅在总体
+分类性能上较好，也能保持较高的有序一致性。模型主要错误集中在相邻质量等级之间，说明质量等级边界具有
+一定模糊性。补充的有序回归分级实验进一步说明，显式关注质量评分顺序有助于减少严重跨级误判。
+
+从方法层面看，本文实验体现了结构化数据分类中几个关键问题：第一，标准化、分层划分和交叉验证是保证评价
+可靠性的基础；第二，面对类别分布不均衡和标签有序性，仅报告准确率会遗漏重要误差信息；第三，随机森林等
+集成模型在中小规模表格数据上具有较好的稳定性和解释辅助能力。通过基础模型比较、进阶指标评价和有序补充实验，
+本文较完整地展示了白葡萄酒质量分级任务的建模流程和误差特点。
+
+\subsection{不足与展望}
+本文仍存在一些不足。首先，实验只比较了四种传统模型，后续可加入 XGBoost、LightGBM 等梯度提升方法；
+其次，类别不平衡只通过类别权重和分层划分进行处理，后续可系统比较 SMOTE 等重采样策略；最后，有序回归
+分级实验仍较基础，后续可进一步使用专门的有序分类模型和多随机种子重复实验验证结论稳定性。
+
+此外，特征解释仍主要依赖随机森林内置重要性，后续可以结合置换重要性、SHAP 等方法分析不同理化指标对预测
+结果的边际影响。数据层面也可以进一步引入更多酿造工艺、产区、年份和感官描述信息，以弥补单纯理化指标对
+质量判断解释不足的问题。若面向实际质量控制场景，还应结合误判成本设置不同阈值，例如对高质量样本筛选任务
+更关注精确率，对问题批次预警任务更关注召回率，从而使模型评价与应用目标更加一致。
+
+% ===================== 参考文献 =====================
+\section*{参考文献}
+\addcontentsline{toc}{section}{参考文献}
+{\setlength{\parindent}{0pt}
+\newcommand{\refentry}[1]{\par\hangindent=2em\hangafter=1 #1\vspace{3pt}}
+\refentry{周志华. 机器学习[M]. 北京: 清华大学出版社, 2016: 23-200.}
+\refentry{Breiman L. Random forests[J]. Machine Learning, 2001, 45(1): 5-32.}
+\refentry{Chawla N V, Bowyer K W, Hall L O, et al. SMOTE: synthetic minority over-sampling technique[J]. Journal of Artificial Intelligence Research, 2002, 16: 321-357.}
+\refentry{Chen T, Guestrin C. XGBoost: a scalable tree boosting system[C]//ACM SIGKDD International Conference on Knowledge Discovery and Data Mining. 2016: 785-794.}
+\refentry{Cortes C, Vapnik V. Support-vector networks[J]. Machine Learning, 1995, 20(3): 273-297.}
+\refentry{Cortez P, Cerdeira A, Almeida F, et al. Modeling wine preferences by data mining from physicochemical properties[J]. Decision Support Systems, 2009, 47(4): 547-553.}
+\refentry{He H, Garcia E A. Learning from imbalanced data[J]. IEEE Transactions on Knowledge and Data Engineering, 2009, 21(9): 1263-1284.}
+\refentry{Ke G, Meng Q, Finley T, et al. LightGBM: a highly efficient gradient boosting decision tree[C]//Advances in Neural Information Processing Systems. 2017: 3146-3154.}
+\refentry{McCullagh P. Regression models for ordinal data[J]. Journal of the Royal Statistical Society: Series B, 1980, 42(2): 109-142.}
+\refentry{Pedregosa F, Varoquaux G, Gramfort P, et al. Scikit-learn: machine learning in Python[J]. Journal of Machine Learning Research, 2011, 12: 2825-2830.}
+}
+
+\end{document}

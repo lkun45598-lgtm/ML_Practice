@@ -18,3 +18,13 @@ report/*.out
 *.pptx
 附件3*/
 .planning/
+
+# reports/ latex 中间产物
+reports/**/*.aux
+reports/**/*.log
+reports/**/*.toc
+reports/**/*.out
+reports/**/__pycache__/
+
+# 旧的“两项目合并版”报告：已拆分为 reports/ 两份，不再维护/推送
+/report/

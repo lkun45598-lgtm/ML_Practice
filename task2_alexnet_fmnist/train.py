@@ -18,18 +18,18 @@ def run_epoch(model, loader, criterion, optimizer, device, train=True):
     """跑一个 epoch，返回 (平均loss, 准确率)。train=False 时不更新参数。"""
     model.train(train)
     total, correct, loss_sum = 0, 0, 0.0
-    torch.set_grad_enabled(train)
-    for xb, yb in loader:
-        xb, yb = xb.to(device), yb.to(device)
-        if train:
-            optimizer.zero_grad()
-        out = model(xb)
-        loss = criterion(out, yb)
-        if train:
-            loss.backward(); optimizer.step()
-        loss_sum += loss.item() * xb.size(0)
-        correct += (out.argmax(1) == yb).sum().item()
-        total += xb.size(0)
+    with torch.set_grad_enabled(train):
+        for xb, yb in loader:
+            xb, yb = xb.to(device), yb.to(device)
+            if train:
+                optimizer.zero_grad()
+            out = model(xb)
+            loss = criterion(out, yb)
+            if train:
+                loss.backward(); optimizer.step()
+            loss_sum += loss.item() * xb.size(0)
+            correct += (out.argmax(1) == yb).sum().item()
+            total += xb.size(0)
     return loss_sum / total, correct / total
 
 

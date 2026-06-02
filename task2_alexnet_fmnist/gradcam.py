@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""核心创新点②（可解释性）：用 Grad-CAM 可视化手写 AlexNet 在分类时“关注”图像的哪些区域。
+"""可解释性分析：用 Grad-CAM 可视化手写 AlexNet 在分类时“关注”图像的哪些区域。
 
 对最后一个卷积层（Conv5）计算类激活映射，叠加到原图上，直观展示模型的判别依据。
-需先有 outputs/alexnet_best.pt（由 train.py 生成）。
+需先有 outputs/alexnet_best.pt（由主模型训练命令生成）。
 """
 import os
 import sys
@@ -53,9 +53,9 @@ def grad_cam(model, x, target_layer, cls=None):
 def main():
     set_chinese_font()
     if not os.path.exists(CKPT):
-        raise FileNotFoundError(f"未找到 {CKPT}，请先运行 train.py。")
+        raise FileNotFoundError(f"未找到 {CKPT}，请先运行 README 中的主模型训练命令。")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = AlexNet(num_classes=10, in_channels=1).to(device)
+    model = AlexNet(num_classes=10, in_channels=1, use_bn=True).to(device)
     model.load_state_dict(torch.load(CKPT, map_location=device))
     model.eval()
     # 关闭 inplace ReLU，避免反向 hook 与原地操作冲突

@@ -72,7 +72,10 @@ def main():
     set_chinese_font()
     if not os.path.exists(CKPT):
         raise FileNotFoundError(
-            f"未找到模型文件 {CKPT}，请先运行 `python train.py` 完成训练以生成 alexnet_best.pt。")
+            f"未找到模型文件 {CKPT}，请先运行主模型训练命令："
+            "`python task2_alexnet_fmnist/experiments.py --model alexnet --bn --augment --cosine "
+            "--epochs 40 --seed 0 --tag main --save-ckpt task2_alexnet_fmnist/outputs/alexnet_best.pt "
+            "--save-history task2_alexnet_fmnist/outputs/history.json`。")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     plot_curves()
     y_true, y_pred, y_prob, imgs, meta = evaluate(device)

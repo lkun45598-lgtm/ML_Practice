@@ -30,33 +30,33 @@ os.makedirs(OUT_DIR, exist_ok=True)
 def run_epoch(model, loader, criterion, optimizer, device, train, scaler=None, mixup_alpha=0.0):
     model.train(train)
     total, correct, loss_sum = 0, 0, 0.0
-    torch.set_grad_enabled(train)
     use_amp = scaler is not None
     dev_type = "cuda" if device.type == "cuda" else "cpu"
     use_mixup = train and mixup_alpha > 0
     beta = torch.distributions.Beta(mixup_alpha, mixup_alpha) if use_mixup else None
-    for xb, yb in loader:
-        xb, yb = xb.to(device), yb.to(device)
-        if train:
-            optimizer.zero_grad()
-        with torch.autocast(device_type=dev_type, enabled=use_amp):
-            if use_mixup:                          # MixUp：线性混合样本与标签，强正则
-                lam = float(beta.sample())
-                idx = torch.randperm(xb.size(0), device=device)
-                xb = lam * xb + (1 - lam) * xb[idx]
-                out = model(xb)
-                loss = lam * criterion(out, yb) + (1 - lam) * criterion(out, yb[idx])
-            else:
-                out = model(xb)
-                loss = criterion(out, yb)
-        if train:
-            if use_amp:                       # 混合精度：scaler 防止 fp16 梯度下溢
-                scaler.scale(loss).backward(); scaler.step(optimizer); scaler.update()
-            else:
-                loss.backward(); optimizer.step()
-        loss_sum += loss.item() * xb.size(0)
-        correct += (out.argmax(1) == yb).sum().item()
-        total += xb.size(0)
+    with torch.set_grad_enabled(train):
+        for xb, yb in loader:
+            xb, yb = xb.to(device), yb.to(device)
+            if train:
+                optimizer.zero_grad()
+            with torch.autocast(device_type=dev_type, enabled=use_amp):
+                if use_mixup:                          # MixUp：线性混合样本与标签，强正则
+                    lam = float(beta.sample())
+                    idx = torch.randperm(xb.size(0), device=device)
+                    xb = lam * xb + (1 - lam) * xb[idx]
+                    out = model(xb)
+                    loss = lam * criterion(out, yb) + (1 - lam) * criterion(out, yb[idx])
+                else:
+                    out = model(xb)
+                    loss = criterion(out, yb)
+            if train:
+                if use_amp:                       # 混合精度：scaler 防止 fp16 梯度下溢
+                    scaler.scale(loss).backward(); scaler.step(optimizer); scaler.update()
+                else:
+                    loss.backward(); optimizer.step()
+            loss_sum += loss.item() * xb.size(0)
+            correct += (out.argmax(1) == yb).sum().item()
+            total += xb.size(0)
     return loss_sum / total, correct / total
 
 

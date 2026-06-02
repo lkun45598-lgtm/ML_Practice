@@ -2,7 +2,7 @@
 """计算复杂度对照：手写 AlexNet@224 vs 轻量 SimpleCNN@28。
 
 量化三项：参数量、FLOPs（单张前向乘加）、单图推理延迟（GPU/CPU）。
-用硬数字坐实“AlexNet 在 Fashion-MNIST 上存在显著容量/算力冗余”的论点。
+用于分析 AlexNet 在 Fashion-MNIST 上的容量与计算开销。
 结果写入 outputs/complexity.json。
 """
 import os

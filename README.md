@@ -6,7 +6,7 @@
 | 任务 | 内容 | 数据集 | 最佳结果 |
 |------|------|--------|----------|
 | **任务①** | 传统机器学习多分类（SVM / 决策树 / 随机森林 / 逻辑回归） | UCI 白葡萄酒质量（4898×11，3 分类） | 随机森林 macro-F1 **0.734** |
-| **任务②** | **逐层手写** AlexNet 图像分类（不调用预置模型） | Fashion-MNIST（70000，10 分类） | 测试集准确率 **91.55%** |
+| **任务②** | **逐层实现** AlexNet 图像分类（基于基础算子构建） | Fashion-MNIST（70000，10 分类） | 测试集准确率 **94.38%** |
 
 ## 目录结构
 
@@ -18,12 +18,23 @@ ML_Practice/
 ├── task2_alexnet_fmnist/       # 任务② 手写 AlexNet
 │   ├── alexnet.py              # 逐层手写的 AlexNet（nn.Module）
 │   ├── data.py                 # Fashion-MNIST 加载（Resize 224 + train/val/test）
-│   ├── train.py                # 训练 + 验证，保存最优 checkpoint
+│   ├── train.py                # 基础训练脚本
+│   ├── experiments.py          # 主模型与对照/消融实验统一运行器
 │   ├── evaluate.py             # 测试集评估、混淆矩阵、训练曲线、预测样例
 │   └── outputs/                # 曲线图、混淆矩阵、样例图、history.json、test_metrics.json
 ├── common/zh_font.py           # matplotlib 中文字体设置（含数字/字母回退）
-├── report/                     # 实训报告
-│   ├── 毕业论文_人工智能实训.docx  # Word 版（python-docx 生成）
+├── reports/                    # 两篇独立论文（当前提交口径）
+│   ├── generate_split_reports.py
+│   ├── task1_wine_quality/
+│   │   ├── report.tex
+│   │   ├── report.pdf
+│   │   └── 任务一_白葡萄酒质量分类论文.docx
+│   └── task2_alexnet_fmnist/
+│       ├── report.tex
+│       ├── report.pdf
+│       └── 任务二_AlexNet服饰图像分类论文.docx
+├── report/                     # 两个项目合并版报告（保留备份）
+│   ├── 毕业论文_人工智能实训.docx
 │   ├── generate_report.py      # Word 生成脚本
 │   ├── report.tex              # LaTeX 版（xelatex + ctex/fandol）
 │   └── report.pdf              # LaTeX 编译产物
@@ -37,11 +48,11 @@ ML_Practice/
 ## 环境
 
 - Python 3.12，建议用 conda 环境（开发环境为 `pytorch312`）
-- GPU：训练任务②使用 CUDA（开发环境为单卡 RTX 4090，约 10 分钟跑完 15 轮）
+- GPU：训练任务②使用 CUDA（开发环境为单卡 RTX 4090，主模型 40 轮约半小时）
 
 ```bash
 pip install -r requirements.txt
-# 关键依赖：torch、torchvision、scikit-learn、pandas、matplotlib、seaborn、python-docx
+# 关键依赖：torch、torchvision、scikit-learn、pandas、matplotlib、seaborn、python-docx、thop
 ```
 
 ## 运行方式
@@ -58,9 +69,12 @@ python task1_ml_wine/wine_quality.py
 # 1) 模型自检（打印前向输出形状与参数量）
 python task2_alexnet_fmnist/alexnet.py
 
-# 2) 训练（首次运行自动下载 Fashion-MNIST）
-python task2_alexnet_fmnist/train.py --epochs 15 --batch-size 128 --lr 0.01
-#   冒烟测试：python task2_alexnet_fmnist/train.py --subset 256 --epochs 2
+# 2) 训练主模型（首次运行自动下载 Fashion-MNIST）
+python task2_alexnet_fmnist/experiments.py --model alexnet --bn --augment --cosine \
+  --epochs 40 --batch-size 128 --lr 0.01 --seed 0 --tag main \
+  --save-ckpt task2_alexnet_fmnist/outputs/alexnet_best.pt \
+  --save-history task2_alexnet_fmnist/outputs/history.json
+#   冒烟测试：python task2_alexnet_fmnist/experiments.py --model alexnet --bn --subset 256 --epochs 2 --tag smoke
 
 # 3) 评估（加载最优 checkpoint，生成混淆矩阵/曲线/样例）
 python task2_alexnet_fmnist/evaluate.py
@@ -77,29 +91,36 @@ python aggregate_experiments.py           # 汇总并绘制对比图
 
 ### 生成报告
 ```bash
-python report/generate_report.py          # 生成 Word 文档
-cd report && python make_flowchart.py && xelatex report.tex && xelatex report.tex   # LaTeX → PDF
+python reports/generate_split_reports.py  # 生成任务一、任务二两篇独立 Word
+
+cd reports/task1_wine_quality && xelatex report.tex && xelatex report.tex
+cd ../../reports/task2_alexnet_fmnist && xelatex report.tex && xelatex report.tex
+
+# 合并版报告仍可保留备份：
+# python report/generate_report.py
+# cd report && python make_flowchart.py && xelatex report.tex && xelatex report.tex
 ```
 
 ## 提交说明（重要）
-按课程要求，最终在「教育在线」**以附件分别提交、不要打包成 zip**：
+最终在「教育在线」**以附件分别提交、不要打包成 zip**：
 1. PPT（汇报用）
-2. Word 文档（学校毕业论文格式）
-3. Python 源代码（各 `.py` 文件，作为附件）
+2. 任务一 Word 文档（学校毕业论文格式，独立封面与目录）
+3. 任务二 Word 文档（学校毕业论文格式，独立封面与目录）
+4. Python 源代码（各 `.py` 文件，作为附件）
 
 由学号最小者 **蔡铭飞（202434610301）** 负责提交；文件按「学号后3位姓名_…」命名，
 建议：`309雷正_301蔡铭飞_326冼嘉谦`。数据集与模型 checkpoint 不随仓库提交，运行脚本会自动下载/重新训练。
 
 ## 网络结构（手写 AlexNet）
 
-输入 `1×224×224`，约 58.3M 参数：
+主模型输入 `1×224×224`，约 58.3M 参数；卷积层使用 BatchNorm，LRN 作为对照实验保留：
 
-- **特征提取（5 卷积块）**：Conv(1→96,11×11,s4)→ReLU→LRN→MaxPool；Conv(96→256,5×5)→ReLU→LRN→MaxPool；
-  Conv(256→384,3×3)→ReLU；Conv(384→384,3×3)→ReLU；Conv(384→256,3×3)→ReLU→MaxPool（输出 256×6×6）
+- **特征提取（5 卷积块）**：Conv(1→96,11×11,s4)→BN→ReLU→MaxPool；Conv(96→256,5×5)→BN→ReLU→MaxPool；
+  Conv(256→384,3×3)→BN→ReLU；Conv(384→384,3×3)→BN→ReLU；Conv(384→256,3×3)→BN→ReLU→MaxPool（输出 256×6×6）
 - **分类器（3 全连接）**：Dropout→Linear(9216→4096)→ReLU；Dropout→Linear(4096→4096)→ReLU；Linear(4096→10)
 
-> 按课程要求，AlexNet 使用 `nn.Conv2d` / `nn.Linear` 等基础算子**逐层手工组装**，
-> 不调用 `torchvision.models.alexnet` 或任何预置模型。
+> AlexNet 使用 `nn.Conv2d` / `nn.Linear` 等基础算子逐层构建，
+> 不调用 `torchvision.models.alexnet` 或任何预置 AlexNet。
 
 ## 说明
 
