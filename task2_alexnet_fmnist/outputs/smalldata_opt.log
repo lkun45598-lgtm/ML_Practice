@@ -1,0 +1,13 @@
+[13:31:24][gpu1] ▶ x_alexopt_flowers_s1
+[13:31:24][gpu2] ▶ x_alexopt_flowers_s2
+[13:31:24][gpu0] ▶ x_alexopt_flowers_s0
+[13:31:24][gpu3] ▶ x_alexopt_garbage_s0
+[13:31:24][gpu4] ▶ x_alexopt_garbage_s1
+[13:31:24][gpu5] ▶ x_alexopt_garbage_s2
+[13:34:13][gpu4] ✓ x_alexopt_garbage_s1  [x_alexopt_garbage_s1] 完成 test_acc=0.7719 f1=0.7421 -> exp_x_alexopt_garbage_s1.json
+[13:34:13][gpu5] ✓ x_alexopt_garbage_s2  [x_alexopt_garbage_s2] 完成 test_acc=0.7745 f1=0.7518 -> exp_x_alexopt_garbage_s2.json
+[13:34:13][gpu3] ✓ x_alexopt_garbage_s0  [x_alexopt_garbage_s0] 完成 test_acc=0.7851 f1=0.7674 -> exp_x_alexopt_garbage_s0.json
+[13:35:24][gpu2] ✓ x_alexopt_flowers_s2  [x_alexopt_flowers_s2] 完成 test_acc=0.8152 f1=0.8161 -> exp_x_alexopt_flowers_s2.json
+[13:35:25][gpu0] ✓ x_alexopt_flowers_s0  [x_alexopt_flowers_s0] 完成 test_acc=0.8028 f1=0.8004 -> exp_x_alexopt_flowers_s0.json
+[13:35:27][gpu1] ✓ x_alexopt_flowers_s1  [x_alexopt_flowers_s1] 完成 test_acc=0.8292 f1=0.8254 -> exp_x_alexopt_flowers_s1.json
+[13:35:27] ✅ 小数据优化 6 个任务全部完成

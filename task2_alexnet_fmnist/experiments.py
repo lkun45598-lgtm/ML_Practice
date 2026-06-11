@@ -125,7 +125,10 @@ def main():
     ap.add_argument("--label-smoothing", type=float, default=0.0, help="交叉熵标签平滑系数(0=关闭)")
     ap.add_argument("--amp", action="store_true", help="启用混合精度训练(加速、省显存)")
     ap.add_argument("--patience", type=int, default=0, help="早停耐心轮数(0=关闭，跑满 epochs)")
-    ap.add_argument("--strong-aug", action="store_true", help="更强增强：平移+随机擦除")
+    ap.add_argument("--strong-aug", action="store_true",
+                    help="更强增强：彩色集为随机裁剪缩放+颜色抖动+随机擦除；灰度集为平移+随机擦除")
+    ap.add_argument("--class-weight", action="store_true",
+                    help="按训练集类频倒数对交叉熵加权，缓解类别不平衡(仅彩色集)")
     ap.add_argument("--mixup", type=float, default=0.0, help="MixUp 的 Beta 系数(0=关闭)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--epochs", type=int, default=15)
@@ -156,7 +159,8 @@ def main():
     else:
         train_loader, val_loader, test_loader, data_info = get_image_loaders(
             args.dataset, batch_size=args.batch_size, img_size=args.img_size,
-            augment=args.augment, seed=args.seed, subset=args.subset)
+            augment=args.augment, seed=args.seed, subset=args.subset,
+            strong_aug=args.strong_aug)
         num_classes = data_info["num_classes"]
         print(f"[{args.tag}] 数据集 {args.dataset}: 类别 {data_info['class_names']} "
               f"train/val/test={data_info['n_train']}/{data_info['n_val']}/{data_info['n_test']} "
@@ -168,6 +172,14 @@ def main():
     n_params = sum(p.numel() for p in model.parameters())
     if args.loss == "focal":
         criterion = FocalLoss(gamma=2.0)
+    elif args.class_weight and data_info is not None:
+        counts = data_info["train_class_counts"]
+        total = float(sum(counts))
+        # 类频倒数权重，归一化到均值为 1（不改变整体损失尺度）
+        w = [total / (len(counts) * c) if c > 0 else 0.0 for c in counts]
+        weight = torch.tensor(w, dtype=torch.float32, device=device)
+        criterion = nn.CrossEntropyLoss(weight=weight, label_smoothing=args.label_smoothing)
+        print(f"[{args.tag}] 类加权权重: {[round(x,2) for x in w]}")
     else:
         criterion = nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
@@ -223,7 +235,9 @@ def main():
               "num_classes": num_classes, "img_size": args.img_size,
               "train_acc_at_best": round(train_acc_at_best, 4) if train_acc_at_best is not None else None,
               "train_val_gap": train_val_gap,
-              "augment": args.augment, "use_lrn": use_lrn, "use_bn": args.bn,
+              "augment": args.augment, "strong_aug": args.strong_aug,
+              "class_weight": args.class_weight,
+              "use_lrn": use_lrn, "use_bn": args.bn,
               "small_kernel": args.small_kernel,
               "cosine": args.cosine, "loss": args.loss,
               "label_smoothing": args.label_smoothing, "amp": bool(scaler),

@@ -112,7 +112,17 @@ class ListImageDataset(Dataset):
         return self.transform(img), label
 
 
-def _make_tf(img_size, augment):
+def _make_tf(img_size, augment, strong=False):
+    """构造图像变换。strong=True 时启用针对小数据集的强增强：
+    随机裁剪缩放 + 颜色抖动 + 翻转旋转，并在张量化后加随机擦除。"""
+    if strong:
+        ops = [transforms.RandomResizedCrop(img_size, scale=(0.6, 1.0)),
+               transforms.RandomHorizontalFlip(),
+               transforms.RandomRotation(15),
+               transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.05),
+               transforms.ToTensor(), transforms.Normalize(_MEAN, _STD),
+               transforms.RandomErasing(p=0.25)]
+        return transforms.Compose(ops)
     ops = [transforms.Resize((img_size, img_size))]
     if augment:
         ops += [transforms.RandomHorizontalFlip(), transforms.RandomRotation(15)]
@@ -121,7 +131,8 @@ def _make_tf(img_size, augment):
 
 
 def get_image_loaders(dataset, batch_size=64, img_size=224, augment=False, seed=42,
-                      val_ratio=0.15, test_ratio=0.15, num_workers=4, subset=None):
+                      val_ratio=0.15, test_ratio=0.15, num_workers=4, subset=None,
+                      strong_aug=False):
     """返回 (train_loader, val_loader, test_loader, info)。
 
     分层（按类）70/15/15 划分；训练集可增强，验证/测试集恒定无增强。
@@ -140,7 +151,7 @@ def get_image_loaders(dataset, batch_size=64, img_size=224, augment=False, seed=
         n = len(perm); nt = int(n * test_ratio); nv = int(n * val_ratio)
         test_idx += perm[:nt]; val_idx += perm[nt:nt + nv]; train_idx += perm[nt + nv:]
 
-    train_tf, eval_tf = _make_tf(img_size, augment), _make_tf(img_size, False)
+    train_tf, eval_tf = _make_tf(img_size, augment, strong=strong_aug), _make_tf(img_size, False)
     pick = lambda ids: [samples[i] for i in ids]
     train_ds = ListImageDataset(pick(train_idx), train_tf)
     val_ds = ListImageDataset(pick(val_idx), eval_tf)
@@ -156,9 +167,13 @@ def get_image_loaders(dataset, batch_size=64, img_size=224, augment=False, seed=
 
     mk = lambda ds, sh: DataLoader(ds, batch_size=batch_size, shuffle=sh,
                                    num_workers=num_workers, pin_memory=True)
+    train_class_counts = [0] * len(classes)
+    for _, lbl in train_ds.samples:
+        train_class_counts[lbl] += 1
     info = {"dataset": dataset, "num_classes": len(classes), "in_channels": 3,
             "class_names": classes, "skipped": skipped,
-            "n_train": len(train_ds), "n_val": len(val_ds), "n_test": len(test_ds)}
+            "n_train": len(train_ds), "n_val": len(val_ds), "n_test": len(test_ds),
+            "train_class_counts": train_class_counts}
     return mk(train_ds, True), mk(val_ds, False), mk(test_ds, False), info
 
 
