@@ -155,10 +155,12 @@ def task1_abstract(doc):
 
 def task2_abstract(doc):
     add_center_title(doc, "摘　要")
-    para(doc, "图像分类是深度学习中的典型任务。本文以 Fashion-MNIST 服饰图像数据集为研究对象，基于 PyTorch 基础"
-              "模块逐层构建 AlexNet 卷积神经网络，不调用任何预置 AlexNet 模型，完成数据加载、预处理、训练、验证、"
-              "测试和误差分析流程。针对 Fashion-MNIST 图像尺寸较小、类别间相似度较高等特点，本文将 28×28 灰度"
-              "图像放大至 224×224，并在主模型中采用 BatchNorm、余弦退火学习率调度和数据增强等训练策略。")
+    para(doc, "图像分类是深度学习中的典型任务。本文以卷积神经网络架构为研究对象，基于 PyTorch 基础模块逐层手写 "
+              "AlexNet（不调用任何预置模型），并以 Fashion-MNIST 服饰图像数据集为主实验平台，完成数据加载、预处理、"
+              "训练、验证、测试和误差分析的完整流程；在此基础上进一步把同一模型放到难度递增的四个数据集上对照，并与"
+              "轻量 SimpleCNN 和手写小型 ResNet 比较，考察架构设计对识别性能的影响。针对 Fashion-MNIST 图像尺寸较小、"
+              "类别间相似度较高等特点，本文将 28×28 灰度图像放大至 224×224，并在主模型中采用 BatchNorm、余弦退火"
+              "学习率调度和数据增强等训练策略。")
     para(doc, "实验结果表明，主模型在测试集上取得 94.38% 的准确率和 0.9437 的宏平均 F1。混淆矩阵和分类样例显示，"
               "模型对裤子、包、鞋类等区分度较高的类别识别效果较好，而 T 恤、套衫、外套和衬衫等上装类别之间仍存在"
               "较明显混淆。进一步的消融实验表明，充分训练和 BatchNorm 对模型性能提升具有较大作用；复杂度对比显示，"
@@ -171,10 +173,12 @@ def task2_abstract(doc):
     para(doc, "关键词：深度学习；卷积神经网络；AlexNet；Fashion-MNIST；图像分类；跨数据集泛化；Grad-CAM")
     doc.add_page_break()
     add_center_title(doc, "Abstract")
-    para(doc, "Image classification is a representative task in deep learning. This paper studies the Fashion-MNIST dataset "
-              "and builds an AlexNet convolutional neural network layer by layer using basic PyTorch modules, without calling "
-              "any predefined AlexNet model. The workflow includes data loading, preprocessing, training, validation, testing "
-              "and error analysis.")
+    para(doc, "Image classification is a representative task in deep learning. This paper takes convolutional neural network "
+              "architecture as its research object: an AlexNet is built layer by layer using basic PyTorch modules (without "
+              "calling any predefined model), with Fashion-MNIST as the primary experimental platform for data loading, "
+              "preprocessing, training, validation, testing and error analysis. The same model is then evaluated on four "
+              "datasets of increasing difficulty and compared with a lightweight SimpleCNN and a handwritten small ResNet "
+              "to examine how architectural design affects recognition performance.")
     para(doc, "The experimental results show that the main model achieves a test accuracy of 94.38% and a macro-F1 score of "
               "0.9437. Further ablation experiments show that sufficient training and BatchNorm make important contributions "
               "to model performance. Complexity comparison also indicates that AlexNet has certain parameter and computation "
@@ -408,13 +412,15 @@ def task2_body(doc):
               "混淆矩阵讨论上装类别误差来源，而不是只比较总体准确率。")
 
     doc.add_heading("1.3 研究内容与分工", level=2)
-    para(doc, "本文围绕 Fashion-MNIST 十分类任务开展研究，主要工作包括逐层实现 AlexNet 网络结构，构建数据加载与训练流程，"
-              "在测试集上评估模型性能，利用混淆矩阵和预测样例分析错误类型，并通过组件消融、复杂度对比、Focal Loss 对照和"
-              "Grad-CAM 可视化讨论模型性能来源。")
+    para(doc, "本文以卷积神经网络架构为研究对象、以逐层手写的 AlexNet 为主模型，把数据集视为检验模型的试验台。主要工作"
+              "包括两个层面：其一，以 Fashion-MNIST 十分类任务为主实验平台，完成 AlexNet 的逐层实现、训练评估和误差分析，"
+              "并通过组件消融、复杂度对比、Focal Loss 对照和 Grad-CAM 可视化深入剖析模型性能来源；其二，将同一 AlexNet "
+              "推广到难度递增的四个数据集，与轻量 SimpleCNN 和手写小型 ResNet 同条件对照，从卷积核大小、残差连接、分类头"
+              "结构等角度分析架构设计对识别性能与泛化能力的影响。")
     add_table(doc, ["学号", "姓名", "主要分工"],
-              [["202434610309", "雷正", "实验结果复核、报告内容整理与复现说明"],
-               ["202434610301", "蔡铭飞", "AlexNet 网络实现、模型训练、评估与可视化分析"],
-               ["202434610326", "冼嘉谦", "图表整理、PPT 制作、论文排版与汇报"]],
+              [["202434610309", "雷正", "总体方案设计、AlexNet/ResNet/SimpleCNN 网络逐层实现、跨数据集与大核小核架构对照实验设计与训练、核心实验分析与论文主体撰写"],
+               ["202434610301", "蔡铭飞", "数据加载与预处理、主模型训练与评估、组件消融与 Grad-CAM 可解释性分析、实验图表生成"],
+               ["202434610326", "冼嘉谦", "数据与结果整理、图表与论文排版、PPT 制作与答辩汇报、复现说明整理"]],
               "表 1-1 小组成员分工表")
 
     doc.add_heading("第2章 理论基础", level=1)
@@ -628,21 +634,46 @@ def task2_body(doc):
               "10%）。这说明当模型结构已足够强时，性能瓶颈会从“模型容量”转移到“数据量”：继续增大参数收益有限，扩充数据或"
               "加强正则化才是关键。")
 
-    doc.add_heading("6.5 本章小结", level=2)
-    para(doc, "本章通过四个数据集、三个模型的同条件对照，得到三点相互印证的结论。第一，识别难度主要由数据特点（每类样本量、"
+    doc.add_heading("6.5 针对小数据集的优化尝试与归因分析", level=2)
+    para(doc, "6.2 节指出 Flowers、Garbage 因样本少而严重过拟合（gap 超过 11%），Garbage 还存在类别不平衡（trash 仅 137 张、"
+              "F1 仅 0.60）。据此本文尝试两类“对症”手段：用强数据增强（随机裁剪缩放 + 颜色抖动 + 随机擦除）抑制过拟合，用"
+              "类加权交叉熵（按训练集类频倒数加权）缓解不平衡。然而将二者与标签平滑一并叠加后，Garbage 测试准确率不升反降"
+              "（由 80.28% 降至 77.72%）。这一反直觉结果促使本文做因子分解以定位原因，其中训练准确率是关键诊断信号："
+              "过拟合表现为训练准确率远高于验证，欠拟合则表现为训练准确率本身就很低。")
+    add_table(doc, ["配置", "训练准确率", "验证准确率", "测试准确率", "宏平均 F1", "trash 类 F1"],
+              [["基线（基础增强）", "95.8", "80.9", "80.3", "77.6", "0.595"],
+               ["+ 仅类加权", "95.2", "81.5", "82.0", "80.6", "0.713"],
+               ["+ 仅强增强", "80.0", "78.6", "78.4", "75.9", "0.581"],
+               ["+ 强增强 + 类加权", "79.7", "77.4", "77.7", "75.4", "0.549"]],
+              "表 6-6 Garbage 小数据优化的因子分解（AlexNet，3 种子均值）")
+    para(doc, "因子分解给出清晰结论。其一，类加权是有效改进：单独施加时 Garbage 测试准确率由 80.3% 升至 82.0%，宏平均 F1 由 "
+              "0.776 升至 0.806，最小类别 trash 的 F1 更从 0.595 大幅回升到 0.713，而训练准确率几乎不变（95.8% 对 95.2%），"
+              "说明它没有损害特征学习，只是重新平衡了对各类别的关注。其二，强增强是性能下降的真正原因：单独施加时训练准确率"
+              "由 95.8% 暴跌至 80.0%，模型陷入欠拟合，测试准确率随之降到 78.4%——随机裁剪缩放、颜色抖动等激进增强破坏了 "
+              "Garbage 中区分玻璃、塑料、金属所依赖的透明度、纹理与色彩等细粒度线索。其三，二者叠加时强增强的损害盖过类加权"
+              "的收益，最终表现为整体下降，这正是最初“优化失败”的来源。")
+    para(doc, "对 Flowers 的观察与之呼应：强增强把训练—验证 gap 从 11.9% 压到 2.2%，过拟合被有效抑制，但测试准确率基本持平"
+              "（81.3% 对 81.6%），说明其瓶颈同样不在过拟合而在样本量本身。由此得到方法学启示：面对小数据集不能盲目套用标准"
+              "技巧，而应先诊断瓶颈类型再对症下药——类别不平衡可由类加权有效缓解，而过拟合在数据量受限时并非可通过激进增强"
+              "消除的主要矛盾，盲目增强反而可能把过拟合“治”成欠拟合。")
+
+    doc.add_heading("6.6 本章小结", level=2)
+    para(doc, "本章通过四个数据集、三个模型的同条件对照，得到四点相互印证的结论。第一，识别难度主要由数据特点（每类样本量、"
               "图像复杂度、类别平衡）决定，而类别数量并非主要因素。第二，在参数量几乎相同的受控对照下，3×3 小核堆叠优于大核，"
               "且越困难的数据集收益越大。第三，小型 ResNet 以约 1/20 参数追平甚至反超 AlexNet，原因在于残差连接、全局平均"
-              "池化和小核深网的架构设计，而非参数规模。综合而言，在足够的训练配方下，决定卷积网络性能的是数据特点与架构设计；"
-              "当架构足够强时，真正的瓶颈是数据量。")
+              "池化和小核深网的架构设计，而非参数规模。第四，针对小数据集的优化需对症下药：类加权能有效缓解类别不平衡，而"
+              "激进数据增强在小样本细粒度任务上反而会引发欠拟合。综合而言，在足够的训练配方下，决定卷积网络性能的是数据特点"
+              "与架构设计；当架构足够强时，真正的瓶颈是数据量。")
 
     doc.add_heading("第7章 实验复现说明", level=1)
     para(doc, "在项目根目录执行 README 中的主模型训练命令可复现实验：python task2_alexnet_fmnist/experiments.py --model "
               "alexnet --bn --augment --cosine --epochs 40 --seed 0 --tag main --save-ckpt task2_alexnet_fmnist/outputs/"
               "alexnet_best.pt --save-history task2_alexnet_fmnist/outputs/history.json。随后执行 python task2_alexnet_fmnist/"
               "evaluate.py 生成测试集指标和可视化结果。")
-    para(doc, "跨数据集对照实验可执行 run_cross_parallel.sh（三模型四数据集）、run_scnn_fair.sh（公平基线）和 "
-              "run_kernel_ablation.sh（大核 vs 小核），再用 cross_dataset_summary.py 聚合。其中 Fashion-MNIST 会自动下载，"
-              "三个彩色数据集需预先下载并解压至 task2_alexnet_fmnist/data/ 下对应目录。")
+    para(doc, "跨数据集对照实验可执行 run_cross_parallel.sh（三模型四数据集）、run_scnn_fair.sh（公平基线）、"
+              "run_kernel_ablation.sh（大核 vs 小核）和 run_smalldata_opt.sh/run_smalldata_diag.sh（小数据优化及其因子分解），"
+              "再用 cross_dataset_summary.py 聚合。相关开关包括 --strong-aug、--class-weight、--small-kernel 等。其中 "
+              "Fashion-MNIST 会自动下载，三个彩色数据集需预先下载并解压至 task2_alexnet_fmnist/data/ 下对应目录。")
 
     doc.add_heading("第8章 结论与展望", level=1)
     para(doc, "本文基于 PyTorch 基础模块逐层实现 AlexNet，并在 Fashion-MNIST 十分类任务上完成训练和评估。主模型在"
@@ -699,7 +730,7 @@ def build_task1():
 def build_task2():
     doc = Document()
     set_base_style(doc)
-    cover(doc, "任务二实训论文", "基于 AlexNet 的 Fashion-MNIST 服饰图像分类研究")
+    cover(doc, "任务二实训论文", "卷积神经网络架构对图像分类性能的影响研究——基于 AlexNet 的多数据集实证")
     declaration(doc)
     task2_abstract(doc)
     manual_toc(doc, [

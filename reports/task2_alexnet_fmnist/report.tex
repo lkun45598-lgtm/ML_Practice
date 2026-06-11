@@ -42,8 +42,9 @@
 \vspace*{1.5cm}
 {\Large 本科毕业论文（设计）}\\[1.5cm]
 {\Huge\bfseries 人工智能综合实训 II}\\[0.6cm]
-{\LARGE\bfseries 任务二实训论文}\\[1.5cm]
-{\Large\bfseries 基于 AlexNet 的 Fashion-MNIST 服饰图像分类研究}\\[2cm]
+{\LARGE\bfseries 任务二实训论文}\\[1.2cm]
+{\Large\bfseries 卷积神经网络架构对图像分类性能的影响研究}\\[0.4cm]
+{\large\bfseries ——基于 AlexNet 的多数据集实证}\\[2cm]
 {\large
 \renewcommand{\arraystretch}{1.7}
 \begin{tabular}{rl}
@@ -80,10 +81,12 @@
 
 % ===================== 摘要 =====================
 \begin{center}{\Large\bfseries 摘\quad 要}\end{center}
-\par 图像分类是深度学习中的典型任务。本文以 Fashion-MNIST 服饰图像数据集为研究对象，基于 PyTorch 基础
-模块逐层构建 AlexNet 卷积神经网络，不调用任何预置 AlexNet 模型，完成数据加载、预处理、训练、验证、
-测试和误差分析流程。针对 Fashion-MNIST 图像尺寸较小、类别间相似度较高等特点，本文将 $28\times28$ 灰度
-图像放大至 $224\times224$，并在主模型中采用 BatchNorm、余弦退火学习率调度和数据增强等训练策略。
+\par 图像分类是深度学习中的典型任务。本文\textbf{以卷积神经网络架构为研究对象}，基于 PyTorch 基础模块
+逐层手写 AlexNet（不调用任何预置模型），并以 Fashion-MNIST 服饰图像数据集为主实验平台，完成数据加载、
+预处理、训练、验证、测试和误差分析的完整流程；在此基础上进一步把同一模型放到难度递增的四个数据集上
+对照，并与轻量 SimpleCNN 和手写小型 ResNet 比较，考察架构设计对识别性能的影响。针对 Fashion-MNIST 图像
+尺寸较小、类别间相似度较高等特点，本文将 $28\times28$ 灰度图像放大至 $224\times224$，并在主模型中采用
+BatchNorm、余弦退火学习率调度和数据增强等训练策略。
 
 \par 实验结果表明，主模型在测试集上取得 94.38\% 的准确率和 0.9437 的宏平均 F1。混淆矩阵和分类样例显示，
 模型对裤子、包、鞋类等区分度较高的类别识别效果较好，而 T 恤、套衫、外套和衬衫等上装类别之间仍存在
@@ -102,12 +105,14 @@ Garbage），并与轻量 SimpleCNN 和手写小型 ResNet 进行同条件对照
 
 \newpage
 \begin{center}{\Large\bfseries Abstract}\end{center}
-\par Image classification is a representative task in deep learning. This paper studies the Fashion-MNIST dataset
-and builds an AlexNet convolutional neural network layer by layer using basic PyTorch modules, without calling any
-predefined AlexNet model. The complete workflow includes data loading, preprocessing, training, validation, testing
-and error analysis. Considering the small image size and high inter-class similarity of Fashion-MNIST, the original
-$28\times28$ grayscale images are resized to $224\times224$. BatchNorm, cosine annealing and data augmentation are
-used in the main model.
+\par Image classification is a representative task in deep learning. This paper \textbf{takes convolutional neural
+network architecture as its research object}: an AlexNet is built layer by layer using basic PyTorch modules
+(without calling any predefined model), with Fashion-MNIST as the primary experimental platform for the complete
+workflow of data loading, preprocessing, training, validation, testing and error analysis. The same model is then
+evaluated on four datasets of increasing difficulty and compared with a lightweight SimpleCNN and a handwritten
+small ResNet, so as to examine how architectural design affects recognition performance. Considering the small
+image size and high inter-class similarity of Fashion-MNIST, the original $28\times28$ grayscale images are resized
+to $224\times224$, and BatchNorm, cosine annealing and data augmentation are used in the main model.
 
 \par The experimental results show that the main model achieves a test accuracy of 94.38\% and a macro-F1 score of
 0.9437. The confusion matrix and prediction samples indicate that the model performs well on visually distinctive
@@ -153,10 +158,11 @@ Fashion-MNIST 是 MNIST 的替代性基准数据集，由 10 类服饰图像构�
 规模适中、类别均衡、训练成本可控，既适合验证卷积神经网络的基本分类能力，也适合分析模型在细粒度视觉
 差异不足时的错误类型。
 
-本研究在 Fashion-MNIST 上逐层构建 AlexNet，并围绕训练策略、组件消融、模型复杂度和可解释性展开实验，
-具有两方面意义。其一，实验能够展示深度图像分类从数据预处理、模型实现、训练验证到测试评估的完整流程；
-其二，通过 BatchNorm、数据增强、Focal Loss、复杂度对比和 Grad-CAM 可视化，可以进一步分析模型性能来源
-和误差成因，避免只以单一准确率评价模型效果。
+本研究逐层构建 AlexNet 并围绕其训练策略、组件、复杂度和可解释性展开实验，进而把模型推广到多个数据集做
+架构对照，具有两方面意义。其一，实验能够展示深度图像分类从数据预处理、模型实现、训练验证到测试评估的
+完整流程；其二，通过组件消融、复杂度对比、Grad-CAM 可视化以及跨数据集的架构对照，可以从“模型”而非
+“单一数据集”的角度分析性能来源，回答“究竟是数据特点、架构设计还是参数规模决定了卷积网络的分类性能”
+这一问题，避免只以单一准确率评价模型效果。
 
 \subsection{国内外研究现状}
 卷积神经网络的发展经历了从浅层结构到深层结构、从单纯提升精度到兼顾效率与可解释性的过程。LeCun 等
@@ -183,9 +189,11 @@ Selvaraju 等(2017)提出 Grad-CAM，通过梯度加权的类激活映射展示�
 上装类别误差来源，而不是只比较总体准确率。
 
 \subsection{研究内容与分工}
-本文围绕 Fashion-MNIST 十分类任务开展研究，主要工作包括：逐层实现 AlexNet 网络结构，构建数据加载与
-训练流程，在测试集上评估模型性能，利用混淆矩阵和预测样例分析错误类型，并通过组件消融、复杂度对比、
-Focal Loss 对照和 Grad-CAM 可视化讨论模型性能来源。小组成员分工如表~\ref{tab:team} 所示。
+本文\textbf{以卷积神经网络架构为研究对象，以逐层手写的 AlexNet 为主模型}，把数据集视为检验模型的试验台。
+主要工作包括两个层面：其一，以 Fashion-MNIST 十分类任务为主实验平台，完成 AlexNet 的逐层实现、训练评估、
+误差分析，并通过组件消融、复杂度对比、Focal Loss 对照和 Grad-CAM 可视化深入剖析模型性能来源；其二，将同一
+AlexNet 推广到难度递增的四个数据集，并与轻量 SimpleCNN 和手写小型 ResNet 进行同条件对照，从卷积核大小、
+残差连接、分类头结构等角度分析架构设计对识别性能与泛化能力的影响。小组成员分工如表~\ref{tab:team} 所示。
 
 \begin{table}[H]
   \centering
@@ -195,9 +203,9 @@ Focal Loss 对照和 Grad-CAM 可视化讨论模型性能来源。小组成员�
     \toprule
     学号 & 姓名 & 主要分工 \\
     \midrule
-    202434610309 & 雷正 & 实验结果复核、报告内容整理与复现说明 \\
-    202434610301 & 蔡铭飞 & AlexNet 网络实现、模型训练、评估与可视化分析 \\
-    202434610326 & 冼嘉谦 & 图表整理、PPT 制作、论文排版与汇报 \\
+    202434610309 & 雷正 & 总体方案设计、AlexNet/ResNet/SimpleCNN 网络逐层实现、跨数据集与大核小核架构对照实验设计与训练、核心实验分析与论文主体撰写 \\
+    202434610301 & 蔡铭飞 & 数据加载与预处理、主模型训练与评估、组件消融与 Grad-CAM 可解释性分析、实验图表生成 \\
+    202434610326 & 冼嘉谦 & 数据与结果整理、图表与论文排版、PPT 制作与答辩汇报、复现说明整理 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -703,11 +711,57 @@ gap 都在样本较少的彩色数据集上偏大（均超过 10\%），而在�
   \label{fig:cross-gap}
 \end{figure}
 
+\subsection{针对小数据集的优化尝试与归因分析}
+6.2 节指出 Flowers、Garbage 因样本少而严重过拟合（gap 超过 11\%），Garbage 还存在类别不平衡（trash 仅 137
+张、F1 仅 0.60）。据此本文尝试两类“对症”手段：用\textbf{强数据增强}（随机裁剪缩放 + 颜色抖动 + 随机擦除）
+抑制过拟合，用\textbf{类加权交叉熵}（按训练集类频倒数加权）缓解不平衡。然而，将二者与标签平滑一并叠加后，
+Garbage 的测试准确率不升反降（由 80.28\% 降至 77.72\%），这一“反直觉”的结果促使本文进一步做因子分解，
+定位真正的原因。
+
+将 Garbage 上的“强增强”与“类加权”拆开单独施加，结果如表~\ref{tab:smalldata} 所示。其中\textbf{训练准确率
+是关键诊断信号}：过拟合表现为训练准确率远高于验证，欠拟合则表现为训练准确率本身就很低。
+
+\begin{table}[H]
+  \centering
+  \caption{Garbage 小数据优化的因子分解（AlexNet，3 种子均值）}
+  \label{tab:smalldata}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lccccc}
+    \toprule
+    配置 & 训练准确率 & 验证准确率 & 测试准确率 & 宏平均 F1 & trash 类 F1 \\
+    \midrule
+    基线（基础增强） & 95.8 & 80.9 & 80.3 & 77.6 & 0.595 \\
+    \quad + 仅类加权 & 95.2 & 81.5 & \textbf{82.0} & \textbf{80.6} & \textbf{0.713} \\
+    \quad + 仅强增强 & 80.0 & 78.6 & 78.4 & 75.9 & 0.581 \\
+    \quad + 强增强 + 类加权 & 79.7 & 77.4 & 77.7 & 75.4 & 0.549 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+因子分解给出清晰且相互独立的结论。其一，\textbf{类加权是有效的改进}：单独施加时，Garbage 测试准确率由
+80.3\% 提升至 82.0\%，宏平均 F1 由 0.776 提升至 0.806，最小类别 trash 的 F1 更从 0.595 大幅回升到 0.713，
+而训练准确率几乎不变（95.8\% 对 95.2\%）——说明它没有损害特征学习，只是重新平衡了模型对各类别的关注，
+恰好解决了当初设计它所要应对的不平衡问题。其二，\textbf{强增强是性能下降的真正原因}：单独施加时训练准确率
+由 95.8\% 暴跌至 80.0\%，模型陷入欠拟合，测试准确率随之降到 78.4\%。原因在于随机裁剪缩放、颜色抖动等激进
+增强会破坏 Garbage 中区分玻璃、塑料、金属所依赖的透明度、纹理与色彩等细粒度线索，对这类“小样本 + 细粒度”
+数据弊大于利。其三，二者叠加时强增强的损害盖过了类加权的收益，最终表现为整体下降——这正是最初“优化失败”
+的来源。
+
+对 Flowers 的观察与之呼应：强增强把训练—验证 gap 从 11.9\% 压到 2.2\%，过拟合被有效抑制，但测试准确率
+基本持平（81.3\% 对 81.6\%）。这说明 Flowers 的瓶颈同样不在过拟合，而在样本量本身，单靠增强无法突破。
+
+由此得到一个方法学上的启示：\textbf{面对小数据集不能盲目套用标准技巧，而应先诊断瓶颈类型再对症下药}。
+本任务中，类别不平衡可由类加权有效缓解，而过拟合在数据量受限时并非可通过激进增强消除的主要矛盾；
+盲目增强反而可能把过拟合“治”成欠拟合。这一“诊断—改进—验证”的过程，也与第五章误差分析中强调的
+“先判断错误来源再选择改进方法”的思路一致。
+
 \subsection{本章小结}
-本章通过四个数据集、三个模型的同条件对照，得到三点相互印证的结论。第一，识别难度主要由数据特点决定：
+本章通过四个数据集、三个模型的同条件对照，得到四点相互印证的结论。第一，识别难度主要由数据特点决定：
 每类样本量、图像复杂度和类别平衡共同决定准确率高低，而类别数量并非主要因素。第二，在参数量几乎相同的
 受控对照下，$3\times3$ 小核堆叠优于大核，且越困难的数据集收益越大。第三，小型 ResNet 以约 1/20 的参数
-追平甚至反超 AlexNet，原因在于残差连接、全局平均池化和小核深网的架构设计，而非参数规模。综合而言，
+追平甚至反超 AlexNet，原因在于残差连接、全局平均池化和小核深网的架构设计，而非参数规模。第四，针对小
+数据集的优化需对症下药：类加权能有效缓解类别不平衡（Garbage 测试准确率与 trash 类 F1 均明显回升），而
+激进的数据增强在小样本细粒度任务上反而会引发欠拟合。综合而言，
 \textbf{在足够的训练配方下，决定卷积网络性能的是数据特点与架构设计；当架构足够强时，真正的瓶颈是数据量}。
 
 % ===================== 第七章 实验复现说明 =====================
@@ -751,11 +805,12 @@ python task2\_alexnet\_fmnist/experiments.py --model alexnet \textbackslash\newl
 {\small\ttfamily python task2\_alexnet\_fmnist/evaluate.py}
 \end{quote}
 对照实验可通过不同的 \texttt{--model}、\texttt{--dataset}、\texttt{--bn}、\texttt{--augment}、
-\texttt{--small-kernel}、\texttt{--loss} 和 \texttt{--epochs} 参数组合运行。跨数据集对照可执行
-\texttt{run\_cross\_parallel.sh}（三模型四数据集）、\texttt{run\_scnn\_fair.sh}（公平基线）和
-\texttt{run\_kernel\_ablation.sh}（大核 vs 小核），再用 \texttt{cross\_dataset\_summary.py} 聚合。
-其中 Fashion-MNIST 会自动下载，三个彩色数据集需预先下载并解压至 \texttt{task2\_alexnet\_fmnist/data/} 下
-对应目录。
+\texttt{--strong-aug}、\texttt{--class-weight}、\texttt{--small-kernel}、\texttt{--loss} 和 \texttt{--epochs}
+参数组合运行。跨数据集对照可执行 \texttt{run\_cross\_parallel.sh}（三模型四数据集）、
+\texttt{run\_scnn\_fair.sh}（公平基线）、\texttt{run\_kernel\_ablation.sh}（大核 vs 小核）和
+\texttt{run\_smalldata\_opt.sh}/\texttt{run\_smalldata\_diag.sh}（小数据优化及其因子分解），再用
+\texttt{cross\_dataset\_summary.py} 聚合。其中 Fashion-MNIST 会自动下载，三个彩色数据集需预先下载并解压至
+\texttt{task2\_alexnet\_fmnist/data/} 下对应目录。
 
 % ===================== 第七章 结论与展望 =====================
 \section{结论与展望}
