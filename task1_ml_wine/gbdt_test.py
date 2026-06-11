@@ -31,9 +31,9 @@ def run(X, y, class_weight=None):
 
 def main():
     res = {}
-    print("[GBDT] 贷款违约(补类别特征 37 维)...")
+    print("[GBDT] 贷款违约(补类别特征 37 维, class_weight=balanced)...")
     Xr, yr, _ = load_lendingclub(rich=True)
-    res["lendingclub"] = run(Xr, yr)
+    res["lendingclub"] = run(Xr, yr, class_weight="balanced")
     print("   ", res["lendingclub"])
     print("[GBDT] 臭氧(class_weight=balanced)...")
     Xo, yo, _ = load_ozone()

@@ -35,12 +35,9 @@ def plot_curves():
 
 
 @torch.no_grad()
-def evaluate(device):
+def evaluate(model, device):
     """在测试集预测，返回 (y_true, y_pred, 部分图像)。"""
     _, _, test_loader = get_loaders(batch_size=256)
-    # 主模型采用 BatchNorm（替代 LRN）+ 40 轮余弦退火 + 数据增强训练，详见正文第四章。
-    model = AlexNet(num_classes=10, in_channels=1, use_bn=True).to(device)
-    model.load_state_dict(torch.load(CKPT, map_location=device))
     model.eval()
     ys, ps, probs, sample_imgs, sample_meta = [], [], [], None, None
     for xb, yb in test_loader:
@@ -69,16 +66,30 @@ def plot_samples(imgs, meta):
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser(
+        description="评估手写 AlexNet 检查点。默认架构与 experiments.py 主模型(BatchNorm)一致，"
+                    "若评估其它配置的检查点，请用下列开关使架构与训练时保持一致。")
+    ap.add_argument("--ckpt", default=CKPT, help="检查点路径(默认 outputs/alexnet_best.pt)")
+    ap.add_argument("--no-bn", action="store_true", help="检查点不含 BatchNorm(用 LRN)")
+    ap.add_argument("--no-lrn", action="store_true", help="检查点不含 LRN")
+    ap.add_argument("--small-kernel", action="store_true", help="检查点为小核(3x3 堆叠)版")
+    args = ap.parse_args()
+
     set_chinese_font()
-    if not os.path.exists(CKPT):
+    if not os.path.exists(args.ckpt):
         raise FileNotFoundError(
-            f"未找到模型文件 {CKPT}，请先运行主模型训练命令："
+            f"未找到模型文件 {args.ckpt}，请先运行主模型训练命令(主入口为 experiments.py，而非旧版 train.py)："
             "`python task2_alexnet_fmnist/experiments.py --model alexnet --bn --augment --cosine "
             "--epochs 40 --seed 0 --tag main --save-ckpt task2_alexnet_fmnist/outputs/alexnet_best.pt "
             "--save-history task2_alexnet_fmnist/outputs/history.json`。")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # 构建与检查点训练时一致的架构（默认主模型：BatchNorm 替代 LRN）
+    model = AlexNet(num_classes=10, in_channels=1, use_bn=not args.no_bn,
+                    use_lrn=not args.no_lrn, small_kernel=args.small_kernel).to(device)
+    model.load_state_dict(torch.load(args.ckpt, map_location=device))
     plot_curves()
-    y_true, y_pred, y_prob, imgs, meta = evaluate(device)
+    y_true, y_pred, y_prob, imgs, meta = evaluate(model, device)
     acc = accuracy_score(y_true, y_pred)
     p, r, f1, _ = precision_recall_fscore_support(y_true, y_pred, average="macro")
     kappa = cohen_kappa_score(y_true, y_pred)                          # 一致性（排除碰运气）

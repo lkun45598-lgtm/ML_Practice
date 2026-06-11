@@ -1,9 +1,12 @@
 torch>=2.5
 torchvision>=0.20
 scikit-learn>=1.7
+imbalanced-learn>=0.12
 pandas>=2.0
 numpy
 matplotlib
 seaborn
+Pillow
 python-docx
+python-pptx
 thop

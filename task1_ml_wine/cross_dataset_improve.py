@@ -24,6 +24,7 @@ from data_tabular import load_lendingclub, load_ozone
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
@@ -54,7 +55,8 @@ def _estimators(class_weight="balanced"):
 def _fit_eval(Xtr, ytr, Xte, yte, smote=False, class_weight="balanced"):
     out = {}
     for name, (est, grid) in _estimators(class_weight).items():
-        steps = [("scaler", StandardScaler())]
+        steps = [("imputer", SimpleImputer(strategy="median")),
+                 ("scaler", StandardScaler())]
         if smote:
             steps.append(("smote", SMOTE(random_state=42)))
         steps.append(("clf", est))

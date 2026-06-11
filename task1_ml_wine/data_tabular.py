@@ -17,14 +17,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HERE, "data")
 
 
-def _impute_median(X):
-    """用列中位数填充 NaN。"""
-    col_median = np.nanmedian(X, axis=0)
-    inds = np.where(np.isnan(X))
-    X[inds] = np.take(col_median, inds[1])
-    return X
-
-
 def _meta(name, label_cn, X, y, class_names):
     counts = np.bincount(y)
     imb = float(counts.max() / max(counts.min(), 1))
@@ -61,7 +53,8 @@ def load_ozone():
     df = pd.read_csv(io.StringIO(raw), header=None, na_values="?")
     df = df.iloc[:, 1:]                      # 丢掉首列日期
     y = df.iloc[:, -1].to_numpy(dtype=int)
-    X = _impute_median(df.iloc[:, :-1].to_numpy(dtype=float))
+    # 保留 NaN，缺失值填充交给建模 Pipeline 中的 SimpleImputer，避免划分前用全量统计造成泄漏
+    X = df.iloc[:, :-1].to_numpy(dtype=float)
     return X, y, _meta("ozone", "臭氧 72维·2类(极不平衡)", X, y, ["正常", "超标"])
 
 
@@ -96,20 +89,32 @@ _LC_CAT = ["term", "grade", "sub_grade", "emp_length", "home_ownership",
            "verification_status", "purpose"]
 
 
+# 固定类别域：独热编码用此列表，避免“从全量数据得知所有类别”造成的泄漏
+_LC_SUBGRADES = [f"{g}{i}" for g in "ABCDEFG" for i in range(1, 6)]
+_LC_HOME = ["ANY", "MORTGAGE", "NONE", "OTHER", "OWN", "RENT"]
+_LC_PURPOSE = ["car", "credit_card", "debt_consolidation", "educational",
+               "home_improvement", "house", "major_purchase", "medical", "moving",
+               "other", "renewable_energy", "small_business", "vacation", "wedding"]
+
+
 def _lc_encode_categoricals(df):
-    """把 Lending Club 的类别特征编码为数值/独热，返回 DataFrame。"""
+    """把 Lending Club 的类别特征编码为数值/独热（均用固定域，无数据泄漏）。"""
     out = pd.DataFrame(index=df.index)
     out["term_months"] = df["term"].str.extract(r"(\d+)").astype(float)
     out["grade_ord"] = df["grade"].map({g: i for i, g in enumerate("ABCDEFG")})
-    sub = sorted(df["sub_grade"].dropna().unique())
-    out["subgrade_ord"] = df["sub_grade"].map({s: i for i, s in enumerate(sub)})
+    out["subgrade_ord"] = df["sub_grade"].map({s: i for i, s in enumerate(_LC_SUBGRADES)})
     emp_map = {"< 1 year": 0, "1 year": 1, "2 years": 2, "3 years": 3, "4 years": 4,
                "5 years": 5, "6 years": 6, "7 years": 7, "8 years": 8, "9 years": 9,
                "10+ years": 10}
     out["emp_len"] = df["emp_length"].map(emp_map)
     out["verif_ord"] = df["verification_status"].map(
         {"Not Verified": 0, "Source Verified": 1, "Verified": 2})
-    oh = pd.get_dummies(df[["home_ownership", "purpose"]].astype(str), dtype=float)
+    # 用固定类别域做独热，列结构不依赖于具体样本集合
+    home = pd.Categorical(df["home_ownership"].astype(str), categories=_LC_HOME)
+    purp = pd.Categorical(df["purpose"].astype(str), categories=_LC_PURPOSE)
+    oh = pd.concat([pd.get_dummies(home, prefix="home", dtype=float),
+                    pd.get_dummies(purp, prefix="purpose", dtype=float)], axis=1)
+    oh.index = df.index
     return pd.concat([out, oh], axis=1)
 
 
@@ -136,7 +141,8 @@ def load_lendingclub(subsample=30000, seed=42, rich=False):
         label = f"贷款违约 {feat.shape[1]}维·2类(含类别特征)"
     else:
         feat, label = num, "贷款违约 12维·2类(大规模)"
-    X_all = _impute_median(feat.to_numpy(dtype=float))
+    # 保留 NaN，缺失值填充交给建模 Pipeline 的 SimpleImputer
+    X_all = feat.to_numpy(dtype=float)
     if subsample and X_all.shape[0] > subsample:
         from sklearn.model_selection import train_test_split
         X_all, _, y_all, _ = train_test_split(

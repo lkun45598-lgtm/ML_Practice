@@ -24,6 +24,7 @@ from wine_quality import build_models
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import (accuracy_score, f1_score, balanced_accuracy_score)
 
@@ -47,7 +48,8 @@ def run_one(name, seed=42):
            "majority_baseline": round(majority, 4), "models": {}}
     for mname, (est, grid) in build_models().items():
         t0 = time.time()
-        pipe = Pipeline([("scaler", StandardScaler()), ("clf", est)])
+        pipe = Pipeline([("imputer", SimpleImputer(strategy="median")),
+                         ("scaler", StandardScaler()), ("clf", est)])
         gs = GridSearchCV(pipe, grid, cv=5, scoring="f1_macro", n_jobs=-1)
         gs.fit(Xtr, ytr)
         yp = gs.predict(Xte)

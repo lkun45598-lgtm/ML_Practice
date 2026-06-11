@@ -5,8 +5,8 @@
     "acc": 0.9155,
     "f1": 0.9153,
     "shirt_f1": 0.77,
-    "note": "历史 15 轮主模型测试结果",
-    "source": "test_metrics_15ep.json.bak",
+    "note": "15 轮 LRN 基线",
+    "source": "baseline_15ep_metrics.json",
     "delta_acc_pp": null
   },
   {

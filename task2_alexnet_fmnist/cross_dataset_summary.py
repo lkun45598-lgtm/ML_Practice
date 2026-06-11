@@ -24,11 +24,12 @@ from common.zh_font import set_chinese_font
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "outputs")
 
+# 顺序与报告表格保持一致（fmnist, catsdogs, flowers, garbage）
 DS = [
     ("fmnist", "Fashion-MNIST\n灰度28·10类", 10),
+    ("catsdogs", "Cats vs Dogs\n彩色·2类", 2),
     ("flowers", "Flowers\n彩色·5类", 5),
     ("garbage", "Garbage\n彩色·6类", 6),
-    ("catsdogs", "Cats vs Dogs\n彩色·2类", 2),
 ]
 
 

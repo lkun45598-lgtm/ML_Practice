@@ -75,16 +75,19 @@ def metric_row(name, result, note, shirt_f1=None, acc=None, f1=None, params=None
 
 def build_component_ablation(tags):
     """返回与论文表 5-1 一致的 AlexNet 组件消融行。"""
-    baseline_metrics = read_json(os.path.join(OUT_DIR, "test_metrics_15ep.json.bak"))
+    # 15 轮基线指标来自已提交的 baseline_15ep_metrics.json（不再依赖未跟踪的 .bak 文件）；
+    # 若该文件缺失则回退到 exp_alexnet_base.json，避免硬编码。
+    baseline_metrics = read_json(os.path.join(OUT_DIR, "baseline_15ep_metrics.json"))
     base_exp = tags.get("alexnet_base") or {}
     baseline_acc = baseline_metrics.get("acc") if baseline_metrics else base_exp.get("test_acc")
     baseline_f1 = baseline_metrics.get("f1") if baseline_metrics else base_exp.get("test_f1")
+    baseline_shirt = (baseline_metrics or {}).get("shirt_f1", class_f1(base_exp, "衬衫"))
 
     rows = [
-        metric_row("最小配置（15轮，LRN，无增强）", base_exp, "历史 15 轮主模型测试结果",
-                   shirt_f1=0.77, acc=baseline_acc, f1=baseline_f1,
-                   params=base_exp.get("n_params_M", 58.299),
-                   source="test_metrics_15ep.json.bak"),
+        metric_row("最小配置（15轮，LRN，无增强）", base_exp, "15 轮 LRN 基线",
+                   shirt_f1=baseline_shirt, acc=baseline_acc, f1=baseline_f1,
+                   params=(baseline_metrics or {}).get("n_params_M", 58.299),
+                   source="baseline_15ep_metrics.json"),
         metric_row("+ 充分训练（40轮，余弦退火）", tags["alexnet_long_base"],
                    "40 轮 LRN，无增强"),
         metric_row("+ BatchNorm 替代 LRN", tags["alexnet_long_bn"],

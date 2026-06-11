@@ -18,6 +18,23 @@
       "resnet_minus_alex_pp": 0.54
     },
     {
+      "dataset": "catsdogs",
+      "label": "Cats vs Dogs 彩色·2类",
+      "num_classes": 2,
+      "random_baseline": 0.5,
+      "alexnet_acc": 0.9538,
+      "alexnet_params_M": 58.292,
+      "alexnet_gap": 0.0437,
+      "resnet_acc": 0.9522,
+      "resnet_acc_std": 0.0026,
+      "resnet_params_M": 2.776,
+      "resnet_gap": 0.0325,
+      "simplecnn_acc": 0.9044,
+      "simplecnn_acc_std": 0.0035,
+      "simplecnn_params_M": 0.389,
+      "resnet_minus_alex_pp": -0.16
+    },
+    {
       "dataset": "flowers",
       "label": "Flowers 彩色·5类",
       "num_classes": 5,
@@ -50,23 +67,6 @@
       "simplecnn_acc_std": 0.0133,
       "simplecnn_params_M": 0.39,
       "resnet_minus_alex_pp": 2.56
-    },
-    {
-      "dataset": "catsdogs",
-      "label": "Cats vs Dogs 彩色·2类",
-      "num_classes": 2,
-      "random_baseline": 0.5,
-      "alexnet_acc": 0.9538,
-      "alexnet_params_M": 58.292,
-      "alexnet_gap": 0.0437,
-      "resnet_acc": 0.9522,
-      "resnet_acc_std": 0.0026,
-      "resnet_params_M": 2.776,
-      "resnet_gap": 0.0325,
-      "simplecnn_acc": 0.9044,
-      "simplecnn_acc_std": 0.0035,
-      "simplecnn_params_M": 0.389,
-      "resnet_minus_alex_pp": -0.16
     }
   ],
   "note": "三模型：AlexNet@224 / ResNetSmall@64 / SimpleCNN@64"

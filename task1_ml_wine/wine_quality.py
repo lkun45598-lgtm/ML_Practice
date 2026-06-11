@@ -75,6 +75,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 CLASS_NAMES = ["差(≤5)", "中(=6)", "好(≥7)"]
+# 模型名 → ASCII 文件名（避免中文文件名跨系统乱码，便于 LaTeX 引用）
+MODEL_FNAME = {"SVM": "svm", "决策树": "decision_tree",
+               "随机森林": "random_forest", "逻辑回归": "logistic_regression"}
 
 
 def make_labels(df):
@@ -185,7 +188,7 @@ def evaluate_models(models, X_te, y_te):
                     xticklabels=CLASS_NAMES, yticklabels=CLASS_NAMES)
         plt.title(f"{name} 混淆矩阵"); plt.xlabel("预测"); plt.ylabel("真实")
         plt.tight_layout()
-        plt.savefig(os.path.join(OUT_DIR, f"cm_{name}.png"), dpi=150); plt.close()
+        plt.savefig(os.path.join(OUT_DIR, f"cm_{MODEL_FNAME.get(name, name)}.png"), dpi=150); plt.close()
 
     metrics = pd.DataFrame(rows)
     metrics.to_csv(os.path.join(OUT_DIR, "metrics.csv"), index=False, encoding="utf-8-sig")
