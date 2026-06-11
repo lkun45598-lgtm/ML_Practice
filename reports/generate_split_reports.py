@@ -569,16 +569,18 @@ def task2_body(doc):
               "运行 SimpleCNN，后将其对齐为与主模型一致的 40 轮 + 余弦退火重新训练，以避免把“训练不足”误判为“结构不行”。")
 
     doc.add_heading("6.2 数据特点对识别难度的决定作用", level=2)
-    para(doc, "三个模型在四个数据集上的测试准确率如表 6-2 和图 6-1 所示。即便是同一个 AlexNet，其准确率也在 80% 至 95% "
+    para(doc, "三个模型在四个数据集上的测试准确率如表 6-2 和图 6-2 所示。即便是同一个 AlexNet，其准确率也在 80% 至 95% "
               "之间大幅波动：数据充足的 Cats vs Dogs 和 Fashion-MNIST 分别达到 95.38% 和 94.38%，而样本较少的 Flowers "
-              "和 Garbage 仅为 80% 左右。这说明识别难度主要由数据本身的特点决定，可归纳为三个因素。")
+              "和 Garbage 仅为 80% 左右。这说明识别难度主要由数据本身的特点决定，可归纳为三个因素。四个数据集由易到难的"
+              "难度阶梯及其代表样例如图 6-1 所示。")
+    add_image(doc, os.path.join(T2_OUT, "fig_datasets.png"), 5.8, "图 6-1 四个数据集的难度阶梯：从标准灰度图到复杂彩色图像")
     add_table(doc, ["数据集（类别数）", "随机基线", "AlexNet 58M", "小型 ResNet 2.8M", "SimpleCNN 0.39M"],
               [["Fashion-MNIST (10)", "0.100", "0.9438", "0.9492", "0.9181±0.002"],
                ["Cats vs Dogs (2)", "0.500", "0.9538", "0.9522±0.003", "0.9044±0.004"],
                ["Flowers (5)", "0.200", "0.8075", "0.8126±0.006", "0.7609±0.011"],
                ["Garbage (6)", "0.167", "0.8011", "0.8267±0.006", "0.7356±0.013"]],
               "表 6-2 三模型在四个数据集上的测试准确率")
-    add_image(doc, os.path.join(T2_OUT, "cross_dataset_acc.png"), 5.8, "图 6-1 任务难度阶梯与三模型准确率对比")
+    add_image(doc, os.path.join(T2_OUT, "cross_dataset_acc.png"), 5.8, "图 6-2 任务难度阶梯与三模型准确率对比")
     para(doc, "第一是每类样本量。准确率最高的两个数据集每类样本均在 7000 张以上（猫狗约 12500 张），而 Flowers、Garbage "
               "每类仅数百张。样本不足直接表现为过拟合：在同一 AlexNet 上，数据充足的猫狗训练—验证准确率差约 4.4 个百分点，"
               "而 Flowers、Garbage 分别高达 11.2 和 12.3 个百分点。同一模型的过拟合程度恰好在数据少的数据集上急剧放大，"
@@ -613,6 +615,7 @@ def task2_body(doc):
               " gap 还略有下降。这在本任务上印证了 VGG 的设计思想：两个 3×3 卷积叠加即可获得与一个 5×5 相近的感受野，但参数"
               "更省、中间多一层非线性、网络也更深。性能提升并非来自更多参数，而是来自“更小的核、更深的层和更强的非线性”，"
               "且越困难的数据集收益越大。")
+    add_image(doc, os.path.join(T2_OUT, "fig_kernel_compare.png"), 6.0, "图 6-3 大卷积核与小卷积核堆叠的对比：相同感受野下小核更省参、非线性更强")
 
     doc.add_heading("6.4 为什么小型 ResNet 更优：架构胜过参数规模", level=2)
     para(doc, "小型 ResNet 仅以约 1/20 的参数（2.8M 对 58.3M）就在四个数据集上全面追平甚至反超 AlexNet。要理解这一点，"
@@ -628,7 +631,10 @@ def task2_body(doc):
               "其一，全部使用 3×3 小核堆叠，与上一节受控对照结论一致；其二，残差连接为梯度提供恒等捷径，使网络可堆到十余层"
               "卷积而不退化，从而学到更丰富的层级特征；其三，用全局平均池化替代大型全连接层，参数极少、自带平移不变性，"
               "过拟合风险也显著降低。")
-    add_image(doc, os.path.join(T2_OUT, "cross_dataset_gap.png"), 5.4, "图 6-2 AlexNet 与小型 ResNet 的过拟合程度对比")
+    add_image(doc, os.path.join(T2_OUT, "fig_resblock.png"), 4.6, "图 6-4 残差块（BasicBlock）结构：捷径使输出为 F(x)+x，缓解深层退化")
+    add_image(doc, os.path.join(T2_OUT, "fig_resnet_arch.png"), 6.0, "图 6-5 小型 ResNet 整体结构：Stem + 三个 Stage + 全局平均池化")
+    add_image(doc, os.path.join(T2_OUT, "fig_head_compare.png"), 6.0, "图 6-6 巨型全连接头与全局平均池化头的对比：后者参数少四个数量级")
+    add_image(doc, os.path.join(T2_OUT, "cross_dataset_gap.png"), 5.4, "图 6-7 AlexNet 与小型 ResNet 的过拟合程度对比")
     para(doc, "过拟合对比进一步支持上述判断：在每个数据集上，小型 ResNet 的训练—验证 gap 都不高于 AlexNet（如 Garbage 为 "
               "12.2% 对 12.3%、Cats vs Dogs 为 3.3% 对 4.4%）。同时两个模型的 gap 都在样本较少的彩色数据集上偏大（均超过 "
               "10%）。这说明当模型结构已足够强时，性能瓶颈会从“模型容量”转移到“数据量”：继续增大参数收益有限，扩充数据或"

@@ -577,7 +577,14 @@ ResNet 进行对照。本章核心结论是：\textbf{决定性能的是数据�
 三个模型在四个数据集上的测试准确率如表~\ref{tab:cross-acc} 和图~\ref{fig:cross-acc} 所示。可以看到，
 即便是同一个 AlexNet，其准确率也在 80\% 至 95\% 之间大幅波动：数据充足的 Cats vs Dogs 和 Fashion-MNIST
 分别达到 95.38\% 和 94.38\%，而样本较少的 Flowers 和 Garbage 仅为 80\% 左右。这说明识别难度主要由数据
-本身的特点决定，可归纳为三个因素。
+本身的特点决定，可归纳为三个因素。四个数据集由易到难的难度阶梯及其代表样例如图~\ref{fig:datasets} 所示。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_datasets.png}
+  \caption{四个数据集的难度阶梯：从标准灰度图到复杂彩色图像，数据量递减、难度递增}
+  \label{fig:datasets}
+\end{figure}
 
 \begin{table}[H]
   \centering
@@ -667,9 +674,16 @@ Flowers 只有 5 个类别反而只有 81\%；猫狗虽然只有 2 类，但其�
 在参数量几乎相同的前提下，小核版在两个数据集上都取得更高准确率：Flowers 提升约 1.7 个百分点，Garbage
 提升约 4.3 个百分点；宏平均 F1 的提升更大（Garbage 提升约 5.6 个百分点），说明小核对困难和少数类别的
 帮助更明显，且过拟合 gap 还略有下降。这一结果在本任务上印证了 VGG 的设计思想：两个 $3\times3$ 卷积叠加
-即可获得与一个 $5\times5$ 卷积相近的感受野，但参数更省、中间多一层非线性、网络也更深，因而表达能力更强。
-换言之，性能的提升并非来自更多参数，而是来自“更小的核、更深的层和更强的非线性”这一结构选择，且越困难的
-数据集收益越大。
+即可获得与一个 $5\times5$ 卷积相近的感受野，但参数更省、中间多一层非线性、网络也更深，因而表达能力更强
+（如图~\ref{fig:kernel} 所示）。换言之，性能的提升并非来自更多参数，而是来自“更小的核、更深的层和更强的
+非线性”这一结构选择，且越困难的数据集收益越大。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{fig_kernel_compare.png}
+  \caption{大卷积核与小卷积核堆叠的对比：相同感受野下小核更省参、非线性更强}
+  \label{fig:kernel}
+\end{figure}
 
 \subsection{为什么小型 ResNet 更优：架构胜过参数规模}
 小型 ResNet 仅以约 1/20 的参数（2.8M 对 58.3M）就在四个数据集上全面追平甚至反超 AlexNet。要理解这一点，
@@ -692,12 +706,34 @@ Flowers 只有 5 个类别反而只有 81\%；猫狗虽然只有 2 类，但其�
 \end{table}
 
 AlexNet 的 58.3M 参数中，高达 93.6\% 集中在三层全连接分类头，真正用于提取特征的卷积部分只有 3.75M；
-而小型 ResNet 用全局平均池化（GAP）取代了庞大的全连接头，几乎 100\% 的参数都用在卷积提特征上。这正是
-ResNet 以极少参数取胜的根本原因——AlexNet 多出的参数大多用在了易过拟合的全连接头上，并没有用在刀刃上。
-具体而言，小型 ResNet 的优势来自三处架构设计：其一，全部使用 $3\times3$ 小核堆叠，与上一节的受控对照
-结论一致；其二，引入残差连接，为梯度提供恒等捷径，使网络可以堆叠到十余层卷积而不发生退化，从而学到更
-丰富的层级特征；其三，用全局平均池化替代大型全连接层，将每个通道压缩为一个值后直接分类，参数极少、自带
-平移不变性，过拟合风险也显著降低。
+而小型 ResNet 用全局平均池化（GAP）取代了庞大的全连接头，几乎 100\% 的参数都用在卷积提特征上
+（两种分类头的对比见图~\ref{fig:head}）。这正是 ResNet 以极少参数取胜的根本原因——AlexNet 多出的参数
+大多用在了易过拟合的全连接头上，并没有用在刀刃上。具体而言，小型 ResNet 的优势来自三处架构设计：其一，
+全部使用 $3\times3$ 小核堆叠，与上一节的受控对照结论一致；其二，引入残差连接，为梯度提供恒等捷径，使网络
+可以堆叠到十余层卷积而不发生退化，从而学到更丰富的层级特征（残差块结构见图~\ref{fig:resblock}）；其三，
+用全局平均池化替代大型全连接层，将每个通道压缩为一个值后直接分类，参数极少、自带平移不变性，过拟合风险
+也显著降低。小型 ResNet 的整体结构如图~\ref{fig:resnet} 所示。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.66\textwidth]{fig_resblock.png}
+  \caption{残差块（BasicBlock）结构：捷径使输出为 $F(x)+x$，缓解深层退化}
+  \label{fig:resblock}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_resnet_arch.png}
+  \caption{小型 ResNet 整体结构：Stem + 三个 Stage（各含 2 个残差块）+ 全局平均池化}
+  \label{fig:resnet}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{fig_head_compare.png}
+  \caption{巨型全连接头与全局平均池化头的对比：后者参数少四个数量级、过拟合更轻}
+  \label{fig:head}
+\end{figure}
 
 过拟合的对比进一步支持上述判断：如图~\ref{fig:cross-gap} 所示，在每个数据集上，小型 ResNet 的训练—验证
 gap 都不高于 AlexNet（如 Garbage 为 12.2\% 对 12.3\%、Cats vs Dogs 为 3.3\% 对 4.4\%）。同时，两个模型的
