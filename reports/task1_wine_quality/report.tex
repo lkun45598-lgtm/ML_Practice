@@ -256,7 +256,15 @@ x'=\frac{x-\mu}{\sigma}.
 划分的作用，但单棵树容易受到训练样本扰动影响，深度过大时也容易过拟合。随机森林在决策树基础上引入
 Bootstrap 采样和随机特征子集，多棵树的投票结果能够降低单棵树的方差，因此在中小规模表格数据上通常具有
 更稳定的泛化表现。逻辑回归则以线性决策边界作为基线模型，其结果可以帮助判断该任务是否主要依赖简单线性
-关系；若逻辑回归表现明显偏低，通常意味着需要非线性模型捕捉更复杂的特征组合。
+关系；若逻辑回归表现明显偏低，通常意味着需要非线性模型捕捉更复杂的特征组合。四种模型的核心原理
+如图~\ref{fig:ml-models} 所示。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{fig_ml_models.png}
+  \caption{四种传统机器学习模型原理示意：间隔最大化、规则分裂、集成投票与概率输出}
+  \label{fig:ml-models}
+\end{figure}
 
 \subsection{评价指标}
 为全面评价模型表现，本文采用准确率、宏平均精确率、宏平均召回率和宏平均 F1 作为基础指标。考虑到类别
@@ -563,6 +571,15 @@ Lending Club 原始数据约 1.19\,GB，本文仅取已结清贷款（Fully Paid
   \end{tabular}}
 \end{table}
 
+五个数据集由易到难的难度阶梯及其关键特征如图~\ref{fig:tab-datasets} 所示。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_tab_datasets.png}
+  \caption{五个结构化数据集的难度阶梯：从小样本近线性可分到大规模弱信号、多分类与极端不平衡}
+  \label{fig:tab-datasets}
+\end{figure}
+
 为保证对照公平，五个数据集统一采用相同的建模管线：标准化、五折交叉验证和网格搜索，并对每个数据集使用
 完全相同的四种模型（SVM、决策树、随机森林、逻辑回归）及其超参数搜索空间，评价主指标为宏平均 F1，
 辅以准确率与平衡准确率。所有模型均开启类别权重平衡（class\_weight=balanced）。
@@ -606,7 +623,15 @@ Lending Club 原始数据约 1.19\,GB，本文仅取已结清贷款（Fully Paid
 或信号本身较弱时，复杂模型并无优势。
 
 \subsection{不平衡与“本质困难”：准确率的陷阱}
-跨数据集对照还暴露了两类容易被准确率掩盖的问题，如图~\ref{fig:tab-imb} 所示。
+跨数据集对照还暴露了两类容易被准确率掩盖的问题，如图~\ref{fig:tab-imb} 所示。极端不平衡下“准确率虚高、
+实则失效”的机理如图~\ref{fig:imb-trap} 所示。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_imbalance_trap.png}
+  \caption{类别不平衡下的准确率陷阱：33:1 时“全预测多数类”即得 97\% 准确率，但宏 F1 仅约 0.5}
+  \label{fig:imb-trap}
+\end{figure}
 
 \begin{figure}[H]
   \centering
