@@ -163,7 +163,12 @@ def task2_abstract(doc):
               "模型对裤子、包、鞋类等区分度较高的类别识别效果较好，而 T 恤、套衫、外套和衬衫等上装类别之间仍存在"
               "较明显混淆。进一步的消融实验表明，充分训练和 BatchNorm 对模型性能提升具有较大作用；复杂度对比显示，"
               "AlexNet 在低分辨率灰度图像任务上存在一定参数和计算冗余。")
-    para(doc, "关键词：深度学习；卷积神经网络；AlexNet；Fashion-MNIST；图像分类；Grad-CAM")
+    para(doc, "在此基础上，本文将手写 AlexNet 推广到难度递增的四个数据集（Fashion-MNIST、Cats vs Dogs、Flowers、"
+              "Garbage），并与轻量 SimpleCNN 和手写小型 ResNet 进行同条件对照。结果表明：识别难度主要由数据特点"
+              "（每类样本量、图像复杂度、类别平衡）决定，而非类别数量；在参数量几乎相同的受控对照下，3×3 小核堆叠"
+              "优于大核；小型 ResNet 仅以约 1/20 参数即可追平甚至反超 AlexNet。由此得出核心结论：决定卷积网络性能的"
+              "是数据特点与架构设计而非参数规模，当架构足够强时真正的瓶颈是数据量。")
+    para(doc, "关键词：深度学习；卷积神经网络；AlexNet；Fashion-MNIST；图像分类；跨数据集泛化；Grad-CAM")
     doc.add_page_break()
     add_center_title(doc, "Abstract")
     para(doc, "Image classification is a representative task in deep learning. This paper studies the Fashion-MNIST dataset "
@@ -174,7 +179,14 @@ def task2_abstract(doc):
               "0.9437. Further ablation experiments show that sufficient training and BatchNorm make important contributions "
               "to model performance. Complexity comparison also indicates that AlexNet has certain parameter and computation "
               "redundancy on low-resolution grayscale images.")
-    para(doc, "Keywords: deep learning; convolutional neural network; AlexNet; Fashion-MNIST; image classification; Grad-CAM")
+    para(doc, "Furthermore, the handwritten AlexNet is extended to four datasets of increasing difficulty (Fashion-MNIST, "
+              "Cats vs Dogs, Flowers, Garbage) and compared under identical settings with a lightweight SimpleCNN and a "
+              "handwritten small ResNet. Recognition difficulty is mainly determined by data characteristics (per-class "
+              "sample size, image complexity, class balance) rather than the number of classes; under a controlled "
+              "comparison with almost identical parameter counts, stacked 3x3 kernels outperform large kernels; and the "
+              "small ResNet matches or surpasses AlexNet with only about 1/20 of the parameters. CNN performance is thus "
+              "governed by data characteristics and architectural design rather than parameter scale.")
+    para(doc, "Keywords: deep learning; convolutional neural network; AlexNet; Fashion-MNIST; image classification; cross-dataset generalization; Grad-CAM")
     doc.add_page_break()
 
 
@@ -528,18 +540,119 @@ def task2_body(doc):
               "矩阵结果一致：模型能够较好区分裤子、包和鞋类等轮廓差异明显的类别，但对领口、袖长、开襟、衣摆等细节"
               "依赖较强的上装类别仍存在误判。")
 
-    doc.add_heading("第6章 实验复现说明", level=1)
+    doc.add_heading("第6章 跨数据集泛化与架构对照研究", level=1)
+    para(doc, "前述各章均在 Fashion-MNIST 上展开。为进一步回答“究竟是什么决定了卷积神经网络的图像分类性能”，本章把"
+              "手写 AlexNet 推广到难度递增的四个图像数据集，并在相同训练条件下与轻量基线 SimpleCNN 和手写小型 ResNet "
+              "进行对照。本章核心结论是：决定性能的是数据本身的特点和网络的架构设计，而非参数规模。")
+
+    doc.add_heading("6.1 实验设置：难度阶梯与三模型对照", level=2)
+    para(doc, "本章在 Fashion-MNIST 之外，另选取三个真实彩色图像数据集：Flowers（花卉，5 类）、Garbage（垃圾分类，"
+              "6 类）和 Cats vs Dogs（猫狗二分类）。四个数据集在类别数、样本规模、类别平衡程度和图像复杂度上差异明显，"
+              "构成由易到难的难度阶梯，其基本特征如表 6-1 所示。三个彩色数据集没有官方划分，本文统一采用按类别分层的"
+              " 70%/15%/15% 划分，并对损坏图像做有效性校验后跳过。")
+    add_table(doc, ["数据集", "类别数", "有效样本数", "每类均量", "不平衡比", "图像性质"],
+              [["Fashion-MNIST", "10", "70000", "7000", "1.0×", "灰度、居中、单物体"],
+               ["Cats vs Dogs", "2", "24998", "12499", "1.0×", "彩色照片、背景多样"],
+               ["Flowers", "5", "4317", "863", "1.4×", "彩色照片、类内差异大"],
+               ["Garbage", "6", "2527", "421", "4.3×", "彩色照片、类间相似且不平衡"]],
+              "表 6-1 四个数据集的基本特征")
+    para(doc, "对照的三个模型分别代表不同设计取向：AlexNet@224（约 58.3M 参数，大卷积核 + 大型全连接分类器）、小型 "
+              "ResNet@64（约 2.8M 参数，3×3 小核 + 残差连接 + 全局平均池化）、SimpleCNN@64（约 0.39M 参数，三层卷积的"
+              "浅层基线）。为保证对照公平，三个模型均从零训练、不使用任何预训练权重，并尽量统一训练预算：均采用数据增强"
+              "与余弦退火；其中 SimpleCNN 与 ResNet 各使用 3 个随机种子重复训练并报告均值与标准差。本文初期曾以较短预算"
+              "运行 SimpleCNN，后将其对齐为与主模型一致的 40 轮 + 余弦退火重新训练，以避免把“训练不足”误判为“结构不行”。")
+
+    doc.add_heading("6.2 数据特点对识别难度的决定作用", level=2)
+    para(doc, "三个模型在四个数据集上的测试准确率如表 6-2 和图 6-1 所示。即便是同一个 AlexNet，其准确率也在 80% 至 95% "
+              "之间大幅波动：数据充足的 Cats vs Dogs 和 Fashion-MNIST 分别达到 95.38% 和 94.38%，而样本较少的 Flowers "
+              "和 Garbage 仅为 80% 左右。这说明识别难度主要由数据本身的特点决定，可归纳为三个因素。")
+    add_table(doc, ["数据集（类别数）", "随机基线", "AlexNet 58M", "小型 ResNet 2.8M", "SimpleCNN 0.39M"],
+              [["Fashion-MNIST (10)", "0.100", "0.9438", "0.9492", "0.9181±0.002"],
+               ["Cats vs Dogs (2)", "0.500", "0.9538", "0.9522±0.003", "0.9044±0.004"],
+               ["Flowers (5)", "0.200", "0.8075", "0.8126±0.006", "0.7609±0.011"],
+               ["Garbage (6)", "0.167", "0.8011", "0.8267±0.006", "0.7356±0.013"]],
+              "表 6-2 三模型在四个数据集上的测试准确率")
+    add_image(doc, os.path.join(T2_OUT, "cross_dataset_acc.png"), 5.8, "图 6-1 任务难度阶梯与三模型准确率对比")
+    para(doc, "第一是每类样本量。准确率最高的两个数据集每类样本均在 7000 张以上（猫狗约 12500 张），而 Flowers、Garbage "
+              "每类仅数百张。样本不足直接表现为过拟合：在同一 AlexNet 上，数据充足的猫狗训练—验证准确率差约 4.4 个百分点，"
+              "而 Flowers、Garbage 分别高达 11.2 和 12.3 个百分点。同一模型的过拟合程度恰好在数据少的数据集上急剧放大，"
+              "说明这是“数据量问题”而非“模型问题”。")
+    para(doc, "第二是图像本身的复杂度。Fashion-MNIST 为灰度、居中、单物体且无背景，类内一致性高，因此即便有 10 个类别仍较"
+              "易学习；而真实彩色照片背景杂乱、姿态光照多变、类内差异大，识别难度明显更高。")
+    para(doc, "第三是类别平衡与类间相似度。Garbage 不平衡比达 4.3 倍，最小类别 trash 仅 137 张，其每类 F1 如表 6-3 所示："
+              "纸张、纸板较高，而 trash 仅 0.60，叠加 glass、metal、plastic 之间本就相似，使 Garbage 的宏平均 F1（0.78）"
+              "明显低于其总体准确率（0.80）——这一现象正是类别不平衡与类间混淆的典型信号。")
+    add_table(doc, ["类别", "paper", "cardboard", "metal", "glass", "plastic", "trash"],
+              [["F1", "0.90", "0.84", "0.80", "0.79", "0.73", "0.60"],
+               ["样本数", "594", "403", "410", "501", "482", "137"]],
+              "表 6-3 AlexNet 在 Garbage 数据集上的每类 F1")
+    para(doc, "值得强调的是，类别数量并不是决定难度的主要因素：Fashion-MNIST 有 10 个类别却达到 94%，而 Flowers 只有 5 类"
+              "反而只有 81%；猫狗虽只有 2 类，但其高准确率主要来自每类上万张的充足数据。这说明“每类有多少数据、图像是否"
+              "干净、类别是否平衡”比“类别多少”更能决定识别难度。")
+
+    doc.add_heading("6.3 大卷积核与小卷积核的受控对照", level=2)
+    para(doc, "小型 ResNet（全用 3×3 小核）整体优于使用大核的 AlexNet，但二者在深度、分类头和残差连接等多方面都不同，"
+              "无法据此单独归因于卷积核大小。为干净地考察核大小的影响，本文设计受控对照：在同一 AlexNet 框架内，仅把第一层"
+              " 11×11 和第二层 5×5 的大核替换为感受野相近的 3×3 卷积堆叠，而通道数、各阶段输出尺寸（最终 256×6×6）、全连接"
+              "分类头和训练预算全部保持一致，使两者唯一差异仅在卷积核。此时大核版与小核版总参数分别为 58.30M 与 58.55M，"
+              "几乎相同。两种配置在 Flowers 和 Garbage 上各以 3 个随机种子重复训练，结果如表 6-4 所示。")
+    add_table(doc, ["数据集", "卷积核配置", "测试准确率", "宏平均 F1", "过拟合 gap", "总参数"],
+              [["Flowers", "大核（11×11、5×5）", "0.8126±0.018", "0.8123", "11.9%", "58.30M"],
+               ["Flowers", "小核（3×3 堆叠）", "0.8297±0.008", "0.8302", "11.7%", "58.55M"],
+               ["Garbage", "大核（11×11、5×5）", "0.8028±0.004", "0.7762", "14.9%", "58.30M"],
+               ["Garbage", "小核（3×3 堆叠）", "0.8461±0.012", "0.8321", "13.6%", "58.55M"]],
+              "表 6-4 大核与小核的受控对照（同一 AlexNet 框架，仅卷积核不同）")
+    para(doc, "在参数量几乎相同的前提下，小核版在两个数据集上都取得更高准确率：Flowers 提升约 1.7 个百分点，Garbage 提升约"
+              " 4.3 个百分点；宏平均 F1 的提升更大（Garbage 约 5.6 个百分点），说明小核对困难和少数类别帮助更明显，且过拟合"
+              " gap 还略有下降。这在本任务上印证了 VGG 的设计思想：两个 3×3 卷积叠加即可获得与一个 5×5 相近的感受野，但参数"
+              "更省、中间多一层非线性、网络也更深。性能提升并非来自更多参数，而是来自“更小的核、更深的层和更强的非线性”，"
+              "且越困难的数据集收益越大。")
+
+    doc.add_heading("6.4 为什么小型 ResNet 更优：架构胜过参数规模", level=2)
+    para(doc, "小型 ResNet 仅以约 1/20 的参数（2.8M 对 58.3M）就在四个数据集上全面追平甚至反超 AlexNet。要理解这一点，"
+              "关键在于观察参数究竟分布在哪里，如表 6-5 所示。")
+    add_table(doc, ["模型", "总参数", "卷积主体（提特征）", "分类头（全连接）"],
+              [["AlexNet", "58.30M", "3.75M（6.4%）", "54.55M（93.6%）"],
+               ["小型 ResNet", "2.78M", "2.77M（99.9%）", "0.003M（0.1%）"],
+               ["SimpleCNN", "0.39M", "0.09M（23.8%）", "0.30M（76.2%）"]],
+              "表 6-5 三个模型的参数分布：卷积主体与分类头")
+    para(doc, "AlexNet 的 58.3M 参数中高达 93.6% 集中在三层全连接分类头，真正用于提取特征的卷积部分只有 3.75M；而小型 "
+              "ResNet 用全局平均池化取代庞大全连接头，几乎 100% 的参数都用在卷积提特征上。这正是 ResNet 以极少参数取胜的"
+              "根本原因——AlexNet 多出的参数大多用在了易过拟合的全连接头上，没有用在刀刃上。小型 ResNet 的优势来自三处设计："
+              "其一，全部使用 3×3 小核堆叠，与上一节受控对照结论一致；其二，残差连接为梯度提供恒等捷径，使网络可堆到十余层"
+              "卷积而不退化，从而学到更丰富的层级特征；其三，用全局平均池化替代大型全连接层，参数极少、自带平移不变性，"
+              "过拟合风险也显著降低。")
+    add_image(doc, os.path.join(T2_OUT, "cross_dataset_gap.png"), 5.4, "图 6-2 AlexNet 与小型 ResNet 的过拟合程度对比")
+    para(doc, "过拟合对比进一步支持上述判断：在每个数据集上，小型 ResNet 的训练—验证 gap 都不高于 AlexNet（如 Garbage 为 "
+              "12.2% 对 12.3%、Cats vs Dogs 为 3.3% 对 4.4%）。同时两个模型的 gap 都在样本较少的彩色数据集上偏大（均超过 "
+              "10%）。这说明当模型结构已足够强时，性能瓶颈会从“模型容量”转移到“数据量”：继续增大参数收益有限，扩充数据或"
+              "加强正则化才是关键。")
+
+    doc.add_heading("6.5 本章小结", level=2)
+    para(doc, "本章通过四个数据集、三个模型的同条件对照，得到三点相互印证的结论。第一，识别难度主要由数据特点（每类样本量、"
+              "图像复杂度、类别平衡）决定，而类别数量并非主要因素。第二，在参数量几乎相同的受控对照下，3×3 小核堆叠优于大核，"
+              "且越困难的数据集收益越大。第三，小型 ResNet 以约 1/20 参数追平甚至反超 AlexNet，原因在于残差连接、全局平均"
+              "池化和小核深网的架构设计，而非参数规模。综合而言，在足够的训练配方下，决定卷积网络性能的是数据特点与架构设计；"
+              "当架构足够强时，真正的瓶颈是数据量。")
+
+    doc.add_heading("第7章 实验复现说明", level=1)
     para(doc, "在项目根目录执行 README 中的主模型训练命令可复现实验：python task2_alexnet_fmnist/experiments.py --model "
               "alexnet --bn --augment --cosine --epochs 40 --seed 0 --tag main --save-ckpt task2_alexnet_fmnist/outputs/"
               "alexnet_best.pt --save-history task2_alexnet_fmnist/outputs/history.json。随后执行 python task2_alexnet_fmnist/"
               "evaluate.py 生成测试集指标和可视化结果。")
+    para(doc, "跨数据集对照实验可执行 run_cross_parallel.sh（三模型四数据集）、run_scnn_fair.sh（公平基线）和 "
+              "run_kernel_ablation.sh（大核 vs 小核），再用 cross_dataset_summary.py 聚合。其中 Fashion-MNIST 会自动下载，"
+              "三个彩色数据集需预先下载并解压至 task2_alexnet_fmnist/data/ 下对应目录。")
 
-    doc.add_heading("第7章 结论与展望", level=1)
+    doc.add_heading("第8章 结论与展望", level=1)
     para(doc, "本文基于 PyTorch 基础模块逐层实现 AlexNet，并在 Fashion-MNIST 十分类任务上完成训练和评估。主模型在"
               "测试集上取得 94.38% 的准确率和 0.9437 的宏平均 F1，说明 AlexNet 能够有效完成服饰图像分类任务。误差"
               "分析显示，模型主要混淆集中在视觉相似的上装类别之间。")
     para(doc, "消融实验表明，充分训练和 BatchNorm 对性能提升具有较大作用；复杂度分析说明 AlexNet 在低分辨率灰度图像"
-              "任务上存在一定冗余；Grad-CAM 可视化进一步揭示模型主要关注服饰整体轮廓，对细粒度局部差异的利用仍有限。"
+              "任务上存在一定冗余；Grad-CAM 可视化进一步揭示模型主要关注服饰整体轮廓，对细粒度局部差异的利用仍有限。")
+    para(doc, "进一步地，本文将手写 AlexNet 推广到四个难度递增的数据集，与 SimpleCNN 和小型 ResNet 同条件对照，得到三点"
+              "结论：识别难度主要由数据特点决定而非类别数量；参数量几乎相同时 3×3 小核堆叠优于大核；小型 ResNet 以约 1/20 "
+              "参数追平甚至反超 AlexNet。综合可见，决定卷积网络性能的是数据特点与架构设计，当架构足够强时真正的瓶颈是数据量。"
               "后续可增加多随机种子重复训练，并系统比较 VGG、ResNet、轻量 CNN 和注意力模块等结构。")
     refs(doc, [
         "He K, Zhang X, Ren S, et al. Deep residual learning for image recognition[C]//IEEE Conference on Computer Vision and Pattern Recognition. 2016.",
@@ -595,8 +708,9 @@ def build_task2():
         "第3章 数据集与模型实现",
         "第4章 训练与评估",
         "第5章 对照实验与误差分析",
-        "第6章 实验复现说明",
-        "第7章 结论与展望",
+        "第6章 跨数据集泛化与架构对照研究",
+        "第7章 实验复现说明",
+        "第8章 结论与展望",
         "参考文献",
     ])
     task2_body(doc)
