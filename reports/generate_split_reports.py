@@ -130,26 +130,32 @@ def declaration(doc):
 
 def task1_abstract(doc):
     add_center_title(doc, "摘　要")
-    para(doc, "葡萄酒质量预测是结构化数据分类中的典型问题。本文以 UCI Wine Quality 数据集中的白葡萄酒子集为"
-              "研究对象，将原始质量评分归并为“差”“中”“好”三类，围绕数据加载、探索性分析、预处理、模型构建、"
-              "模型评估和结果分析完成完整机器学习流程。实验选取支持向量机、决策树、随机森林和逻辑回归四种代表性"
-              "分类算法，并采用标准化流水线、五折交叉验证和网格搜索进行超参数选择。")
-    para(doc, "实验结果表明，随机森林在测试集上取得较优表现，准确率为 73.47%，宏平均 F1 为 0.7336；在平衡"
-              "准确率、二次加权 Kappa、MCC 和宏平均 ROC-AUC 等进阶指标上也表现较好。进一步的混淆矩阵分析显示，"
-              "模型误差主要集中于相邻质量等级之间，严重跨级误判较少。基于这一特点，本文补充采用“回归预测质量分"
-              "再分级”的有序建模方式进行对照，结果显示宏平均 F1 由 0.7336 提升至 0.7533，严重跨级误判数由 7 降至 4。")
-    para(doc, "关键词：机器学习；白葡萄酒质量；支持向量机；随机森林；有序建模；多分类")
+    para(doc, "结构化数据分类是机器学习的典型问题。本文以支持向量机、决策树、随机森林和逻辑回归四种代表性模型为"
+              "研究对象，以 UCI Wine Quality 数据集中的白葡萄酒子集为主实验平台，将原始质量评分归并为“差”“中”“好”"
+              "三类，围绕数据加载、探索性分析、预处理、模型构建、模型评估和结果分析完成完整机器学习流程，并采用标准化"
+              "流水线、五折交叉验证和网格搜索进行超参数选择；在此基础上进一步把同一套模型推广到难度递增的五个结构化"
+              "数据集上对照，并对其中表现欠佳者做针对性处理，考察数据特点与模型选择如何共同决定性能。")
+    para(doc, "实验结果表明，随机森林在白葡萄酒上取得较优表现，准确率 73.47%、宏平均 F1 为 0.7336；“回归预测再分级”"
+              "的有序建模将宏平均 F1 提升至 0.7533、严重跨级误判由 7 降至 4。跨数据集对照进一步表明：不存在放之四海"
+              "而皆准的最优模型，最优选择随数据集而变；类别数量并非主要难度来源；极端不平衡会使准确率严重失真。针对"
+              "表现欠佳的贷款违约与臭氧数据，经补充特征、SMOTE 过采样、更换更强模型三类手段验证，性能上限均无法突破，"
+              "说明其“效果不好”源于数据本质（弱信号/极端不平衡）而非处理不充分。")
+    para(doc, "关键词：机器学习；结构化数据分类；模型对照；类别不平衡；SMOTE；跨数据集")
     doc.add_page_break()
     add_center_title(doc, "Abstract")
-    para(doc, "Wine quality prediction is a representative structured-data classification problem. This paper studies the "
-              "white wine subset of the UCI Wine Quality dataset. The original quality scores are merged into three classes: "
-              "low, medium and high. A complete machine learning workflow is implemented, including data loading, exploratory "
-              "analysis, preprocessing, model construction, model evaluation and result analysis.")
-    para(doc, "The experimental results show that random forest achieves relatively better performance on the test set, with "
-              "an accuracy of 73.47% and a macro-F1 score of 0.7336. A regression-then-discretization strategy is further "
-              "evaluated as an ordinal modeling comparison. The macro-F1 score increases from 0.7336 to 0.7533, and the number "
-              "of severe cross-level errors decreases from 7 to 4.")
-    para(doc, "Keywords: machine learning; white wine quality; support vector machine; random forest; ordinal modeling")
+    para(doc, "Structured-data classification is a representative machine learning problem. This paper takes four representative "
+              "models (SVM, decision tree, random forest, logistic regression) as its research object, with the white wine "
+              "subset of the UCI Wine Quality dataset as the primary experimental platform; the original quality scores are "
+              "merged into three classes (low, medium, high) and a complete workflow with standardization, 5-fold cross "
+              "validation and grid search is implemented. The same models are then extended to five structured datasets of "
+              "increasing difficulty, with targeted treatment applied to the under-performing ones.")
+    para(doc, "Random forest performs best on white wine (accuracy 73.47%, macro-F1 0.7336); a regression-then-discretization "
+              "ordinal strategy raises macro-F1 to 0.7533. The cross-dataset comparison shows there is no universally best model, "
+              "the number of classes is not the main difficulty driver, and extreme imbalance severely distorts accuracy. For the "
+              "weak datasets (loan default, ozone), feature enrichment, SMOTE oversampling and stronger models all fail to break "
+              "the performance ceiling, indicating that their poor results stem from intrinsic data difficulty rather than "
+              "insufficient processing.")
+    para(doc, "Keywords: machine learning; structured-data classification; model comparison; class imbalance; SMOTE; cross-dataset")
     doc.add_page_break()
 
 
@@ -236,13 +242,15 @@ def task1_body(doc):
               "补充有序回归分级对照，并引入二次加权 Kappa 和严重误判数，以更贴合质量分级任务的实际语义。")
 
     doc.add_heading("1.3 研究内容与分工", level=2)
-    para(doc, "本文围绕白葡萄酒质量三分类任务开展实验研究，主要工作包括数据集加载与查看、质量评分三分类标签构造、"
-              "特征标准化与分层划分、四种传统机器学习模型训练、测试集指标评价、混淆矩阵与特征重要性分析，以及基于"
-              "误差结构的有序建模补充实验。")
+    para(doc, "本文以四种传统机器学习模型为研究对象，以白葡萄酒质量三分类为主线，把数据集视为检验模型的试验台。"
+              "主要工作包括两个层面：其一，在白葡萄酒数据上完成加载与查看、三分类标签构造、特征标准化与分层划分、"
+              "四种模型训练与网格搜索、测试集指标评价、混淆矩阵与特征重要性分析，以及基于误差结构的有序建模补充实验；"
+              "其二，将同一套建模管线推广到难度递增的五个结构化数据集上对照，并对其中表现欠佳的数据集做针对性处理"
+              "（补充特征、不平衡重采样、更换更强模型），分析数据特点与模型选择如何共同决定性能。")
     add_table(doc, ["学号", "姓名", "主要分工"],
-              [["202434610309", "雷正", "数据预处理、传统机器学习建模、调参与评估"],
-               ["202434610301", "蔡铭飞", "结果复核、代码整理与实验复现支持"],
-               ["202434610326", "冼嘉谦", "数据可视化、论文整理、PPT 制作与汇报"]],
+              [["202434610301", "蔡铭飞", "数据预处理、四种模型训练与网格搜索、跨数据集对照与不平衡/特征改进实验、结果评估"],
+               ["202434610309", "雷正", "总体方案设计、实验结果分析、论文主体撰写与复现说明整理"],
+               ["202434610326", "冼嘉谦", "数据可视化、图表绘制、论文排版、PPT 制作与汇报"]],
               "表 1-1 小组成员分工表")
 
     doc.add_heading("第2章 理论基础与实验设计", level=1)
@@ -351,11 +359,90 @@ def task1_body(doc):
               "7 降至 4。这说明在质量等级具有自然顺序的场景中，将标签有序性纳入建模和评价过程具有实际意义。该对照"
               "仍属于基础尝试，后续需要多随机种子和专门有序分类模型进一步验证稳定性。")
 
-    doc.add_heading("第6章 实验复现说明", level=1)
-    para(doc, "在项目根目录执行 python task1_ml_wine/wine_quality.py 即可复现任务一实验。脚本会自动下载数据集，完成"
-              "探索性分析、标签构造、模型训练、网格搜索、测试集评估和图表输出，结果保存至 task1_ml_wine/outputs/。")
+    doc.add_heading("第6章 跨数据集模型对照研究", level=1)
+    para(doc, "前述各章均围绕白葡萄酒一个数据集展开。为进一步回答“究竟是什么决定了传统机器学习模型的分类性能”，"
+              "本章以四种模型本身为研究对象，把同一套建模管线推广到难度递增的五个结构化数据集上对照，考察模型表现如何"
+              "随数据特点变化。本章核心结论是：不存在放之四海而皆准的“最优模型”，性能由数据特点与“模型—数据匹配”共同决定。")
+    doc.add_heading("6.1 实验设置：难度阶梯与统一模型管线", level=2)
+    para(doc, "本章在白葡萄酒之外，另选取电离层雷达回波（ionosphere）、贷款违约预测（Lending Club）、干豆形态分类"
+              "（Dry Bean）和臭氧层超标检测（Ozone）四个公开数据集。五个数据集在样本量、特征维度、类别数和类别平衡"
+              "程度上差异明显，构成由易到难的难度阶梯，如表 6-1 所示。其中 Lending Club 原始数据约 1.19GB，本文仅取已"
+              "结清贷款、剔除回款额等会泄露标签的事后特征，并按类别分层抽样 3 万条以保证可计算性。")
+    add_table(doc, ["数据集", "样本数", "特征维度", "类别数", "不平衡比", "特点"],
+              [["电离层 ionosphere", "351", "34", "2", "1.8", "小样本、近线性可分"],
+               ["白葡萄酒 wine", "4898", "11", "3", "2.1", "有序、轻度不平衡"],
+               ["贷款违约 Lending Club", "30000", "12", "2", "4.0", "大规模、弱信号"],
+               ["干豆 Dry Bean", "13611", "16", "7", "6.8", "多分类、形态可分"],
+               ["臭氧 Ozone", "2536", "72", "2", "33.7", "高维、极度不平衡"]],
+              "表 6-1 五个结构化数据集的基本特征")
+    para(doc, "五个数据集统一采用相同的建模管线：标准化、五折交叉验证和网格搜索，并对每个数据集使用完全相同的四种模型"
+              "（SVM、决策树、随机森林、逻辑回归）及超参数搜索空间，主指标为宏平均 F1，辅以准确率与平衡准确率，所有"
+              "模型均开启类别权重平衡。")
 
-    doc.add_heading("第7章 结论与展望", level=1)
+    doc.add_heading("6.2 跨数据集对照结果", level=2)
+    para(doc, "四种模型在五个数据集上的测试集宏平均 F1 如表 6-2 和图 6-5 所示。最优模型随数据集而改变：随机森林在电离层"
+              "和白葡萄酒上最好，支持向量机在干豆上最好，逻辑回归在贷款违约上最好，而在极不平衡的臭氧上各模型表现都很"
+              "差。这直观印证了“没有免费午餐”——没有任何单一模型在所有任务上占优。")
+    add_table(doc, ["数据集", "SVM", "决策树", "随机森林", "逻辑回归", "最优模型"],
+              [["电离层 ionosphere", "0.9393", "0.9235", "0.9541", "0.8598", "随机森林"],
+               ["白葡萄酒 wine", "0.6219", "0.6449", "0.7336", "0.5204", "随机森林"],
+               ["贷款违约 Lending Club", "0.5698", "0.5380", "0.5343", "0.5843", "逻辑回归"],
+               ["干豆 Dry Bean", "0.9375", "0.9104", "0.9333", "0.9300", "SVM"],
+               ["臭氧 Ozone", "0.5805", "0.5806", "0.4920", "0.5516", "决策树"]],
+              "表 6-2 四种模型在五个数据集上的测试集宏平均 F1")
+    add_image(doc, os.path.join(T1_OUT, "cross_tab_f1.png"), 6.0, "图 6-5 同一套模型在五个数据集上的宏平均 F1 对照")
+    para(doc, "在特征干净、类别较可分的数据集上（电离层、干豆），四种模型差距不大、整体都较高，说明此时数据可分性决定"
+              "上限、模型选择影响有限；干豆虽有 7 个类别，各模型宏平均 F1 仍达 0.91 以上，说明类别数量并非主要难度来源，"
+              "与项目二结论一致。随机森林在中低维、非线性、较平衡数据上通常是稳健默认（白葡萄酒上以 0.7336 显著领先）；"
+              "逻辑回归在近线性可分或弱信号数据上反而更稳（贷款违约最优）。")
+
+    doc.add_heading("6.3 不平衡与“本质困难”：准确率的陷阱", level=2)
+    para(doc, "跨数据集对照还暴露了两类被准确率掩盖的问题，如图 6-6 所示。第一类是极端类别不平衡：臭氧阳性样本仅占 2.9%，"
+              "不平衡比高达 33.7。此时“全部预测为多数类”即可得到 97.05% 的准确率；随机森林测试准确率 96.85%，看似很高，"
+              "却反而低于这一多数类基线，其宏平均 F1 仅 0.492、平衡准确率仅 0.499（约等于随机猜测）。这说明在极端不平衡下"
+              "准确率几乎没有意义，必须以宏平均 F1 或平衡准确率衡量。")
+    add_image(doc, os.path.join(T1_OUT, "cross_tab_imbalance.png"), 6.0, "图 6-6 不平衡的代价：随机森林的准确率、宏F1与平衡准确率对照")
+    para(doc, "第二类是数据本身的“本质困难”：贷款违约预测中四种模型的宏平均 F1 全部落在 0.53～0.58 的狭窄区间，无论选用"
+              "何种模型都无法显著突破。这是因为可在申请时获得的特征对“是否违约”的判别信号本就较弱，性能瓶颈在数据而非"
+              "模型——与项目二“当模型足够强时瓶颈转向数据”的结论相互呼应。")
+
+    doc.add_heading("6.4 针对欠佳数据集的改进尝试与归因", level=2)
+    para(doc, "对表现欠佳的贷款违约和臭氧，本文进一步尝试有针对性的处理，以判断其“效果不好”究竟源于处理不充分还是"
+              "数据本质，结果如表 6-3 所示。")
+    add_table(doc, ["数据集", "处理手段", "最优宏F1", "结果与归因"],
+              [["贷款违约", "基线（12 维数值）", "0.5843", "—"],
+               ["贷款违约", "补充申请时类别特征（37 维）", "0.5902", "几乎无提升：int_rate 已编码 grade，信息冗余"],
+               ["贷款违约", "梯度提升 GBDT（37 维）", "0.5739", "更强模型亦无突破"],
+               ["臭氧", "基线（class_weight 平衡）", "0.5806", "—"],
+               ["臭氧", "SMOTE 过采样", "0.5587", "不升反降：高维且少数类过少，插值成噪声"],
+               ["臭氧", "梯度提升 GBDT", "0.5778", "更强模型亦无突破"]],
+              "表 6-3 两个欠佳数据集的改进尝试（测试集宏平均 F1）")
+    add_image(doc, os.path.join(T1_OUT, "improve_lendingclub.png"), 5.2, "图 6-7 贷款违约：补充类别特征前后的宏平均 F1（几乎持平）")
+    add_image(doc, os.path.join(T1_OUT, "improve_ozone.png"), 5.4, "图 6-8 臭氧：SMOTE 过采样与类别权重对照（SMOTE 未带来改进）")
+    para(doc, "三种手段给出一致结论。其一，为贷款违约补充 grade、期限、工龄等类别特征后宏平均 F1 几乎不变，因为基线已含"
+              "的利率 int_rate 实际上已编码贷款等级（经核验 A 至 G 级平均利率由 7.3% 单调升至 30.8%，高度共线），而最强的"
+              "FICO 信用分在本数据集版本中并不提供。其二，对极端不平衡的臭氧采用 SMOTE 后宏平均 F1 反而下降，因为特征"
+              "高达 72 维而少数类训练样本仅数十个，SMOTE 在高维空间靠极少邻居插值，合成的多为噪声。其三，换用更强的梯度"
+              "提升模型后，两个数据集宏平均 F1 仍停在约 0.58，未能突破四个基础模型的上限。")
+    para(doc, "由此确认：这两个数据集的“效果不好”主要源于数据本质（弱判别信号、极端不平衡叠加高维小样本）而非处理不充分"
+              "——补特征、重采样、换更强模型三类手段均无法突破其上限。真正起作用的反而是“模型与数据的匹配”：在臭氧上"
+              "避开会崩溃的随机森林、改用决策树或支持向量机并配合类别权重已是较优选择。这一“诊断—多手段尝试—归因”过程，"
+              "与项目二中“激进数据增强反而有害”的结论相互呼应，都说明改进必须先判断瓶颈来源、再对症下药。")
+
+    doc.add_heading("6.5 本章小结", level=2)
+    para(doc, "本章通过五个数据集、四种模型的同条件对照得到四点结论。第一，不存在放之四海而皆准的最优模型，最优选择随"
+              "数据集而变。第二，数据可分性与特征质量决定性能上限，类别数量并非主要难度来源。第三，极端类别不平衡会使"
+              "准确率严重失真，必须改用宏平均 F1 或平衡准确率评价。第四，当数据信号本身较弱时性能瓶颈在数据而非模型——"
+              "经补特征、重采样、更换更强模型三类手段验证，贷款违约与臭氧的性能上限均无法突破。综合而言，传统机器学习"
+              "的性能由“数据特点”与“模型—数据匹配”共同决定，改进前须先诊断瓶颈来源。")
+
+    doc.add_heading("第7章 实验复现说明", level=1)
+    para(doc, "在项目根目录执行 python task1_ml_wine/wine_quality.py 即可复现白葡萄酒主实验；执行 python "
+              "task1_ml_wine/cross_dataset_tabular.py 复现五数据集对照，python task1_ml_wine/cross_dataset_improve.py "
+              "复现改进尝试。脚本会完成数据加载、标签构造、模型训练、网格搜索、评估与图表输出，结果保存至 "
+              "task1_ml_wine/outputs/。五个数据集中白葡萄酒会自动下载，其余四个需预先放入 task1_ml_wine/data/。")
+
+    doc.add_heading("第8章 结论与展望", level=1)
     para(doc, "本文完成了白葡萄酒质量三分类任务的传统机器学习建模与误差分析。随机森林在四种模型中表现较优，"
               "测试集准确率为 0.7347，宏平均 F1 为 0.7336，并在进阶指标上保持较好表现。模型主要错误集中在相邻"
               "质量等级之间，说明质量等级边界具有一定模糊性。")
@@ -714,7 +801,7 @@ def refs(doc, items):
 def build_task1():
     doc = Document()
     set_base_style(doc)
-    cover(doc, "任务一实训论文", "基于传统机器学习的白葡萄酒质量分类研究")
+    cover(doc, "任务一实训论文", "传统机器学习模型对结构化数据分类性能的影响研究——以白葡萄酒质量分类为主线的多数据集实证")
     declaration(doc)
     task1_abstract(doc)
     manual_toc(doc, [
@@ -723,8 +810,9 @@ def build_task1():
         "第3章 数据集与预处理",
         "第4章 模型建立与实验结果",
         "第5章 误差分析与补充实验",
-        "第6章 实验复现说明",
-        "第7章 结论与展望",
+        "第6章 跨数据集模型对照研究",
+        "第7章 实验复现说明",
+        "第8章 结论与展望",
         "参考文献",
     ])
     task1_body(doc)
