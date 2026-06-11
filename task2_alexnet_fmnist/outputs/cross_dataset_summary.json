@@ -1,0 +1,73 @@
+{
+  "rows": [
+    {
+      "dataset": "fmnist",
+      "label": "Fashion-MNIST 灰度28·10类",
+      "num_classes": 10,
+      "random_baseline": 0.1,
+      "alexnet_acc": 0.9438,
+      "alexnet_params_M": 58.302,
+      "alexnet_gap": null,
+      "resnet_acc": 0.9492,
+      "resnet_acc_std": null,
+      "resnet_params_M": 2.777,
+      "resnet_gap": null,
+      "simplecnn_acc": 0.9181,
+      "simplecnn_acc_std": 0.0015,
+      "simplecnn_params_M": 0.391,
+      "resnet_minus_alex_pp": 0.54
+    },
+    {
+      "dataset": "flowers",
+      "label": "Flowers 彩色·5类",
+      "num_classes": 5,
+      "random_baseline": 0.2,
+      "alexnet_acc": 0.8075,
+      "alexnet_params_M": 58.305,
+      "alexnet_gap": 0.1118,
+      "resnet_acc": 0.8126,
+      "resnet_acc_std": 0.0063,
+      "resnet_params_M": 2.776,
+      "resnet_gap": 0.1063,
+      "simplecnn_acc": 0.7609,
+      "simplecnn_acc_std": 0.0112,
+      "simplecnn_params_M": 0.39,
+      "resnet_minus_alex_pp": 0.51
+    },
+    {
+      "dataset": "garbage",
+      "label": "Garbage 彩色·6类",
+      "num_classes": 6,
+      "random_baseline": 0.1667,
+      "alexnet_acc": 0.8011,
+      "alexnet_params_M": 58.309,
+      "alexnet_gap": 0.1235,
+      "resnet_acc": 0.8267,
+      "resnet_acc_std": 0.0061,
+      "resnet_params_M": 2.777,
+      "resnet_gap": 0.1218,
+      "simplecnn_acc": 0.7356,
+      "simplecnn_acc_std": 0.0133,
+      "simplecnn_params_M": 0.39,
+      "resnet_minus_alex_pp": 2.56
+    },
+    {
+      "dataset": "catsdogs",
+      "label": "Cats vs Dogs 彩色·2类",
+      "num_classes": 2,
+      "random_baseline": 0.5,
+      "alexnet_acc": 0.9538,
+      "alexnet_params_M": 58.292,
+      "alexnet_gap": 0.0437,
+      "resnet_acc": 0.9522,
+      "resnet_acc_std": 0.0026,
+      "resnet_params_M": 2.776,
+      "resnet_gap": 0.0325,
+      "simplecnn_acc": 0.9044,
+      "simplecnn_acc_std": 0.0035,
+      "simplecnn_params_M": 0.389,
+      "resnet_minus_alex_pp": -0.16
+    }
+  ],
+  "note": "三模型：AlexNet@224 / ResNetSmall@64 / SimpleCNN@64"
+}

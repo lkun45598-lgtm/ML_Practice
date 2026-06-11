@@ -1,0 +1,19 @@
+[11:58:19][gpu1] ▶ x_scnn_flowers_s1 (40轮+余弦)
+[11:58:19][gpu2] ▶ x_scnn_flowers_s2 (40轮+余弦)
+[11:58:19][gpu4] ▶ x_scnn_garbage_s1 (40轮+余弦)
+[11:58:19][gpu6] ▶ x_scnn_catsdogs_s0 (40轮+余弦)
+[11:58:19][gpu5] ▶ x_scnn_garbage_s2 (40轮+余弦)
+[11:58:19][gpu7] ▶ x_scnn_catsdogs_s1 (40轮+余弦)
+[11:58:19][gpu0] ▶ x_scnn_flowers_s0 (40轮+余弦)
+[11:58:19][gpu3] ▶ x_scnn_garbage_s0 (40轮+余弦)
+[11:58:19][gpu0] ▶ x_scnn_catsdogs_s2 (40轮+余弦)
+[11:59:17][gpu3] ✓ x_scnn_garbage_s0  [x_scnn_garbage_s0] 完成 test_acc=0.7374 f1=0.7245 -> exp_x_scnn_garbage_s0.json
+[11:59:18][gpu4] ✓ x_scnn_garbage_s1  [x_scnn_garbage_s1] 完成 test_acc=0.7215 f1=0.6804 -> exp_x_scnn_garbage_s1.json
+[11:59:19][gpu5] ✓ x_scnn_garbage_s2  [x_scnn_garbage_s2] 完成 test_acc=0.7480 f1=0.7271 -> exp_x_scnn_garbage_s2.json
+[11:59:40][gpu0] ✓ x_scnn_flowers_s0  [x_scnn_flowers_s0] 完成 test_acc=0.7578 f1=0.7543 -> exp_x_scnn_flowers_s0.json
+[11:59:40][gpu1] ✓ x_scnn_flowers_s1  [x_scnn_flowers_s1] 完成 test_acc=0.7733 f1=0.7709 -> exp_x_scnn_flowers_s1.json
+[11:59:40][gpu2] ✓ x_scnn_flowers_s2  [x_scnn_flowers_s2] 完成 test_acc=0.7516 f1=0.7504 -> exp_x_scnn_flowers_s2.json
+[12:04:59][gpu0] ✓ x_scnn_catsdogs_s2  [x_scnn_catsdogs_s2] 完成 test_acc=0.9055 f1=0.9055 -> exp_x_scnn_catsdogs_s2.json
+[12:05:00][gpu6] ✓ x_scnn_catsdogs_s0  [x_scnn_catsdogs_s0] 完成 test_acc=0.9005 f1=0.9004 -> exp_x_scnn_catsdogs_s0.json
+[12:05:09][gpu7] ✓ x_scnn_catsdogs_s1  [x_scnn_catsdogs_s1] 完成 test_acc=0.9072 f1=0.9071 -> exp_x_scnn_catsdogs_s1.json
+[12:05:09] ✅ 公平版 SimpleCNN 9 个任务全部完成

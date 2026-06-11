@@ -18,9 +18,18 @@ import torch
 import torch.nn as nn
 
 from data import get_loaders
+from data_image import get_image_loaders
 from alexnet import AlexNet
 from simplecnn import SimpleCNN
 from resnet_small import ResNetSmall
+
+# 各数据集的通道数与类别数（fmnist 单通道 10 类；其余 3 通道彩色）
+DATASET_META = {
+    "fmnist": {"in_channels": 1, "num_classes": 10},
+    "flowers": {"in_channels": 3, "num_classes": 5},
+    "garbage": {"in_channels": 3, "num_classes": 6},
+    "catsdogs": {"in_channels": 3, "num_classes": 2},
+}
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "outputs")
@@ -90,21 +99,27 @@ def test_metrics(model, loader, device):
     return float(acc), float(pr), float(rc), float(f1), [round(float(x), 4) for x in f1_cls]
 
 
-def build_model(name, use_lrn, use_bn=False):
+def build_model(name, use_lrn, use_bn=False, in_channels=1, num_classes=10,
+                small_kernel=False):
     if name == "simplecnn":
-        return SimpleCNN(num_classes=10, in_channels=1)
+        return SimpleCNN(num_classes=num_classes, in_channels=in_channels)
     if name == "resnet":
-        return ResNetSmall(num_classes=10, in_channels=1)
-    return AlexNet(num_classes=10, in_channels=1, use_lrn=use_lrn, use_bn=use_bn)
+        return ResNetSmall(num_classes=num_classes, in_channels=in_channels)
+    return AlexNet(num_classes=num_classes, in_channels=in_channels,
+                   use_lrn=use_lrn, use_bn=use_bn, small_kernel=small_kernel)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", choices=["simplecnn", "alexnet", "resnet"], required=True)
+    ap.add_argument("--dataset", choices=["fmnist", "flowers", "garbage", "catsdogs"],
+                    default="fmnist", help="数据集：fmnist 走原灰度管线，其余走彩色 ImageFolder 管线")
     ap.add_argument("--img-size", type=int, default=224)
     ap.add_argument("--augment", action="store_true")
     ap.add_argument("--no-lrn", action="store_true", help="AlexNet 去掉 LRN 的消融")
     ap.add_argument("--bn", action="store_true", help="AlexNet 用 BatchNorm 替代 LRN")
+    ap.add_argument("--small-kernel", action="store_true",
+                    help="AlexNet 把 11×11/5×5 大核换成 3×3 堆叠（大核 vs 小核对照）")
     ap.add_argument("--cosine", action="store_true", help="使用余弦退火学习率(适合更长训练)")
     ap.add_argument("--loss", choices=["ce", "focal"], default="ce", help="损失函数")
     ap.add_argument("--label-smoothing", type=float, default=0.0, help="交叉熵标签平滑系数(0=关闭)")
@@ -131,11 +146,25 @@ def main():
     print(f"[{args.tag}] model={args.model} img={args.img_size} aug={args.augment} "
           f"lrn={use_lrn} seed={args.seed} epochs={args.epochs} device={device}")
 
-    train_loader, val_loader, test_loader = get_loaders(
-        batch_size=args.batch_size, subset=args.subset, seed=args.seed,
-        img_size=args.img_size, augment=args.augment, strong_aug=args.strong_aug)
+    meta = DATASET_META[args.dataset]
+    in_channels, num_classes = meta["in_channels"], meta["num_classes"]
+    data_info = None
+    if args.dataset == "fmnist":
+        train_loader, val_loader, test_loader = get_loaders(
+            batch_size=args.batch_size, subset=args.subset, seed=args.seed,
+            img_size=args.img_size, augment=args.augment, strong_aug=args.strong_aug)
+    else:
+        train_loader, val_loader, test_loader, data_info = get_image_loaders(
+            args.dataset, batch_size=args.batch_size, img_size=args.img_size,
+            augment=args.augment, seed=args.seed, subset=args.subset)
+        num_classes = data_info["num_classes"]
+        print(f"[{args.tag}] 数据集 {args.dataset}: 类别 {data_info['class_names']} "
+              f"train/val/test={data_info['n_train']}/{data_info['n_val']}/{data_info['n_test']} "
+              f"跳过损坏 {data_info['skipped']}")
 
-    model = build_model(args.model, use_lrn, use_bn=args.bn).to(device)
+    model = build_model(args.model, use_lrn, use_bn=args.bn,
+                        in_channels=in_channels, num_classes=num_classes,
+                        small_kernel=args.small_kernel).to(device)
     n_params = sum(p.numel() for p in model.parameters())
     if args.loss == "focal":
         criterion = FocalLoss(gamma=2.0)
@@ -187,8 +216,15 @@ def main():
             json.dump(history, f)
         print(f"[{args.tag}] 训练曲线已保存 -> {args.save_history}")
     acc, pr, rc, f1, f1_cls = test_metrics(model, test_loader, device)
-    result = {"tag": args.tag, "model": args.model, "img_size": args.img_size,
+    # 过拟合度量：最优轮的训练准确率 vs 验证准确率（gap 越大越过拟合）
+    train_acc_at_best = history["train_acc"][best_epoch - 1] if best_epoch >= 1 else None
+    train_val_gap = round(train_acc_at_best - best_val, 4) if train_acc_at_best is not None else None
+    result = {"tag": args.tag, "model": args.model, "dataset": args.dataset,
+              "num_classes": num_classes, "img_size": args.img_size,
+              "train_acc_at_best": round(train_acc_at_best, 4) if train_acc_at_best is not None else None,
+              "train_val_gap": train_val_gap,
               "augment": args.augment, "use_lrn": use_lrn, "use_bn": args.bn,
+              "small_kernel": args.small_kernel,
               "cosine": args.cosine, "loss": args.loss,
               "label_smoothing": args.label_smoothing, "amp": bool(scaler),
               "patience": args.patience, "stopped_epoch": stopped_epoch,

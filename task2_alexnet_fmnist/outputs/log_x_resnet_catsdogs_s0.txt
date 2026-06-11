@@ -1,0 +1,126 @@
+/data1/user/lz/ML_Practice/task2_alexnet_fmnist/experiments.py:174: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = torch.cuda.amp.GradScaler() if (args.amp and device.type == "cuda") else None
+[x_resnet_catsdogs_s0] model=resnet img=64 aug=True lrn=True seed=0 epochs=40 device=cuda
+[x_resnet_catsdogs_s0] 数据集 catsdogs: 类别 ['Cat', 'Dog'] train/val/test=17502/3748/3748 跳过损坏 4
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch  1 train_acc=0.6489 val_acc=0.5742 (10.7s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch  2 train_acc=0.7065 val_acc=0.6075 (10.8s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch  3 train_acc=0.7574 val_acc=0.7906 (10.4s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch  4 train_acc=0.8055 val_acc=0.5710 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch  5 train_acc=0.8257 val_acc=0.8034 (10.2s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch  6 train_acc=0.8391 val_acc=0.8445 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch  7 train_acc=0.8614 val_acc=0.8570 (10.3s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch  8 train_acc=0.8730 val_acc=0.8426 (9.8s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch  9 train_acc=0.8801 val_acc=0.8477 (10.4s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 10 train_acc=0.8911 val_acc=0.8396 (10.4s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 11 train_acc=0.8961 val_acc=0.8941 (10.0s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 12 train_acc=0.9053 val_acc=0.8770 (10.2s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 13 train_acc=0.9118 val_acc=0.8890 (10.9s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 14 train_acc=0.9113 val_acc=0.9045 (10.6s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 15 train_acc=0.9226 val_acc=0.8375 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 16 train_acc=0.9267 val_acc=0.8743 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 17 train_acc=0.9300 val_acc=0.8975 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 18 train_acc=0.9335 val_acc=0.8877 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 19 train_acc=0.9384 val_acc=0.9045 (10.3s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 20 train_acc=0.9424 val_acc=0.9082 (10.4s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 21 train_acc=0.9472 val_acc=0.9290 (10.6s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 22 train_acc=0.9516 val_acc=0.9197 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 23 train_acc=0.9536 val_acc=0.9386 (10.0s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 24 train_acc=0.9588 val_acc=0.9026 (10.6s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 25 train_acc=0.9631 val_acc=0.9304 (10.3s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 26 train_acc=0.9659 val_acc=0.8661 (10.3s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 27 train_acc=0.9671 val_acc=0.9304 (10.4s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 28 train_acc=0.9678 val_acc=0.9301 (10.0s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 29 train_acc=0.9729 val_acc=0.9144 (9.9s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 30 train_acc=0.9746 val_acc=0.9370 (10.4s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 31 train_acc=0.9759 val_acc=0.9464 (10.0s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 32 train_acc=0.9805 val_acc=0.9421 (10.3s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 33 train_acc=0.9802 val_acc=0.9442 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 34 train_acc=0.9821 val_acc=0.9501 (10.4s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 35 train_acc=0.9841 val_acc=0.9493 (10.6s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 36 train_acc=0.9865 val_acc=0.9501 (10.2s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 37 train_acc=0.9862 val_acc=0.9493 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 38 train_acc=0.9875 val_acc=0.9498 (9.9s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 39 train_acc=0.9864 val_acc=0.9493 (10.1s)
+/home/lz/miniconda3/envs/pytorch312/lib/python3.12/site-packages/PIL/TiffImagePlugin.py:949: UserWarning: Truncated File Read
+  warnings.warn(str(msg))
+[x_resnet_catsdogs_s0] epoch 40 train_acc=0.9862 val_acc=0.9501 (10.1s)
+[x_resnet_catsdogs_s0] 平均每轮 10.3s，共 40 轮 (amp=True)
+[x_resnet_catsdogs_s0] 完成 test_acc=0.9509 f1=0.9509 -> exp_x_resnet_catsdogs_s0.json

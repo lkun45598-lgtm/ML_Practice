@@ -1,0 +1,25 @@
+[12:23:58][gpu0] ▶ x_alexbig_flowers_s0
+[12:23:58][gpu3] ▶ x_alexbig_garbage_s0
+[12:23:58][gpu1] ▶ x_alexbig_flowers_s1
+[12:23:58][gpu2] ▶ x_alexbig_flowers_s2
+[12:23:58][gpu4] ▶ x_alexbig_garbage_s1
+[12:23:58][gpu7] ▶ x_alexsmall_garbage_s2
+[12:23:58][gpu5] ▶ x_alexsmall_garbage_s1
+[12:23:58][gpu6] ▶ x_alexbig_garbage_s2
+[12:25:37][gpu7] ✓ x_alexsmall_garbage_s2  [x_alexsmall_garbage_s2] 完成 test_acc=0.8382 f1=0.8298 -> exp_x_alexsmall_garbage_s2.json
+[12:25:38][gpu3] ✓ x_alexbig_garbage_s0  [x_alexbig_garbage_s0] 完成 test_acc=0.8037 f1=0.7776 -> exp_x_alexbig_garbage_s0.json
+[12:25:38][gpu3] ▶ x_alexsmall_garbage_s0
+[12:25:38][gpu5] ✓ x_alexsmall_garbage_s1  [x_alexsmall_garbage_s1] 完成 test_acc=0.8594 f1=0.8476 -> exp_x_alexsmall_garbage_s1.json
+[12:25:40][gpu4] ✓ x_alexbig_garbage_s1  [x_alexbig_garbage_s1] 完成 test_acc=0.8064 f1=0.7842 -> exp_x_alexbig_garbage_s1.json
+[12:25:43][gpu6] ✓ x_alexbig_garbage_s2  [x_alexbig_garbage_s2] 完成 test_acc=0.7984 f1=0.7668 -> exp_x_alexbig_garbage_s2.json
+[12:26:10][gpu1] ✓ x_alexbig_flowers_s1  [x_alexbig_flowers_s1] 完成 test_acc=0.8323 f1=0.8323 -> exp_x_alexbig_flowers_s1.json
+[12:26:10][gpu1] ▶ x_alexsmall_flowers_s1
+[12:26:12][gpu0] ✓ x_alexbig_flowers_s0  [x_alexbig_flowers_s0] 完成 test_acc=0.8075 f1=0.8071 -> exp_x_alexbig_flowers_s0.json
+[12:26:12][gpu0] ▶ x_alexsmall_flowers_s0
+[12:26:14][gpu2] ✓ x_alexbig_flowers_s2  [x_alexbig_flowers_s2] 完成 test_acc=0.7981 f1=0.7976 -> exp_x_alexbig_flowers_s2.json
+[12:26:14][gpu2] ▶ x_alexsmall_flowers_s2
+[12:27:25][gpu3] ✓ x_alexsmall_garbage_s0  [x_alexsmall_garbage_s0] 完成 test_acc=0.8408 f1=0.8190 -> exp_x_alexsmall_garbage_s0.json
+[12:28:26][gpu0] ✓ x_alexsmall_flowers_s0  [x_alexsmall_flowers_s0] 完成 test_acc=0.8245 f1=0.8249 -> exp_x_alexsmall_flowers_s0.json
+[12:28:28][gpu1] ✓ x_alexsmall_flowers_s1  [x_alexsmall_flowers_s1] 完成 test_acc=0.8385 f1=0.8405 -> exp_x_alexsmall_flowers_s1.json
+[12:28:36][gpu2] ✓ x_alexsmall_flowers_s2  [x_alexsmall_flowers_s2] 完成 test_acc=0.8261 f1=0.8252 -> exp_x_alexsmall_flowers_s2.json
+[12:28:36] ✅ 大核 vs 小核 12 个任务全部完成

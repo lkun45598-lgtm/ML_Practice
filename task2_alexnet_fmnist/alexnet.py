@@ -11,7 +11,8 @@ class AlexNet(nn.Module):
     输出: (N, num_classes)
     """
 
-    def __init__(self, num_classes=10, in_channels=1, use_lrn=True, use_bn=False):
+    def __init__(self, num_classes=10, in_channels=1, use_lrn=True, use_bn=False,
+                 small_kernel=False):
         super().__init__()
 
         def block(cin, cout, k, s=1, p=0, pool=False, lrn=False):
@@ -26,10 +27,22 @@ class AlexNet(nn.Module):
                 ls.append(nn.MaxPool2d(kernel_size=3, stride=2))
             return ls
 
-        # ---- 特征提取：5 个卷积块（输出尺寸不受 BN 影响）----
+        # ---- 特征提取 ----
+        # 大核版（原版 AlexNet）：第 1 层 11×11、第 2 层 5×5。
+        # 小核版（small_kernel）：把 11×11、5×5 替换为 3×3 堆叠，通道数 / 各阶段输出尺寸
+        #   （最终 256×6×6）/ 后续 3~5 层 / 分类头全部保持一致，唯一变量就是「卷积核大小」，
+        #   用于干净的大核 vs 小核对照（VGG：小核堆叠 = 同感受野下更省参、非线性更强）。
         layers = []
-        layers += block(in_channels, 96, 11, s=4, p=2, pool=True, lrn=True)  # -> 96x27x27
-        layers += block(96, 256, 5, p=2, pool=True, lrn=True)                # -> 256x13x13
+        if not small_kernel:
+            layers += block(in_channels, 96, 11, s=4, p=2, pool=True, lrn=True)  # 224 -> 96x27x27
+            layers += block(96, 256, 5, p=2, pool=True, lrn=True)                # -> 256x13x13
+        else:
+            # 11×11 s4 -> 两个 3×3 s2（224->112->56），再池化到 27，与大核版输出对齐
+            layers += block(in_channels, 96, 3, s=2, p=1)                        # 224 -> 96x112x112
+            layers += block(96, 96, 3, s=2, p=1, pool=True)                      # -> 56 -> 96x27x27
+            # 5×5 -> 两个 3×3（27->27），再池化到 13
+            layers += block(96, 256, 3, p=1)                                     # -> 256x27x27
+            layers += block(256, 256, 3, p=1, pool=True)                         # -> 256x13x13
         layers += block(256, 384, 3, p=1)                                    # -> 384x13x13
         layers += block(384, 384, 3, p=1)                                    # -> 384x13x13
         layers += block(384, 256, 3, p=1, pool=True)                         # -> 256x6x6

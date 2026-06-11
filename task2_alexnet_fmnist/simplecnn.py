@@ -20,6 +20,7 @@ class SimpleCNN(nn.Module):
             nn.MaxPool2d(2),                                   # 14 -> 7
             nn.Conv2d(64, 128, 3, padding=1), nn.BatchNorm2d(128), nn.ReLU(inplace=True),
             nn.MaxPool2d(2),                                   # 7 -> 3
+            nn.AdaptiveAvgPool2d((3, 3)),                      # 尺寸无关：任意输入都收敛到 3×3
         )
         self.classifier = nn.Sequential(
             nn.Flatten(),
