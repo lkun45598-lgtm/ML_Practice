@@ -1,0 +1,26 @@
+{
+  "dataset": "lendingclub",
+  "n_features": 12,
+  "monotonic_columns": {
+    "int_rate": 1,
+    "annual_inc": -1,
+    "dti": 1,
+    "delinq_2yrs": 1,
+    "inq_last_6mths": 1,
+    "pub_rec": 1,
+    "revol_util": 1
+  },
+  "results": {
+    "unconstrained": {
+      "acc": 0.6395,
+      "f1": 0.5712,
+      "bacc": 0.6243
+    },
+    "monotonic": {
+      "acc": 0.6268,
+      "f1": 0.5692,
+      "bacc": 0.6356
+    }
+  },
+  "delta_f1": -0.002
+}

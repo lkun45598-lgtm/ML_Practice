@@ -138,9 +138,14 @@ def task1_abstract(doc):
     para(doc, "实验结果表明，随机森林在白葡萄酒上取得较优表现，准确率 73.47%、宏平均 F1 为 0.7336；“回归预测再分级”"
               "的有序建模将宏平均 F1 提升至 0.7533、严重跨级误判由 7 降至 4。跨数据集对照进一步表明：不存在放之四海"
               "而皆准的最优模型，最优选择随数据集而变；类别数量并非主要难度来源；极端不平衡会使准确率严重失真。针对"
-              "表现欠佳的贷款违约与臭氧数据，经补充特征、SMOTE 过采样、更换更强模型三类手段验证，在当前特征、划分与"
-              "参数范围内均未获得稳定提升，表明其“效果不好”更可能源于弱信号或极端不平衡等数据本质，而非单一处理手段缺失。")
-    para(doc, "关键词：机器学习；结构化数据分类；模型对照；类别不平衡；SMOTE；跨数据集")
+              "表现欠佳的贷款违约与臭氧数据，本文先以补充特征、SMOTE 过采样、更换更强模型等静态手段验证（宏 F1 停在约"
+              "0.58—0.62），进而设计任务级创新——把臭氧还原为时间序列并注入时序特征、为贷款补全数十个真实征信特征并注入"
+              "单调约束。值得强调的是，臭氧时序特征在单次划分下一度呈现 +0.058 的提升，但因该划分测试集仅含约 4 个少数类"
+              "样本而高度不可靠；改用时序交叉验证汇集约 58 个样本后提升消失（Δ≈-0.003）；而为贷款补入数十个真实征信特征"
+              "后宏 F1 仍仅由 0.585 变为 0.586，单调约束亦持平于约 0.57。这表明两者“效果不好”确属数据本质——即便补全真实"
+              "信息也几乎无增益（利率已是征信信息的近似充分统计量）；同时给出评估教训：极端不平衡下须以交叉验证汇集足够"
+              "少数类样本，方能避免单次划分的“假提升”。")
+    para(doc, "关键词：机器学习；结构化数据分类；模型对照；类别不平衡；时序交叉验证；单调约束；跨数据集")
     doc.add_page_break()
     add_center_title(doc, "Abstract")
     para(doc, "Structured-data classification is a representative machine learning problem. This paper takes four representative "
@@ -152,10 +157,17 @@ def task1_abstract(doc):
     para(doc, "Random forest performs best on white wine (accuracy 73.47%, macro-F1 0.7336); a regression-then-discretization "
               "ordinal strategy raises macro-F1 to 0.7533. The cross-dataset comparison shows there is no universally best model, "
               "the number of classes is not the main difficulty driver, and extreme imbalance severely distorts accuracy. For the "
-              "weak datasets (loan default, ozone), feature enrichment, SMOTE oversampling and stronger models all fail to break "
-              "the performance ceiling, indicating that their poor results stem from intrinsic data difficulty rather than "
-              "insufficient processing.")
-    para(doc, "Keywords: machine learning; structured-data classification; model comparison; class imbalance; SMOTE; cross-dataset")
+              "weak datasets (loan default, ozone), beyond static remedies (feature enrichment, SMOTE, stronger models) we further "
+              "designed task-level innovations: recasting ozone as a time series with temporal features, and adding dozens of real "
+              "application-time credit features plus monotonic constraints for loan default. Notably, the ozone temporal features "
+              "showed a +0.058 macro-F1 gain under a single time split, but that split contained only about 4 minority samples and "
+              "was unreliable; under time-series cross-validation pooling about 58 minority samples the gain vanished (delta about "
+              "-0.003); adding dozens of real credit features moved loan-default macro-F1 only from 0.585 to 0.586, and the monotonic "
+              "model stayed near 0.57. This confirms their poor results stem from intrinsic data difficulty (even adding real "
+              "information barely helps, since the interest rate is already a near-sufficient statistic of credit signals), and "
+              "yields a methodological lesson: under extreme imbalance, cross-validation pooling enough minority samples is required "
+              "to avoid illusory gains from a single split.")
+    para(doc, "Keywords: machine learning; structured-data classification; model comparison; class imbalance; time-series cross-validation; monotonic constraints; cross-dataset")
     doc.add_page_break()
 
 
@@ -434,18 +446,67 @@ def task1_body(doc):
               "避开会崩溃的随机森林、改用决策树或支持向量机并配合类别权重已是较优选择。这一“诊断—多手段尝试—归因”过程，"
               "与项目二中“激进数据增强反而有害”的结论相互呼应，都说明改进必须先判断瓶颈来源、再对症下药。")
 
-    doc.add_heading("6.5 本章小结", level=2)
-    para(doc, "本章通过五个数据集、四种模型的同条件对照得到四点结论。第一，不存在放之四海而皆准的最优模型，最优选择随"
+    doc.add_heading("6.5 任务级方法创新尝试与严谨评估的教训", level=2)
+    para(doc, "为进一步逼问“效果不好”究竟是建模方式没贴合任务结构、还是数据信息已到上限，本节针对两个欠佳数据集各设计"
+              "一项任务级方法创新。其中臭氧实验还意外给出一条关于评估严谨性的重要教训。")
+    para(doc, "（一）臭氧：把“无序表格”还原为“时间序列”。经核查，臭氧数据集首列即为采集日期，覆盖 1998—2004 年逐日观测，"
+              "而基线直接丢弃日期列、随机划分，等于抛弃了地面臭氧的日间自相关与季节性信息。为此构造 9 维时序特征（标签滞后"
+              "1/2/3 日、近 3/7 日超标率、月份与年内日的正弦/余弦季节编码，全部仅取“过去”信息以避免泄漏），并改用按时间前"
+              "80%/后 20% 划分。在该单次时序划分下，加时序特征后最优宏平均 F1 由 0.6005 升至 0.6586（+0.058）、SVM 平衡准确率"
+              "由 0.855 跃升至 0.984，看似是一次漂亮的突破。")
+    para(doc, "然而核查暴露该结论不可靠：按时间切分后测试窗口（2003—2004）恰好只落入约 4 个超标日，在 4 个正例上算 F1 噪声"
+              "极大，足以凭运气制造“假突破”。改用时序滚动交叉验证（TimeSeriesSplit 6 折，每折在过去训练、在后续时间块测试），"
+              "把各折测试预测汇集起来评估，使评估覆盖全部约 58 个超标日，结果如表 6-4 所示。")
+    add_table(doc, ["评估方式", "原始 72 维", "加 9 维时序特征", "结论"],
+              [["单次时序划分（测试正例仅约 4 个）", "0.6005", "0.6586（+0.058）", "表面提升，但正例过少、噪声极大"],
+               ["时序CV滚动汇集（覆盖约 58 个正例）", "0.6177", "0.6149（-0.003）", "严谨评估下提升消失"]],
+              "表 6-4 臭氧：单次时序划分 vs 时序CV汇集评估（最优宏平均 F1）")
+    add_image(doc, os.path.join(T1_OUT, "ozone_temporal.png"), 5.8, "图 6-7 臭氧：单次时序划分下各模型宏 F1（正例极少，仅作过程展示）")
+    para(doc, "在覆盖 58 个正例的稳健评估下，时序特征带来的“提升”彻底消失（Δ≈-0.003）。这说明此前 +0.058 是单次少正例划分"
+              "造成的评估假象。由此得到两点结论：其一，方法学上，在极端类别不平衡下单次划分的评估高度不可靠，必须用交叉验证"
+              "汇集足够多的少数类样本才能得到可信结论；其二，即便把臭氧正确建模为时间序列，宏平均 F1 仍停在约 0.61，未能突破"
+              "约 0.58—0.62 平台，表明瓶颈确在数据本身的弱判别信号。")
+    para(doc, "（二）贷款违约：补全真实征信特征，再注入领域先验。突破信息天花板最根本的手段是给模型更多真实信息，而非"
+              "更换模型。经核查，原始 loan.csv 多达 145 列，基线却只用了 12 个数值特征——大量申请时即可获得的真实征信行为"
+              "特征（距上次逾期月数、信用卡使用率、最老账户年龄、近两年严重逾期账户数、破产记录、从未逾期账户占比等数十项）"
+              "被丢弃。在严格排除放款后/结果泄漏列的前提下，将其补全为 56 维并派生“信用历史长度”，以分层 5 折交叉验证对照，"
+              "结果如表 6-5 所示。")
+    add_table(doc, ["特征集", "最优模型", "CV 宏平均 F1"],
+              [["基线 12 维数值特征", "逻辑回归", "0.5850 ± 0.006"],
+               ["+ 44 项真实征信特征（共 56 维）", "逻辑回归", "0.5862 ± 0.007"]],
+              "表 6-5 贷款违约：补全真实征信特征前后（分层 5 折 CV 宏平均 F1）")
+    para(doc, "补入数十个真实征信特征后宏平均 F1 仅由 0.5850 变为 0.5862（Δ=+0.001），几乎没有变化。这给出一个根本而清晰"
+              "的解释：利率 int_rate 本身就是放贷方用这些征信特征算出的风险定价，已是它们的近似“充分统计量”，把原始特征再"
+              "加回去只是重复已被利率浓缩的信息，自然无增益。这排除了“只是没用够特征”的可能，把贷款违约的瓶颈牢牢钉在数据"
+              "信息本身——唯一能突破的，是连放贷方放款时都不掌握的信息，那是任何方法都无法凭空创造的。")
+    para(doc, "在确认信息侧已无余量后，再从模型先验角度注入信用评分领域知识。信用评分受监管，业界要求模型满足单调性：利率、"
+              "负债收入比、历史逾期/查询/坏账越高，违约概率不得下降；年收入越高，违约概率不得上升。将这些先验作为硬约束注入"
+              "GBDT（HistGradientBoosting 的 monotonic_cst），与无约束对照如表 6-6 所示。")
+    add_table(doc, ["模型", "准确率", "宏平均 F1", "平衡准确率"],
+              [["无约束 GBDT", "0.6395", "0.5712", "0.6243"],
+               ["单调约束 GBDT（领域先验）", "0.6268", "0.5692", "0.6356"]],
+              "表 6-6 贷款违约：单调约束 GBDT 与无约束对照（测试集，base 12 维）")
+    para(doc, "注入领域先验后宏平均 F1 基本持平（0.5712→0.5692，Δ=-0.002），同样未突破约 0.57，印证贷款违约的“困难”确属"
+              "数据本质：可用特征（利率本身已是放贷方风控定价、缺乏 FICO 强特征）判别信号有限，正确的领域约束也无法凭空"
+              "创造信息——单调约束的价值在于泛化稳定性与监管可解释性，而非精度。")
+    para(doc, "小结：两项任务级创新——臭氧时序建模、贷款单调约束——在严谨评估下均未突破原有平台，强一致地表明这两个数据集"
+              "的瓶颈在数据信息量本身，而非模型或建模方式的缺失。这比一次“看似成功的提升”更有价值：既用对照证据支撑“数据"
+              "决定上限”，也留下一条工程教训——极端不平衡下须先用交叉验证坐实结论，警惕单次划分的评估假象。")
+
+    doc.add_heading("6.6 本章小结", level=2)
+    para(doc, "本章通过五个数据集、四种模型的同条件对照得到五点结论。第一，不存在放之四海而皆准的最优模型，最优选择随"
               "数据集而变。第二，数据可分性与特征质量决定性能上限，类别数量并非主要难度来源。第三，极端类别不平衡会使"
               "准确率严重失真，必须改用宏平均 F1 或平衡准确率评价。第四，当数据信号本身较弱时性能瓶颈更可能在数据而非"
-              "模型——在当前特征、划分与参数范围内，补特征、重采样、更换更强模型均未带来稳定提升。综合而言，传统机器学习"
-              "的性能由“数据特点”与“模型—数据匹配”共同决定，改进前须先诊断瓶颈来源。")
+              "模型——补特征、重采样、更换更强模型乃至任务级的时序建模与单调约束创新，在严谨评估下均未带来稳定提升。第五，"
+              "极端不平衡下评估方式本身至关重要：单次划分可能因少数类样本过少而产生“假提升”，须以交叉验证汇集足够样本"
+              "加以坐实。综合而言，传统机器学习的性能由“数据特点”与“模型—数据匹配”共同决定，改进前须先诊断瓶颈来源。")
 
     doc.add_heading("第7章 实验复现说明", level=1)
     para(doc, "在项目根目录执行 python task1_ml_wine/wine_quality.py 即可复现白葡萄酒主实验；执行 python "
               "task1_ml_wine/cross_dataset_tabular.py 复现五数据集对照，python task1_ml_wine/cross_dataset_improve.py "
-              "复现改进尝试。脚本会完成数据加载、标签构造、模型训练、网格搜索、评估与图表输出，结果保存至 "
-              "task1_ml_wine/outputs/。五个数据集中白葡萄酒会自动下载，其余四个需预先放入 task1_ml_wine/data/。")
+              "复现改进尝试；python task1_ml_wine/ozone_temporal.py 与 python task1_ml_wine/credit_monotonic.py 复现臭氧时序"
+              "特征与贷款单调约束两项任务级创新。脚本会完成数据加载、标签构造、模型训练、网格搜索、评估与图表输出，结果"
+              "保存至 task1_ml_wine/outputs/。五个数据集中白葡萄酒会自动下载，其余四个需预先放入 task1_ml_wine/data/。")
 
     doc.add_heading("第8章 结论与展望", level=1)
     para(doc, "本文完成了白葡萄酒质量三分类任务的传统机器学习建模与误差分析。随机森林在四种模型中表现较优，"

@@ -18,6 +18,9 @@ ML_Practice/
 │   ├── cross_dataset_tabular.py# 五数据集×四模型跨数据集对照
 │   ├── cross_dataset_improve.py# 欠佳数据集改进尝试（补特征/SMOTE）
 │   ├── gbdt_test.py            # 梯度提升 GBDT 第五模型对照
+│   ├── ozone_temporal.py       # 臭氧时序特征创新 + 时序CV评估（识别"假提升"）
+│   ├── credit_deepfeatures.py  # 贷款违约补全真实征信特征（信息侧上限检验）
+│   ├── credit_monotonic.py     # 贷款违约单调约束 GBDT（信用评分领域先验）
 │   └── outputs/                # EDA/混淆矩阵/模型对比/跨数据集图表/手绘示意图
 ├── task2_alexnet_fmnist/       # 任务② 手写 AlexNet
 │   ├── alexnet.py              # 逐层手写的 AlexNet（含 small_kernel 开关）
@@ -76,6 +79,9 @@ python task1_ml_wine/wine_quality.py
 python task1_ml_wine/cross_dataset_tabular.py   # 五数据集×四模型对照
 python task1_ml_wine/cross_dataset_improve.py   # 欠佳数据集改进尝试
 python task1_ml_wine/gbdt_test.py               # GBDT 第五模型对照
+python task1_ml_wine/ozone_temporal.py          # 臭氧时序特征创新 + 时序CV评估
+python task1_ml_wine/credit_deepfeatures.py     # 贷款违约补全真实征信特征
+python task1_ml_wine/credit_monotonic.py        # 贷款违约单调约束 GBDT
 ```
 
 ### 任务② 手写 AlexNet
