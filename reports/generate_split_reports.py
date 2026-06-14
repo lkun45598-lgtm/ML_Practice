@@ -9,7 +9,102 @@ import os
 from docx import Document
 from docx.shared import Pt, Inches
 from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.section import WD_SECTION
+
+
+# ============ 学校论文格式辅助：页码分节 / 真实目录域 / 三线表 ============
+def _add_page_field(paragraph):
+    """在段落中插入 Word 的 PAGE 域（显示当前页码）。"""
+    run = paragraph.add_run()
+    f1 = OxmlElement("w:fldChar"); f1.set(qn("w:fldCharType"), "begin")
+    instr = OxmlElement("w:instrText"); instr.set(qn("xml:space"), "preserve"); instr.text = " PAGE "
+    f2 = OxmlElement("w:fldChar"); f2.set(qn("w:fldCharType"), "end")
+    run._r.append(f1); run._r.append(instr); run._r.append(f2)
+
+
+def _set_pgnum(section, fmt, start=None):
+    """设置该节页码格式：fmt='upperRoman'（I,II）或 'decimal'（1,2），可指定起始值。"""
+    sectPr = section._sectPr
+    for el in sectPr.findall(qn("w:pgNumType")):
+        sectPr.remove(el)
+    pg = OxmlElement("w:pgNumType"); pg.set(qn("w:fmt"), fmt)
+    if start is not None:
+        pg.set(qn("w:start"), str(start))
+    sectPr.append(pg)
+
+
+def _footer_pagenum(section, roman=False):
+    """该节页脚居中显示页码域。"""
+    section.footer.is_linked_to_previous = False
+    p = section.footer.paragraphs[0] if section.footer.paragraphs else section.footer.add_paragraph()
+    p.text = ""
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _add_page_field(p)
+
+
+def _enable_update_fields(doc):
+    """打开文档时自动更新域（让目录页码自动生成）。"""
+    settings = doc.settings.element
+    for el in settings.findall(qn("w:updateFields")):
+        settings.remove(el)
+    uf = OxmlElement("w:updateFields"); uf.set(qn("w:val"), "true")
+    settings.append(uf)
+
+
+def toc_field(doc):
+    """真实目录域：标题黑体4号居中、字间空4字距；条目由 Word 生成，含小黑点引导与右对齐页码。"""
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p.add_run("目" + "　　　　" + "录")  # 空4个全角字距
+    r.font.name = "SimHei"
+    r._element.get_or_add_rPr().get_or_add_rFonts().set(qn("w:eastAsia"), "SimHei")
+    r.font.size = Pt(14)   # 4 号字
+    r.font.bold = True
+    p2 = doc.add_paragraph()
+    run = p2.add_run()
+    f1 = OxmlElement("w:fldChar"); f1.set(qn("w:fldCharType"), "begin")
+    instr = OxmlElement("w:instrText"); instr.set(qn("xml:space"), "preserve")
+    instr.text = 'TOC \\o "1-3" \\h \\z \\u'
+    fsep = OxmlElement("w:fldChar"); fsep.set(qn("w:fldCharType"), "separate")
+    t = OxmlElement("w:t"); t.text = "（请在 Word 中按 Ctrl+A 后 F9 更新目录；打开时一般自动更新）"
+    fend = OxmlElement("w:fldChar"); fend.set(qn("w:fldCharType"), "end")
+    for e in (f1, instr, fsep, t, fend):
+        run._r.append(e)
+    # 目录条目字体设为宋体小4号
+    for name in ("TOC 1", "TOC 2", "TOC 3"):
+        try:
+            st = doc.styles[name]
+            st.font.name = "SimSun"; st.font.size = Pt(12)
+            st.element.get_or_add_rPr().get_or_add_rFonts().set(qn("w:eastAsia"), "SimSun")
+        except KeyError:
+            pass
+
+
+def _three_line_borders(table):
+    """三线表：仅保留表格上、下边框（1.5pt）与表头下方一条线（0.75pt），去掉其余线与底纹。"""
+    tblPr = table._tbl.tblPr
+    for el in tblPr.findall(qn("w:tblBorders")):
+        tblPr.remove(el)
+    borders = OxmlElement("w:tblBorders")
+    for edge in ("top", "bottom", "left", "right", "insideH", "insideV"):
+        el = OxmlElement("w:" + edge)
+        if edge in ("top", "bottom"):
+            el.set(qn("w:val"), "single"); el.set(qn("w:sz"), "12")
+            el.set(qn("w:space"), "0"); el.set(qn("w:color"), "000000")
+        else:
+            el.set(qn("w:val"), "none"); el.set(qn("w:sz"), "0"); el.set(qn("w:space"), "0")
+        borders.append(el)
+    tblPr.append(borders)
+    # 表头行下边线
+    for cell in table.rows[0].cells:
+        tcPr = cell._tc.get_or_add_tcPr()
+        tcB = OxmlElement("w:tcBorders")
+        b = OxmlElement("w:bottom")
+        b.set(qn("w:val"), "single"); b.set(qn("w:sz"), "6")
+        b.set(qn("w:space"), "0"); b.set(qn("w:color"), "000000")
+        tcB.append(b); tcPr.append(tcB)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 T1_OUT = os.path.join(ROOT, "task1_ml_wine", "outputs")
@@ -50,31 +145,42 @@ def add_center_title(doc, text, size=16):
 
 
 def add_table(doc, header, rows, caption=None):
-    if caption:
+    doc.add_paragraph()  # 表与正文之间上空一行
+    if caption:  # 表题在表上方居中，与表之间不留空行
         c = doc.add_paragraph(caption)
         c.alignment = WD_ALIGN_PARAGRAPH.CENTER
         c.runs[0].font.size = Pt(10.5)
-    table = doc.add_table(rows=1, cols=len(header))
-    table.style = "Light List Accent 1"
+    table = doc.add_table(rows=1, cols=len(header))  # 不设主题样式，改用三线表
     table.alignment = WD_ALIGN_PARAGRAPH.CENTER
     for i, h in enumerate(header):
-        table.rows[0].cells[i].text = str(h)
+        cell = table.rows[0].cells[i]
+        cell.text = str(h)
+        for p in cell.paragraphs:
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for r in p.runs:
+                r.font.bold = True
     for row in rows:
         cells = table.add_row().cells
         for i, value in enumerate(row):
             cells[i].text = str(value)
+            for p in cells[i].paragraphs:
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _three_line_borders(table)
+    doc.add_paragraph()  # 表与正文之间下空一行
     return table
 
 
 def add_image(doc, path, width=5.5, caption=None):
     if not os.path.exists(path):
         return
+    doc.add_paragraph()  # 图与正文之间上空一行
     doc.add_picture(path, width=Inches(width))
     doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-    if caption:
+    if caption:  # 图题在图下方居中
         p = doc.add_paragraph(caption)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.runs[0].font.size = Pt(10.5)
+    doc.add_paragraph()  # 图与正文之间下空一行
 
 
 def cover(doc, subtitle, title):
@@ -228,30 +334,33 @@ def task1_body(doc):
               "决策树、随机森林、逻辑回归等传统机器学习方法仍然具有训练成本低、调试方便、结果较易解释等优势。")
     para(doc, "葡萄酒质量评价兼具实际应用价值和方法研究价值。在真实生产场景中，葡萄酒质量通常受到酸度、糖分、"
               "硫化物、密度、酒精度等多种理化因素影响，最终评分又带有一定主观性。若能够基于理化指标建立稳定的"
-              "质量分级模型，可以辅助质量控制、产品筛选和生产工艺分析。Cortez 等整理的 Wine Quality 数据集将"
+              "质量分级模型，可以辅助质量控制、产品筛选和生产工艺分析。Cortez 等（2009）整理的 Wine Quality 数据集将"
               "理化检测指标与质量评分对应起来，为研究化学属性与感官质量之间的统计关系提供了公开基准。")
     para(doc, "该任务的难点在于，葡萄酒质量评分并不是完全离散、边界清晰的类别标签。一方面，数据集中样本主要集中"
               "在中间分值，极高和极低评分样本较少；另一方面，质量评分具有天然顺序，相邻等级之间的误判和跨等级"
               "误判在实际含义上并不相同。因此，本研究不仅比较多种传统分类模型的性能，还进一步引入宏平均 F1、"
-              "二次加权 Kappa、有序 MAE 和严重跨级误判数等指标，从误差结构角度讨论质量分级模型的适用性。")
+              "二次加权 Kappa（Quadratic Weighted Kappa）、有序平均绝对误差（Mean Absolute Error，MAE）和严重跨级误判数等指标，从误差结构角度讨论质量分级模型的适用性。")
     para(doc, "从实训和研究方法角度看，白葡萄酒质量分类任务能够覆盖结构化数据建模的完整流程，包括数据读取与查看、"
               "探索性分析、标签构造、标准化、交叉验证、模型选择、测试集评价和结果解释。通过该任务，可以较系统地"
               "理解传统机器学习在中小规模结构化数据上的建模思路，并分析不同模型在可解释性、泛化能力和错误类型上的差异。")
 
     doc.add_heading("1.2 国内外研究现状", level=2)
-    para(doc, "围绕结构化分类任务，国内外研究已经形成了较成熟的方法体系。逻辑回归作为广义线性模型的代表，具有"
-              "参数含义清晰、训练效率高等特点，常用于建立可解释的分类基线。支持向量机通过最大间隔原则提高分类器"
-              "泛化能力，并可借助核函数刻画非线性边界，在中小规模数据集上具有较强竞争力。")
-    para(doc, "树模型及其集成方法是结构化数据建模中的重要方向。单棵决策树能够形成较直观的特征划分规则，但对"
-              "训练样本扰动较敏感。随机森林通过 Bootstrap 采样、随机特征选择和多树投票降低方差，在表格数据任务中"
-              "具有较好的稳定性。此后，XGBoost 和 LightGBM 等梯度提升树方法在工程效率和预测性能方面得到广泛应用。")
-    para(doc, "葡萄酒质量预测方面，Cortez 等以红葡萄酒和白葡萄酒理化检测数据为基础，研究了数据挖掘方法对感官"
+    para(doc, "围绕结构化分类任务，国内外研究已经形成了较成熟的方法体系（周志华，2016）。逻辑回归（Logistic "
+              "Regression，LR）作为广义线性模型的代表，具有参数含义清晰、训练效率高等特点，常用于建立可解释的"
+              "分类基线。支持向量机（Support Vector Machine，SVM）由 Cortes 和 Vapnik（1995）提出，通过最大间隔"
+              "原则提高分类器泛化能力，并可借助核函数刻画非线性边界，在中小规模数据集上具有较强竞争力。")
+    para(doc, "树模型及其集成方法是结构化数据建模中的重要方向。单棵决策树（Decision Tree，DT）能够形成较直观的"
+              "特征划分规则，但对训练样本扰动较敏感。Breiman（2001）提出的随机森林（Random Forest，RF）通过 "
+              "Bootstrap 采样、随机特征选择和多树投票降低方差，在表格数据任务中具有较好的稳定性。此后，"
+              "XGBoost（Chen 和 Guestrin，2016）和 LightGBM（Ke 等，2017）等梯度提升树方法在工程效率和预测性能方面得到广泛应用。")
+    para(doc, "葡萄酒质量预测方面，Cortez 等（2009）以红葡萄酒和白葡萄酒理化检测数据为基础，研究了数据挖掘方法对感官"
               "偏好建模的可行性。该数据集被广泛用于分类、回归、特征重要性分析和模型比较。已有研究通常关注理化指标"
               "与质量评分之间的统计关联，其中酒精度、挥发性酸度、密度等变量常被认为与质量判断关系较密切。")
-    para(doc, "类别不平衡和有序标签是该任务中需要重点处理的两个问题。不平衡学习中总体准确率可能掩盖少数类别识别"
-              "效果，因此需要结合平衡准确率、F1、MCC 等指标进行评价。另一方面，葡萄酒质量评分从低到高具有明确"
-              "次序，将其完全视为无序类别会弱化相邻误判与严重跨级误判之间的差异。因此，本文在常规三分类实验之外"
-              "补充有序回归分级对照，并引入二次加权 Kappa 和严重误判数，以更贴合质量分级任务的实际语义。")
+    para(doc, "类别不平衡和有序标签是该任务中需要重点处理的两个问题。He 和 Garcia（2009）指出，不平衡学习中总体"
+              "准确率可能掩盖少数类别识别效果，因此需要结合平衡准确率、F1、马修斯相关系数（Matthews Correlation "
+              "Coefficient，MCC）等指标进行评价。另一方面，葡萄酒质量评分从低到高具有明确次序，将其完全视为无序"
+              "类别会弱化相邻误判与严重跨级误判之间的差异。因此，本文在常规三分类实验之外补充有序回归（McCullagh，"
+              "1980）分级对照，并引入二次加权 Kappa 和严重误判数，以更贴合质量分级任务的实际语义。")
 
     doc.add_heading("1.3 研究内容与分工", level=2)
     para(doc, "本文以四种传统机器学习模型为研究对象，以白葡萄酒质量三分类为主线，把数据集视为检验模型的试验台。"
@@ -284,7 +393,7 @@ def task1_body(doc):
               "训练集上完成调参和拟合，测试集只用于最后一次独立评价。")
     doc.add_heading("2.3 模型方法", level=2)
     para(doc, "本文选取支持向量机、决策树、随机森林和逻辑回归四种模型进行比较。支持向量机通过最大化分类间隔提高"
-              "泛化能力，并借助 RBF 核函数表达非线性边界；决策树通过递归划分特征空间形成分类规则，可解释性较强，"
+              "泛化能力，并借助径向基函数（Radial Basis Function，RBF）核函数表达非线性边界；决策树通过递归划分特征空间形成分类规则，可解释性较强，"
               "但单棵树容易受到训练样本扰动影响。")
     para(doc, "随机森林在决策树基础上引入 Bootstrap 采样和随机特征子集，多棵树投票能够降低单棵树方差，因此在"
               "中小规模表格数据上通常具有较好的稳定性。逻辑回归作为线性分类基线，用于检验理化指标与质量等级之间"
@@ -294,7 +403,8 @@ def task1_body(doc):
     doc.add_heading("2.4 评价指标", level=2)
     para(doc, "基础指标包括准确率、宏平均精确率、宏平均召回率和宏平均 F1。准确率反映总体预测正确比例，宏平均指标"
               "则对每个类别等权计算，更适合观察类别不均衡场景下的平均识别质量。")
-    para(doc, "进阶指标包括平衡准确率、二次加权 Kappa、Cohen's Kappa、MCC 和宏平均 ROC-AUC。平衡准确率本质上是"
+    para(doc, "进阶指标包括平衡准确率、二次加权 Kappa、Cohen's Kappa、MCC 和宏平均 ROC-AUC（受试者工作特征曲线下"
+              "面积，Area Under the ROC Curve）。平衡准确率本质上是"
               "各类别召回率的平均值；MCC 能综合反映混淆矩阵结构；Kappa 衡量预测与真实标签的一致性，并扣除随机一致"
               "影响；二次加权 Kappa 对跨等级误判惩罚更高，更适合葡萄酒质量这种有序标签；宏平均 ROC-AUC 则从概率"
               "排序角度补充评价模型区分能力。")
@@ -437,9 +547,10 @@ def task1_body(doc):
     add_image(doc, os.path.join(T1_OUT, "improve_ozone.png"), 5.4, "图 6-6 臭氧：SMOTE 过采样与类别权重对照（SMOTE 未带来改进）")
     para(doc, "三种手段给出一致结论。其一，为贷款违约补充 grade、期限、工龄等类别特征后宏平均 F1 几乎不变，因为基线已含"
               "的利率 int_rate 实际上已编码贷款等级（经核验 A 至 G 级平均利率由 7.3% 单调升至 30.8%，高度共线），而最强的"
-              "FICO 信用分在本数据集版本中并不提供。其二，对极端不平衡的臭氧采用 SMOTE 后宏平均 F1 反而下降，因为特征"
-              "高达 72 维而少数类训练样本仅数十个，SMOTE 在高维空间靠极少邻居插值，合成的多为噪声。其三，换用更强的梯度"
-              "提升模型后，两个数据集宏平均 F1 仍停在约 0.58，未能突破四个基础模型的上限。")
+              "FICO 信用分在本数据集版本中并不提供。其二，对极端不平衡的臭氧采用合成少数类过采样技术（Synthetic "
+              "Minority Over-sampling Technique，SMOTE）后宏平均 F1 反而下降，因为特征高达 72 维而少数类训练样本仅"
+              "数十个，SMOTE 在高维空间靠极少邻居插值，合成的多为噪声。其三，换用更强的梯度提升决策树（Gradient "
+              "Boosting Decision Tree，GBDT）后，两个数据集宏平均 F1 仍停在约 0.58，未能突破四个基础模型的上限。")
     para(doc, "由此判断：在当前特征、划分与参数范围内，补特征、重采样、换更强模型三类手段均未给这两个数据集带来稳定提升，"
               "表明其“效果不好”更可能源于弱判别信号或极端不平衡叠加高维小样本等数据本质，而非单一处理手段缺失（需多随机"
               "种子进一步确认）。相对更有效的是“模型与数据的匹配”：在臭氧上"
@@ -533,11 +644,11 @@ def task1_body(doc):
 def task2_body(doc):
     doc.add_heading("第1章 引言", level=1)
     doc.add_heading("1.1 研究背景与意义", level=2)
-    para(doc, "图像分类是计算机视觉中的基础任务，也是深度学习方法最早取得显著突破的方向之一。卷积神经网络通过"
+    para(doc, "图像分类是计算机视觉中的基础任务，也是深度学习方法最早取得显著突破的方向之一。卷积神经网络（Convolutional Neural Network，CNN）通过"
               "局部连接、权值共享和层次化特征提取机制，能够从图像中逐级学习边缘、纹理、局部形状和高层语义信息，"
               "相比完全连接网络更适合处理具有空间结构的视觉数据。")
     para(doc, "AlexNet 在 ImageNet 图像分类任务中的成功推动了深度卷积网络的快速发展。其结构包含多层卷积、池化、"
-              "ReLU 激活、局部响应归一化、Dropout 和全连接分类器，集中体现了早期深度视觉模型的关键设计。虽然当前"
+              "修正线性单元（Rectified Linear Unit，ReLU）激活、局部响应归一化（Local Response Normalization，LRN）、Dropout 和全连接分类器，集中体现了早期深度视觉模型的关键设计。虽然当前"
               "更深或更轻量的网络结构已经广泛应用，但 AlexNet 仍然适合作为理解卷积网络基本机制的经典模型。逐层实现"
               "AlexNet，而不是直接调用预置模型，可以更清楚地理解输入尺寸变化、卷积核设置、特征图尺寸、参数量和训练策略"
               "之间的关系。")
@@ -546,22 +657,23 @@ def task2_body(doc):
               "该数据集规模适中、类别均衡、训练成本可控，既适合验证卷积神经网络的基本分类能力，也适合分析模型在"
               "细粒度视觉差异不足时的错误类型。")
     para(doc, "本研究在 Fashion-MNIST 上逐层构建 AlexNet，并围绕训练策略、组件消融、模型复杂度和可解释性展开实验。"
-              "通过 BatchNorm、数据增强、Focal Loss、复杂度对比和 Grad-CAM 可视化，可以进一步分析模型性能来源和误差成因，"
+              "通过批归一化（Batch Normalization，BN）、数据增强、Focal Loss、复杂度对比和梯度加权类激活映射（Gradient-weighted Class Activation Mapping，Grad-CAM）可视化，可以进一步分析模型性能来源和误差成因，"
               "避免只以单一准确率评价模型效果。")
 
     doc.add_heading("1.2 国内外研究现状", level=2)
-    para(doc, "卷积神经网络的发展经历了从浅层结构到深层结构、从单纯提升精度到兼顾效率与可解释性的过程。LeNet 展示了"
-              "卷积、池化和共享权重在手写字符识别中的有效性，为后续视觉网络奠定了基础。AlexNet 在大规模 ImageNet 分类"
-              "任务上显著提升识别性能，证明了深层卷积网络在大规模视觉数据上的表达能力。随后，VGG 通过堆叠小卷积核研究"
-              "网络深度对性能的影响，ResNet 则利用残差连接缓解深层网络训练退化问题。")
-    para(doc, "在训练策略方面，早期 AlexNet 使用 ReLU 激活提升非线性表达和训练效率，并结合 Dropout 缓解全连接层过拟合。"
-              "Batch Normalization 通过标准化中间层输入分布稳定训练过程，常用于替代或弱化早期网络中的局部响应归一化。"
+    para(doc, "卷积神经网络的发展经历了从浅层结构到深层结构、从单纯提升精度到兼顾效率与可解释性的过程。LeNet（LeCun 等，"
+              "1998）展示了卷积、池化和共享权重在手写字符识别中的有效性，为后续视觉网络奠定了基础。AlexNet（Krizhevsky "
+              "等，2012）在大规模 ImageNet 分类任务上显著提升识别性能，证明了深层卷积网络在大规模视觉数据上的表达能力。"
+              "随后，VGG（Simonyan 和 Zisserman，2015）通过堆叠小卷积核研究网络深度对性能的影响，ResNet（He 等，2016）"
+              "则利用残差连接缓解深层网络训练退化问题。")
+    para(doc, "在训练策略方面，早期 AlexNet 使用 ReLU 激活提升非线性表达和训练效率，并结合 Dropout（Srivastava 等，"
+              "2014）缓解全连接层过拟合。批归一化（Ioffe 和 Szegedy，2015）通过标准化中间层输入分布稳定训练过程，常用于替代或弱化早期网络中的局部响应归一化。"
               "数据增强也是图像分类中常用的正则化手段，可通过随机翻转、旋转、裁剪等方式提高模型对输入扰动的鲁棒性。")
     para(doc, "在数据集方面，MNIST 长期作为图像分类入门基准，但其类别结构较简单，许多模型容易取得较高准确率。"
               "Fashion-MNIST 提供了一个与 MNIST 接口相近但更具挑战性的服饰图像基准。其上装类别形态相近，低分辨率灰度图"
               "缺乏颜色和纹理细节，因此比手写数字更适合检验模型对细粒度形状差异的表达能力。")
-    para(doc, "在误差分析和模型解释方面，仅报告测试准确率难以说明卷积网络真正依赖哪些图像区域进行判断。Focal Loss 通过"
-              "降低易分样本权重，使模型更关注难分类样本；Grad-CAM 通过梯度加权的类激活映射展示模型关注区域，为分析卷积"
+    para(doc, "在误差分析和模型解释方面，仅报告测试准确率难以说明卷积网络真正依赖哪些图像区域进行判断。Focal Loss（Lin 等，2017）通过"
+              "降低易分样本权重，使模型更关注难分类样本；Grad-CAM（Selvaraju 等，2017）通过梯度加权的类激活映射展示模型关注区域，为分析卷积"
               "神经网络预测依据提供了可视化工具。本文在主模型训练之外引入 Focal Loss 对照和 Grad-CAM 可视化，目的在于结合"
               "混淆矩阵讨论上装类别误差来源，而不是只比较总体准确率。")
 
@@ -598,7 +710,7 @@ def task2_body(doc):
               "之间的竞争，但后续深度学习实践中 BatchNorm 更常用于稳定中间层输入分布。本文以 BatchNorm 作为主模型"
               "配置，并保留 LRN 基线作为对照。")
     para(doc, "Dropout 是 AlexNet 全连接分类器中的重要正则化手段，可以降低隐藏单元之间的 co-adaptation，缓解大容量"
-              "分类器带来的过拟合风险。优化方面，本文采用带动量的 SGD、权重衰减和余弦退火学习率调度；数据增强则通过"
+              "分类器带来的过拟合风险。优化方面，本文采用带动量的随机梯度下降（Stochastic Gradient Descent，SGD）、权重衰减和余弦退火学习率调度；数据增强则通过"
               "随机水平翻转和小角度旋转构造输入扰动，提高模型对轻微姿态变化的鲁棒性。")
     doc.add_heading("2.4 评价指标与可解释性方法", level=2)
     para(doc, "本文采用准确率、宏平均精确率、宏平均召回率和宏平均 F1 评价多分类性能。Fashion-MNIST 类别数量均衡，"
@@ -717,7 +829,7 @@ def task2_body(doc):
                ["Garbage", "6", "2527", "421", "4.3×", "彩色照片、类间相似且不平衡"]],
               "表 6-1 四个数据集的基本特征")
     para(doc, "对照的三个模型分别代表不同设计取向：AlexNet@224（约 58.3M 参数，大卷积核 + 大型全连接分类器）、小型 "
-              "ResNet@64（约 2.8M 参数，3×3 小核 + 残差连接 + 全局平均池化）、SimpleCNN@64（约 0.39M 参数，三层卷积的"
+              "ResNet@64（约 2.8M 参数，3×3 小核 + 残差连接 + 全局平均池化，Global Average Pooling，GAP）、SimpleCNN@64（约 0.39M 参数，三层卷积的"
               "浅层基线）。为保证对照公平，三个模型均从零训练、不使用任何预训练权重，并尽量统一训练预算：均采用数据增强"
               "与余弦退火；其中 SimpleCNN 与 ResNet 各使用 3 个随机种子重复训练并报告均值与标准差。本文初期曾以较短预算"
               "运行 SimpleCNN，后将其对齐为与主模型一致的 40 轮 + 余弦退火重新训练，以避免把“训练不足”误判为“结构不行”。")
@@ -865,24 +977,28 @@ def refs(doc, items):
         p.paragraph_format.first_line_indent = Pt(-24)
 
 
+def _apply_pagination(doc):
+    """正文之前（封面/声明/摘要/目录）用罗马数字，正文另起一节、页码从 1 重起。"""
+    front = doc.sections[0]
+    body = doc.sections[-1]
+    front.different_first_page_header_footer = True  # 封面页不显示页码
+    _set_pgnum(front, "upperRoman", 1)
+    _footer_pagenum(front)
+    _set_pgnum(body, "decimal", 1)
+    _footer_pagenum(body)
+
+
 def build_task1():
     doc = Document()
     set_base_style(doc)
     cover(doc, "任务一实训论文", "传统机器学习模型对结构化数据分类性能的影响研究——以白葡萄酒质量分类为主线的多数据集实证")
     declaration(doc)
     task1_abstract(doc)
-    manual_toc(doc, [
-        "第1章 引言",
-        "第2章 理论基础与实验设计",
-        "第3章 数据集与预处理",
-        "第4章 模型建立与实验结果",
-        "第5章 误差分析与补充实验",
-        "第6章 跨数据集模型对照研究",
-        "第7章 实验复现说明",
-        "第8章 结论与展望",
-        "参考文献",
-    ])
+    toc_field(doc)
+    doc.add_section(WD_SECTION.NEW_PAGE)  # 正文另起一节，便于页码重起
     task1_body(doc)
+    _apply_pagination(doc)
+    _enable_update_fields(doc)
     out = os.path.join(TASK1_DIR, "任务一_白葡萄酒质量分类论文.docx")
     doc.save(out)
     print("[任务一] 已生成:", out)
@@ -894,18 +1010,11 @@ def build_task2():
     cover(doc, "任务二实训论文", "卷积神经网络架构对图像分类性能的影响研究——基于 AlexNet 的多数据集实证")
     declaration(doc)
     task2_abstract(doc)
-    manual_toc(doc, [
-        "第1章 引言",
-        "第2章 理论基础",
-        "第3章 数据集与模型实现",
-        "第4章 训练与评估",
-        "第5章 对照实验与误差分析",
-        "第6章 跨数据集泛化与架构对照研究",
-        "第7章 实验复现说明",
-        "第8章 结论与展望",
-        "参考文献",
-    ])
+    toc_field(doc)
+    doc.add_section(WD_SECTION.NEW_PAGE)  # 正文另起一节，便于页码重起
     task2_body(doc)
+    _apply_pagination(doc)
+    _enable_update_fields(doc)
     out = os.path.join(TASK2_DIR, "任务二_AlexNet服饰图像分类论文.docx")
     doc.save(out)
     print("[任务二] 已生成:", out)

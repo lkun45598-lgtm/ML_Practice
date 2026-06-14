@@ -15,6 +15,19 @@
 \usepackage{hyperref}
 \hypersetup{hidelinks}
 
+% —— 目录格式：标题黑体4号居中、字间空4字距；各级条目宋体小4号、小黑点连接、页码右对齐 ——
+\usepackage{tocloft}
+\renewcommand{\contentsname}{目\hspace{4\ccwd}录}
+\renewcommand{\cfttoctitlefont}{\hspace*{\fill}\heiti\zihao{4}}
+\renewcommand{\cftaftertoctitle}{\hspace*{\fill}}
+\renewcommand{\cftsecfont}{\songti\zihao{-4}}
+\renewcommand{\cftsecpagefont}{\songti\zihao{-4}}
+\renewcommand{\cftsubsecfont}{\songti\zihao{-4}}
+\renewcommand{\cftsubsecpagefont}{\songti\zihao{-4}}
+\renewcommand{\cftsubsubsecfont}{\songti\zihao{-4}}
+\renewcommand{\cftsubsubsecpagefont}{\songti\zihao{-4}}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
 \captionsetup{font=small, labelsep=quad}
 \graphicspath{{./}{../../report/}{../../task2_alexnet_fmnist/outputs/}}
 \renewcommand{\arraystretch}{1.3}
@@ -78,6 +91,8 @@
 \par\hfill 作者签名：\rule{3cm}{0.4pt}\qquad 指导教师签名：\rule{3cm}{0.4pt}\hspace{1cm}
 \par\hfill 日期：\quad\ 年\ \quad 月\ \quad 日\qquad\quad 日期：\quad\ 年\ \quad 月\ \quad 日\hspace{1cm}
 \newpage
+\pagenumbering{Roman}   % 正文之前（摘要/Abstract/目录）用 I、II 等罗马数字
+\setcounter{page}{1}
 
 % ===================== 摘要 =====================
 \begin{center}{\Large\bfseries 摘\quad 要}\end{center}
@@ -136,18 +151,19 @@ than parameter scale, and that once the architecture is strong enough the real b
 
 \newpage
 \tableofcontents
-\newpage
+\clearpage
+\pagenumbering{arabic}  % 正文页码从 1 重新标起
 
 % ===================== 第一章 引言 =====================
 \section{引言}
 
 \subsection{研究背景与意义}
-图像分类是计算机视觉中的基础任务，也是深度学习方法最早取得显著突破的方向之一。卷积神经网络通过局部
+图像分类是计算机视觉中的基础任务，也是深度学习方法最早取得显著突破的方向之一。卷积神经网络（Convolutional Neural Network，CNN）通过局部
 连接、权值共享和层次化特征提取机制，能够从图像中逐级学习边缘、纹理、局部形状和高层语义信息，相比完全
 连接网络更适合处理具有空间结构的视觉数据。随着计算能力、数据规模和训练技巧的发展，卷积神经网络已经
 成为图像识别、目标检测、医学影像分析和工业视觉检测等任务中的重要模型。
 
-AlexNet 在 ImageNet 图像分类任务中的成功推动了深度卷积网络的快速发展。其结构包含多层卷积、池化、ReLU
+AlexNet 在 ImageNet 图像分类任务中的成功推动了深度卷积网络的快速发展。其结构包含多层卷积、池化、修正线性单元（Rectified Linear Unit，ReLU）
 激活、局部响应归一化、Dropout 和全连接分类器，集中体现了早期深度视觉模型的关键设计。虽然当前更深或更
 轻量的网络结构已经广泛应用，但 AlexNet 仍然适合作为理解卷积网络基本机制的经典模型。逐层实现 AlexNet，
 而不是直接调用预置模型，可以更清楚地理解输入尺寸变化、卷积核设置、特征图尺寸、参数量和训练策略之间的
@@ -160,31 +176,31 @@ Fashion-MNIST 是 MNIST 的替代性基准数据集，由 10 类服饰图像构�
 
 本研究逐层构建 AlexNet 并围绕其训练策略、组件、复杂度和可解释性展开实验，进而把模型推广到多个数据集做
 架构对照，具有两方面意义。其一，实验能够展示深度图像分类从数据预处理、模型实现、训练验证到测试评估的
-完整流程；其二，通过组件消融、复杂度对比、Grad-CAM 可视化以及跨数据集的架构对照，可以从“模型”而非
+完整流程；其二，通过组件消融、复杂度对比、梯度加权类激活映射（Gradient-weighted Class Activation Mapping，Grad-CAM）可视化以及跨数据集的架构对照，可以从“模型”而非
 “单一数据集”的角度分析性能来源，回答“究竟是数据特点、架构设计还是参数规模决定了卷积网络的分类性能”
 这一问题，避免只以单一准确率评价模型效果。
 
 \subsection{国内外研究现状}
 卷积神经网络的发展经历了从浅层结构到深层结构、从单纯提升精度到兼顾效率与可解释性的过程。LeCun 等
-(1998)提出的 LeNet 展示了卷积、池化和共享权重在手写字符识别中的有效性，为后续视觉网络奠定了基础。
-Krizhevsky 等(2012)提出的 AlexNet 在大规模 ImageNet 分类任务上显著提升了识别性能，证明了深层卷积网络
+（1998）提出的 LeNet 展示了卷积、池化和共享权重在手写字符识别中的有效性，为后续视觉网络奠定了基础。
+Krizhevsky 等（2012）提出的 AlexNet 在大规模 ImageNet 分类任务上显著提升了识别性能，证明了深层卷积网络
 在大规模视觉数据上的表达能力。随后，VGG 通过堆叠小卷积核研究网络深度对性能的影响，ResNet 则利用残差
 连接缓解深层网络训练退化问题，使更深网络的训练成为可能。
 
 在训练策略方面，早期 AlexNet 使用 ReLU 激活提升非线性表达和训练效率，并结合 Dropout 缓解全连接层过拟合。
-Srivastava 等(2014)系统研究了 Dropout 对过拟合的抑制作用。Ioffe 和 Szegedy(2015)提出 Batch Normalization，
+Srivastava 等（2014）系统研究了 Dropout 对过拟合的抑制作用。Ioffe 和 Szegedy（2015）提出批归一化（Batch Normalization，BN），
 通过标准化中间层输入分布稳定训练过程，常用于替代或弱化早期网络中的局部响应归一化。数据增强也是图像
 分类中常用的正则化手段，可通过随机翻转、旋转、裁剪等方式提高模型对输入扰动的鲁棒性。
 
 在数据集方面，MNIST 长期作为图像分类入门基准，但其类别结构较简单，许多模型容易取得较高准确率。Xiao 等
-(2017)提出 Fashion-MNIST，希望提供一个与 MNIST 接口相近但更具挑战性的服饰图像基准。Fashion-MNIST 中
+（2017）提出 Fashion-MNIST，希望提供一个与 MNIST 接口相近但更具挑战性的服饰图像基准。Fashion-MNIST 中
 上装类别形态相近，低分辨率灰度图缺乏颜色和纹理细节，因此比手写数字更适合检验模型对细粒度形状差异的
 表达能力。围绕该数据集，研究者通常比较传统 CNN、VGG/ResNet 类模型和轻量网络在准确率、参数量和推理效率
 之间的取舍。
 
-在误差分析和模型解释方面，仅报告测试准确率难以说明卷积网络真正依赖哪些图像区域进行判断。Lin 等(2017)
+在误差分析和模型解释方面，仅报告测试准确率难以说明卷积网络真正依赖哪些图像区域进行判断。Lin 等（2017）
 提出的 Focal Loss 通过降低易分样本权重，使模型更关注难分类样本，常用于类别不平衡或难样本较多的视觉任务。
-Selvaraju 等(2017)提出 Grad-CAM，通过梯度加权的类激活映射展示模型关注区域，为分析卷积神经网络预测依据
+Selvaraju 等（2017）提出 Grad-CAM，通过梯度加权的类激活映射展示模型关注区域，为分析卷积神经网络预测依据
 提供了可视化工具。本文在主模型训练之外引入 Focal Loss 对照和 Grad-CAM 可视化，目的在于结合混淆矩阵讨论
 上装类别误差来源，而不是只比较总体准确率。
 
@@ -235,7 +251,7 @@ Y_{i,j,k}=\sum_{c}\sum_{u}\sum_{v}W_{u,v,c,k}X_{i+u,j+v,c}+b_k.
 分类器容量都会影响最终识别效果。
 
 \subsection{AlexNet 结构}
-AlexNet 由五个卷积层和三个全连接层组成。原始 AlexNet 使用局部响应归一化（LRN）和 Dropout 等组件。本文
+AlexNet 由五个卷积层和三个全连接层组成。原始 AlexNet 使用局部响应归一化（Local Response Normalization，LRN）和 Dropout 等组件。本文
 基于 Fashion-MNIST 的单通道灰度输入，将首层输入通道改为 1，输出类别数改为 10，并保留五个卷积块和三层
 全连接分类器的基本结构。主模型中采用 BatchNorm 替代 LRN，以提升训练稳定性。
 
@@ -266,7 +282,7 @@ $256\times6\times6$，展平后进入 4096 维全连接层。大量参数集中�
 本文以 BatchNorm 作为主模型配置，并保留 LRN 基线作为对照，以分析归一化组件对训练稳定性和测试性能的影响。
 
 Dropout 是 AlexNet 全连接分类器中的重要正则化手段。训练时随机置零一部分神经元输出，可以降低隐藏单元之间
-的 co-adaptation，缓解大规模全连接层带来的过拟合风险。优化方面，本文采用带动量的 SGD。动量项能够累积历史
+的 co-adaptation，缓解大规模全连接层带来的过拟合风险。优化方面，本文采用带动量的随机梯度下降（Stochastic Gradient Descent，SGD）。动量项能够累积历史
 梯度方向，减少参数更新震荡；权重衰减通过惩罚过大的参数值控制模型复杂度；余弦退火学习率调度在训练后期逐步
 降低学习率，有助于模型在较平滑的参数区域收敛。数据增强则通过随机水平翻转和小角度旋转构造输入扰动，提高
 模型对轻微姿态变化的鲁棒性。
@@ -706,7 +722,7 @@ Flowers 只有 5 个类别反而只有 81\%；猫狗虽然只有 2 类，但其�
 \end{table}
 
 AlexNet 的 58.3M 参数中，高达 93.6\% 集中在三层全连接分类头，真正用于提取特征的卷积部分只有 3.75M；
-而小型 ResNet 用全局平均池化（GAP）取代了庞大的全连接头，几乎 100\% 的参数都用在卷积提特征上
+而小型 ResNet 用全局平均池化（Global Average Pooling，GAP）取代了庞大的全连接头，几乎 100\% 的参数都用在卷积提特征上
 （两种分类头的对比见图~\ref{fig:head}）。这正是 ResNet 以极少参数取胜的根本原因——AlexNet 多出的参数
 大多用在了易过拟合的全连接头上，并没有用在刀刃上。具体而言，小型 ResNet 的优势来自三处架构设计：其一，
 全部使用 $3\times3$ 小核堆叠，与上一节的受控对照结论一致；其二，引入残差连接，为梯度提供恒等捷径，使网络
