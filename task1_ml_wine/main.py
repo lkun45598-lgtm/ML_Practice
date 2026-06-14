@@ -1,52 +1,18 @@
 # -*- coding: utf-8 -*-
-"""任务① 红酒（白葡萄酒）质量多分类：加载→查看→预处理→建模→评估→结论。"""
+"""任务① 白葡萄酒质量多分类主流程：加载→查看→预处理→建模→评估→结论。
+
+运行：python -m task1_ml_wine.main
+"""
 import os
-import io
-import zipfile
-import urllib.request
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.zh_font import set_chinese_font
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(HERE, "data")
-OUT_DIR = os.path.join(HERE, "outputs")
-CSV_PATH = os.path.join(DATA_DIR, "winequality-white.csv")
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(OUT_DIR, exist_ok=True)
-
-
-def download_data():
-    """下载 UCI 白葡萄酒质量数据集到 data/。优先直链 CSV，失败则取官方 zip 解压。"""
-    if os.path.exists(CSV_PATH):
-        print(f"[数据] 已存在: {CSV_PATH}")
-        return
-    direct = ("https://archive.ics.uci.edu/ml/machine-learning-databases/"
-              "wine-quality/winequality-white.csv")
-    try:
-        print("[数据] 尝试直链下载...")
-        urllib.request.urlretrieve(direct, CSV_PATH)
-    except Exception as e:
-        print(f"[数据] 直链失败({e})，改用官方 zip...")
-        zip_url = "https://archive.ics.uci.edu/static/public/186/wine+quality.zip"
-        with urllib.request.urlopen(zip_url, timeout=60) as resp:
-            zbytes = resp.read()
-        with zipfile.ZipFile(io.BytesIO(zbytes)) as z:
-            with z.open("winequality-white.csv") as f, open(CSV_PATH, "wb") as out:
-                out.write(f.read())
-    print(f"[数据] 已保存: {CSV_PATH}")
-
-
-def load_data():
-    """读取分号分隔的 CSV，返回 DataFrame。"""
-    df = pd.read_csv(CSV_PATH, sep=";")
-    print(f"[数据] 形状: {df.shape}")
-    return df
+from task1_ml_wine import OUT_DIR
+from task1_ml_wine.models import build_models
+from task1_ml_wine.datasets.wine import download_data, load_data, CSV_PATH
 
 
 def eda(df):
@@ -102,34 +68,8 @@ def preprocess(X, y, test_size=0.2, seed=42):
     return X_tr, X_te, y_tr, y_te
 
 
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
-
-
-def build_models():
-    """返回 {模型名: (estimator, 参数网格)}；参数键用 clf__ 前缀以配合 Pipeline。"""
-    return {
-        "SVM": (
-            SVC(class_weight="balanced", probability=True, random_state=42),
-            {"clf__C": [1, 10], "clf__gamma": ["scale", 0.1], "clf__kernel": ["rbf"]},
-        ),
-        "决策树": (
-            DecisionTreeClassifier(class_weight="balanced", random_state=42),
-            {"clf__max_depth": [None, 10, 20], "clf__min_samples_leaf": [1, 5]},
-        ),
-        "随机森林": (
-            RandomForestClassifier(class_weight="balanced", random_state=42, n_jobs=-1),
-            {"clf__n_estimators": [200, 400], "clf__max_depth": [None, 20]},
-        ),
-        "逻辑回归": (
-            LogisticRegression(class_weight="balanced", max_iter=2000),
-            {"clf__C": [0.5, 1, 10]},
-        ),
-    }
 
 
 def train_models(X_tr, y_tr):

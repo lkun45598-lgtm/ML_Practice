@@ -17,11 +17,9 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.zh_font import set_chinese_font
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(HERE, "outputs")
+from task2_alexnet_fmnist import OUT_DIR
 CLASS_NAMES = ["T恤", "裤子", "套衫", "连衣裙", "外套", "凉鞋", "衬衫", "运动鞋", "包", "短靴"]
 
 

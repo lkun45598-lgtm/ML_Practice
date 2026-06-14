@@ -17,18 +17,16 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.zh_font import set_chinese_font
-from wine_quality import build_models
+from task1_ml_wine.models import build_models
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import HistGradientBoostingClassifier
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "outputs")
-DATA_DIR = os.path.join(HERE, "data")
+from task1_ml_wine import OUT_DIR as OUT
+from task1_ml_wine import DATA_DIR
 
 BASE12 = ["loan_amnt", "int_rate", "installment", "annual_inc", "dti",
           "delinq_2yrs", "inq_last_6mths", "open_acc", "pub_rec",

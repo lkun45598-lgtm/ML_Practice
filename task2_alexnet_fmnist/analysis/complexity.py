@@ -11,11 +11,10 @@ import time
 import torch
 from thop import profile
 
-from alexnet import AlexNet
-from simplecnn import SimpleCNN
+from task2_alexnet_fmnist.models.alexnet import AlexNet
+from task2_alexnet_fmnist.models.simplecnn import SimpleCNN
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(HERE, "outputs")
+from task2_alexnet_fmnist import OUT_DIR
 
 
 @torch.no_grad()

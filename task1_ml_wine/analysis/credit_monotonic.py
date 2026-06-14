@@ -14,14 +14,12 @@ import sys
 import json
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from data_tabular import load_lendingclub, _LC_FEATURES
+from task1_ml_wine.datasets.tabular import load_lendingclub, _LC_FEATURES
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import accuracy_score, f1_score, balanced_accuracy_score
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "outputs")
+from task1_ml_wine import OUT_DIR as OUT
 
 # 领域先验：+1 表示"该特征↑ → 违约概率↑"，-1 反之，0 不约束
 _SIGN = {"int_rate": 1, "annual_inc": -1, "dti": 1, "delinq_2yrs": 1,

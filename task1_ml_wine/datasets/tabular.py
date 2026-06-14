@@ -13,8 +13,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(HERE, "data")
+from task1_ml_wine import DATA_DIR
 
 
 def _meta(name, label_cn, X, y, class_names):

@@ -11,13 +11,11 @@ import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.zh_font import set_chinese_font
-from alexnet import AlexNet
-from data import get_loaders, CLASS_NAMES
+from task2_alexnet_fmnist.models.alexnet import AlexNet
+from task2_alexnet_fmnist.datasets.fmnist import get_loaders, CLASS_NAMES
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(HERE, "outputs")
+from task2_alexnet_fmnist import OUT_DIR
 CKPT = os.path.join(OUT_DIR, "alexnet_best.pt")
 
 

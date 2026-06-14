@@ -3,22 +3,22 @@
 # 用法：
 #   bash run_cross_dataset.sh smoke    # 摸底：各 12 轮、单种子（快）
 #   bash run_cross_dataset.sh report   # 报告级：AlexNet 30 轮 + SimpleCNN 25 轮×3 种子
-# 结果写入 outputs/exp_x_<...>.json，再由 cross_dataset_summary.py 聚合。
+# 结果写入 outputs/exp_x_<...>.json，再由 analysis/cross_dataset_summary.py 聚合。
 set -e
 MODE="${1:-smoke}"
 PY=/home/lz/miniconda3/envs/pytorch312/bin/python
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."   # 切到仓库根目录
 DATASETS="flowers garbage catsdogs"
 
 log() { echo "[$(date +%T)] $*"; }
 
 run() {  # run <tag> <args...>
   local tag="$1"; shift
-  if [ -f "outputs/exp_${tag}.json" ] && [ "$FORCE" != "1" ]; then
+  if [ -f "task2_alexnet_fmnist/outputs/exp_${tag}.json" ] && [ "$FORCE" != "1" ]; then
     log "跳过 ${tag}（已存在，设 FORCE=1 可重跑）"; return
   fi
   log "▶ ${tag}"
-  $PY experiments.py --tag "$tag" --amp "$@" 2>&1 \
+  $PY -m task2_alexnet_fmnist.experiments --tag "$tag" --amp "$@" 2>&1 \
     | grep -E "数据集|epoch|每轮|完成" | sed "s/^/    /"
 }
 
@@ -34,7 +34,7 @@ elif [ "$MODE" = "report" ]; then
   for ds in $DATASETS; do
     # 主模型：AlexNet@224，BN + 数据增强 + 余弦退火（对齐 Fashion 主模型方法）
     run "x_alex_${ds}"        --model alexnet  --dataset "$ds" --img-size 224 --bn --augment --cosine --epochs $AEP --batch-size 128 --seed 0 \
-        --save-history "outputs/hist_x_alex_${ds}.json"
+        --save-history "task2_alexnet_fmnist/outputs/hist_x_alex_${ds}.json"
     # 轻量对照：SimpleCNN@64，3 种子估方差
     for s in 0 1 2; do
       run "x_scnn_${ds}_s${s}" --model simplecnn --dataset "$ds" --img-size 64 --augment --epochs $SEP --batch-size 128 --seed $s

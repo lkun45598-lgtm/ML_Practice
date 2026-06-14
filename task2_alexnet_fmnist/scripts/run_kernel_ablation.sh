@@ -4,7 +4,7 @@
 #   小核版：上述大核换成 3×3 堆叠（--small-kernel），通道/输出尺寸/FC头/训练预算全一致
 # flowers + garbage 各 2 变体 × 3 种子 = 12 个任务，铺到 8 张 GPU。
 PY=/home/lz/miniconda3/envs/pytorch312/bin/python
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."   # 切到仓库根目录
 EP=40
 log() { echo "[$(date +%T)][gpu$1] $2"; }
 
@@ -14,10 +14,10 @@ alex() {
   local sk=""; [ "$kind" = "small" ] && sk="--small-kernel"
   local tag="x_alex${kind}_${ds}_s${s}"
   log $gpu "▶ $tag"
-  CUDA_VISIBLE_DEVICES=$gpu $PY experiments.py --tag "$tag" --device cuda --amp \
+  CUDA_VISIBLE_DEVICES=$gpu $PY -m task2_alexnet_fmnist.experiments --tag "$tag" --device cuda --amp \
     --model alexnet --dataset "$ds" --img-size 224 --bn --augment --cosine $sk \
     --epochs $EP --batch-size 128 --seed $s \
-    > "outputs/log_$tag.txt" 2>&1
+    > "task2_alexnet_fmnist/outputs/log_$tag.txt" 2>&1
   log $gpu "✓ $tag  $(grep 完成 outputs/log_$tag.txt | tail -1)"
 }
 

@@ -12,12 +12,10 @@ import argparse
 import torch
 import torch.nn as nn
 
-from alexnet import AlexNet
-from data import get_loaders
+from task2_alexnet_fmnist.models.alexnet import AlexNet
+from task2_alexnet_fmnist.datasets.fmnist import get_loaders
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(HERE, "outputs")
-os.makedirs(OUT_DIR, exist_ok=True)
+from task2_alexnet_fmnist import OUT_DIR
 
 
 def run_epoch(model, loader, criterion, optimizer, device, train=True):

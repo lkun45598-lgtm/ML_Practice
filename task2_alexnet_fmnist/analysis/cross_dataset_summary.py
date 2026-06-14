@@ -18,11 +18,9 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.zh_font import set_chinese_font
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "outputs")
+from task2_alexnet_fmnist import OUT_DIR as OUT
 
 # 数据集固定展示顺序（fmnist, catsdogs, flowers, garbage）
 DS = [

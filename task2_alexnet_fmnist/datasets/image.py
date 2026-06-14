@@ -19,8 +19,7 @@ from PIL import Image, ImageFile
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True          # 容忍截断 JPEG
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(HERE, "data")
+from task2_alexnet_fmnist import DATA_DIR
 
 # ImageNet 三通道均值/方差：真实彩色照片的通用归一化
 _MEAN = (0.485, 0.456, 0.406)

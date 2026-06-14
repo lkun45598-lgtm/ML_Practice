@@ -6,13 +6,12 @@ import sys
 import json
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from data_tabular import load_lendingclub, load_ozone
+from task1_ml_wine.datasets.tabular import load_lendingclub, load_ozone
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import f1_score, balanced_accuracy_score, accuracy_score
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
+from task1_ml_wine import OUT_DIR as OUT
 GRID = {"learning_rate": [0.05, 0.1], "max_depth": [None, 6],
         "max_iter": [200, 400]}
 

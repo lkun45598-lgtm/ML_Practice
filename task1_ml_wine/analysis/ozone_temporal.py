@@ -27,9 +27,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.zh_font import set_chinese_font
-from wine_quality import build_models
+from task1_ml_wine.models import build_models
 
 from sklearn.base import clone
 from sklearn.model_selection import train_test_split, GridSearchCV, TimeSeriesSplit
@@ -40,10 +39,8 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import (accuracy_score, f1_score, balanced_accuracy_score,
                              recall_score, precision_score)
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "outputs")
-DATA_DIR = os.path.join(HERE, "data")
-os.makedirs(OUT, exist_ok=True)
+from task1_ml_wine import OUT_DIR as OUT
+from task1_ml_wine import DATA_DIR
 
 
 def load_ozone_with_date():

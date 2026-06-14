@@ -17,11 +17,11 @@ import argparse
 import torch
 import torch.nn as nn
 
-from data import get_loaders
-from data_image import get_image_loaders
-from alexnet import AlexNet
-from simplecnn import SimpleCNN
-from resnet_small import ResNetSmall
+from task2_alexnet_fmnist.datasets.fmnist import get_loaders
+from task2_alexnet_fmnist.datasets.image import get_image_loaders
+from task2_alexnet_fmnist.models.alexnet import AlexNet
+from task2_alexnet_fmnist.models.simplecnn import SimpleCNN
+from task2_alexnet_fmnist.models.resnet_small import ResNetSmall
 
 # 各数据集的通道数与类别数（fmnist 单通道 10 类；其余 3 通道彩色）
 DATASET_META = {
@@ -31,9 +31,7 @@ DATASET_META = {
     "catsdogs": {"in_channels": 3, "num_classes": 2},
 }
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(HERE, "outputs")
-os.makedirs(OUT_DIR, exist_ok=True)
+from task2_alexnet_fmnist import OUT_DIR
 
 
 def run_epoch(model, loader, criterion, optimizer, device, train, scaler=None, mixup_alpha=0.0):

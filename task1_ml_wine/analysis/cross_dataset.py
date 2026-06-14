@@ -17,10 +17,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.zh_font import set_chinese_font
-from data_tabular import LOADERS
-from wine_quality import build_models
+from task1_ml_wine.datasets.tabular import LOADERS
+from task1_ml_wine.models import build_models
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
@@ -28,9 +27,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import (accuracy_score, f1_score, balanced_accuracy_score)
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "outputs")
-os.makedirs(OUT, exist_ok=True)
+from task1_ml_wine import OUT_DIR as OUT
 
 # 难度阶梯顺序(由易到难/由小到大)
 ORDER = ["ionosphere", "wine", "lendingclub", "drybean", "ozone"]

@@ -18,9 +18,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.zh_font import set_chinese_font
-from data_tabular import load_lendingclub, load_ozone
+from task1_ml_wine.datasets.tabular import load_lendingclub, load_ozone
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
@@ -34,8 +33,7 @@ from sklearn.metrics import accuracy_score, f1_score, balanced_accuracy_score
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "outputs")
+from task1_ml_wine import OUT_DIR as OUT
 MODELS = ["SVM", "决策树", "随机森林", "逻辑回归"]
 
 

@@ -9,8 +9,7 @@ import torch
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(HERE, "data")
+from task2_alexnet_fmnist import DATA_DIR
 
 CLASS_NAMES = ["T恤", "裤子", "套衫", "连衣裙", "外套",
                "凉鞋", "衬衫", "运动鞋", "包", "短靴"]
