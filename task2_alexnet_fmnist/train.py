@@ -2,7 +2,7 @@
 """[旧版/基础脚本] 训练手写 AlexNet 的最小训练循环（默认 LRN、无 BatchNorm）。
 
 注意：本项目的主入口是 experiments.py（统一运行器，支持 --bn/--augment/--cosine/--dataset/
---small-kernel 等开关，并保存 outputs/alexnet_best.pt）。主模型与报告结果均由 experiments.py 产生；
+--small-kernel 等开关，并保存 outputs/alexnet_best.pt）。主模型结果均由 experiments.py 产生；
 evaluate.py 默认评估 BatchNorm 版主模型。train.py 仅作为最简训练流程的演示保留，若用它训练出的
 （LRN 版）检查点喂给 evaluate.py，请加 `--no-bn` 使架构一致，否则结构不匹配会加载失败。
 """

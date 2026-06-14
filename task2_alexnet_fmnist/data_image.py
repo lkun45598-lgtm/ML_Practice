@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """通用彩色图像数据集加载器（ImageFolder 风格）。
 
-把手写 AlexNet / SimpleCNN 从 Fashion-MNIST 扩展到 PPT 任务②列表里的真实图像数据集：
+把手写 AlexNet / SimpleCNN 从 Fashion-MNIST 扩展到三个真实彩色图像数据集：
 - flowers  : Kaggle Flowers Recognition，5 类花卉，约 4317 张
 - garbage  : Kaggle Garbage Classification，6 类，约 2527 张
 - catsdogs : Microsoft Cats vs. Dogs，2 类，约 25000 张（含少量损坏文件，自动跳过）
@@ -34,7 +34,7 @@ _ROOTS = {
     "catsdogs": ["catsdogs_ds/PetImages"],
 }
 
-# 数据集中文展示名（用于图表/报告）
+# 数据集中文展示名（用于图表）
 DATASET_CN = {"flowers": "Flowers 花卉", "garbage": "Garbage 垃圾分类",
               "catsdogs": "Cats vs Dogs 猫狗"}
 

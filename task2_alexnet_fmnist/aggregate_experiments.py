@@ -74,7 +74,7 @@ def metric_row(name, result, note, shirt_f1=None, acc=None, f1=None, params=None
 
 
 def build_component_ablation(tags):
-    """返回与论文表 5-1 一致的 AlexNet 组件消融行。"""
+    """汇总 AlexNet 组件消融对照行（充分训练 / BatchNorm / 数据增强）。"""
     # 15 轮基线指标来自已提交的 baseline_15ep_metrics.json（不再依赖未跟踪的 .bak 文件）；
     # 若该文件缺失则回退到 exp_alexnet_base.json，避免硬编码。
     baseline_metrics = read_json(os.path.join(OUT_DIR, "baseline_15ep_metrics.json"))

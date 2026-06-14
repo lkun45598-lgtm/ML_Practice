@@ -75,7 +75,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 CLASS_NAMES = ["差(≤5)", "中(=6)", "好(≥7)"]
-# 模型名 → ASCII 文件名（避免中文文件名跨系统乱码，便于 LaTeX 引用）
+# 模型名 → ASCII 文件名（避免中文文件名跨系统/工具链乱码）
 MODEL_FNAME = {"SVM": "svm", "决策树": "decision_tree",
                "随机森林": "random_forest", "逻辑回归": "logistic_regression"}
 
