@@ -19,6 +19,7 @@ import torch.nn as nn
 
 from task2_alexnet_fmnist.datasets.fmnist import get_loaders
 from task2_alexnet_fmnist.datasets.image import get_image_loaders
+from task2_alexnet_fmnist.datasets.cifar10 import get_cifar10_loaders
 from task2_alexnet_fmnist.models.alexnet import AlexNet
 from task2_alexnet_fmnist.models.simplecnn import SimpleCNN
 from task2_alexnet_fmnist.models.resnet_small import ResNetSmall
@@ -29,6 +30,7 @@ DATASET_META = {
     "flowers": {"in_channels": 3, "num_classes": 5},
     "garbage": {"in_channels": 3, "num_classes": 6},
     "catsdogs": {"in_channels": 3, "num_classes": 2},
+    "cifar10": {"in_channels": 3, "num_classes": 10},
 }
 
 from task2_alexnet_fmnist import OUT_DIR
@@ -110,8 +112,8 @@ def build_model(name, use_lrn, use_bn=False, in_channels=1, num_classes=10,
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", choices=["simplecnn", "alexnet", "resnet"], required=True)
-    ap.add_argument("--dataset", choices=["fmnist", "flowers", "garbage", "catsdogs"],
-                    default="fmnist", help="数据集：fmnist 走原灰度管线，其余走彩色 ImageFolder 管线")
+    ap.add_argument("--dataset", choices=["fmnist", "flowers", "garbage", "catsdogs", "cifar10"],
+                    default="fmnist", help="数据集：fmnist 走原灰度管线，cifar10 走 torchvision 管线，其余走彩色 ImageFolder 管线")
     ap.add_argument("--img-size", type=int, default=224)
     ap.add_argument("--augment", action="store_true")
     ap.add_argument("--no-lrn", action="store_true", help="AlexNet 去掉 LRN 的消融")
@@ -154,6 +156,13 @@ def main():
         train_loader, val_loader, test_loader = get_loaders(
             batch_size=args.batch_size, subset=args.subset, seed=args.seed,
             img_size=args.img_size, augment=args.augment, strong_aug=args.strong_aug)
+    elif args.dataset == "cifar10":
+        train_loader, val_loader, test_loader, data_info = get_cifar10_loaders(
+            batch_size=args.batch_size, img_size=args.img_size, augment=args.augment,
+            seed=args.seed, subset=args.subset, strong_aug=args.strong_aug)
+        num_classes = data_info["num_classes"]
+        print(f"[{args.tag}] CIFAR-10: train/val/test="
+              f"{data_info['n_train']}/{data_info['n_val']}/{data_info['n_test']}")
     else:
         train_loader, val_loader, test_loader, data_info = get_image_loaders(
             args.dataset, batch_size=args.batch_size, img_size=args.img_size,

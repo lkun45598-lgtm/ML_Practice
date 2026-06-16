@@ -22,12 +22,13 @@ from common.zh_font import set_chinese_font
 
 from task2_alexnet_fmnist import OUT_DIR as OUT
 
-# 数据集固定展示顺序（fmnist, catsdogs, flowers, garbage）
+# 数据集固定展示顺序（fmnist, catsdogs, flowers, garbage, cifar10）
 DS = [
     ("fmnist", "Fashion-MNIST\n灰度28·10类", 10),
     ("catsdogs", "Cats vs Dogs\n彩色·2类", 2),
     ("flowers", "Flowers\n彩色·5类", 5),
     ("garbage", "Garbage\n彩色·6类", 6),
+    ("cifar10", "CIFAR-10\n彩色32·10类", 10),
 ]
 
 
@@ -61,6 +62,8 @@ def alexnet_of(ds):
     if ds == "fmnist":
         d = first_exp("alexnet_long_bn_aug")
         return (d["test_acc"], None, d.get("n_params_M"), d.get("train_val_gap")) if d else None
+    if ds == "cifar10":                 # CIFAR-10 走调好的 _best 三种子（与 resnet/scnn 同口径）
+        return agg("exp_x_alex_cifar10_best_s*.json")
     return agg(f"exp_x_alex_{ds}.json", f"x_alex_{ds}_smoke")
 
 
@@ -68,12 +71,16 @@ def resnet_of(ds):
     if ds == "fmnist":
         d = first_exp("resnet")          # 既有 Fashion ResNet 结果
         return (d["test_acc"], None, d.get("n_params_M"), d.get("train_val_gap")) if d else None
+    if ds == "cifar10":
+        return agg("exp_x_resnet_cifar10_best_s*.json")
     return agg(f"exp_x_resnet_{ds}_s*.json")
 
 
 def simplecnn_of(ds):
     if ds == "fmnist":
         return agg("exp_simplecnn_s*.json")
+    if ds == "cifar10":
+        return agg("exp_x_scnn_cifar10_best_s*.json")
     return agg(f"exp_x_scnn_{ds}_s*.json", f"x_scnn_{ds}_smoke")
 
 
@@ -131,7 +138,7 @@ def main():
                 plt.text(b.get_x() + b.get_width() / 2, v + 0.012, f"{v:.2f}", ha="center", va="bottom", fontsize=7.5)
     plt.xticks(x, labels, fontsize=9)
     plt.ylim(0, 1.08); plt.ylabel("测试集准确率")
-    plt.title("任务难度阶梯 + 架构演进：大核大头 → 小核深网（跨四个数据集）")
+    plt.title("任务难度阶梯 + 架构演进：大核大头 → 小核深网（跨五个数据集）")
     plt.legend(loc="lower left", fontsize=8.5, ncol=1); plt.grid(axis="y", alpha=0.3)
     plt.tight_layout(); plt.savefig(os.path.join(OUT, "cross_dataset_acc.png"), dpi=150); plt.close()
 
